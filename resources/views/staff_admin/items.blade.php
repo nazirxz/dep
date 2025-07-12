@@ -56,7 +56,7 @@
             </div>
 
             {{-- Include konten items --}}
-            @include('partials.items_content')
+            @include('staff_admin.partials.items_content')        
         </div>
     </div>
 </div>
