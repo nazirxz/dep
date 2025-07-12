@@ -49,13 +49,47 @@
         </div>
 
         {{-- Main Content Dashboard --}}
-        <div class="col-md-10 offset-md-2 main-content"> {{-- Sesuaikan offset karena sidebar --}}
+        <div class="col-md-10 offset-md-2 main-content"> {{-- offset-md-2 tetap dipertahankan untuk mengimbangi sidebar --}}
             <div class="d-flex justify-content-end align-items-center mb-4 mt-3">
                 <span class="text-muted me-3"><i class="fas fa-user"></i> {{ Auth::user()->role === 'manager' ? 'Manajer' : 'Admin' }}</span>
+                {{-- Tombol toggle untuk sidebar di mobile --}}
                 <button class="btn btn-primary d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <i class="fas fa-bars"></i>
                 </button>
             </div>
+
+            {{-- Menampilkan pesan sesi di dalam konten utama --}}
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i>
+                    <div>{{ session('success') }}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <div>{{ session('error') }}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            @if(session('warning'))
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>{{ session('warning') }}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            @if(session('info'))
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    <i class="fas fa-info-circle"></i>
+                    <div>{{ session('info')}}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
 
             {{-- Card Stok Barang Masuk --}}
             <div class="card shadow-sm mb-4">
@@ -213,7 +247,26 @@
     /* Tambahan CSS khusus untuk Manager Dashboard */
     .main-content {
         padding-left: 1.5rem; /* Tambahkan padding agar tidak terlalu mepet sidebar */
+        padding-right: 1.5rem; /* Tambahkan padding kanan juga */
+        margin-left: 16.66666667%; /* Sesuaikan margin-left untuk mengimbangi col-md-2 */
+        width: 83.33333333%; /* Sesuaikan lebar untuk col-md-10 */
     }
+
+    @media (max-width: 767.98px) {
+        .main-content {
+            margin-left: 0; /* Hapus margin di mobile */
+            width: 100%; /* Lebar penuh di mobile */
+            padding-left: 1rem; /* Sesuaikan padding mobile */
+            padding-right: 1rem; /* Sesuaikan padding mobile */
+        }
+        .sidebar {
+            position: relative; /* Sidebar menjadi relatif di mobile */
+            min-height: auto; /* Tinggi otomatis di mobile */
+            width: 100%; /* Lebar penuh di mobile */
+            padding-bottom: 1rem;
+        }
+    }
+
     .stat-icon {
         background: rgba(0,123,255,0.1);
         width: 60px;
@@ -253,4 +306,28 @@
         font-size: 0.75rem;
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto dismiss alerts after 5 seconds
+        const alerts = document.querySelectorAll('.alert-dismissible');
+        alerts.forEach(function(alert) {
+            setTimeout(function() {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }, 5000);
+        });
+
+        // Add smooth fade-in animation for alerts
+        alerts.forEach(function(alert) {
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateY(-20px)';
+            setTimeout(function() {
+                alert.style.transition = 'all 0.5s ease';
+                alert.style.opacity = '1';
+                alert.style.transform = 'translateY(0)';
+            }, 100);
+        });
+    });
+</script>
 @endsection

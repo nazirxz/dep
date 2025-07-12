@@ -4,15 +4,19 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    {{-- CSRF Token --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ config('app.name', 'Usaha Distributor Keluarga Sehati') }}</title>
 
+    {{-- Fonts --}}
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
+    {{-- FontAwesome --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    {{-- Bootstrap CSS --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
@@ -44,104 +48,10 @@
             line-height: 1.6;
             color: var(--dark-color);
             background-color: #ffffff;
+            overflow-x: hidden; /* Mencegah scroll horizontal */
         }
         
-        /* Navbar Styles */
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-            box-shadow: var(--box-shadow);
-            border: none;
-            padding: 0.75rem 0;
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.4rem;
-            color: white !important;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            transition: var(--transition);
-        }
-
-        .navbar-brand:hover {
-            transform: translateY(-1px);
-        }
-
-        .navbar-brand img {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            transition: var(--transition);
-        }
-
-        .navbar-brand:hover img {
-            border-color: rgba(255, 255, 255, 0.8);
-            transform: scale(1.05);
-        }
-
-        .navbar-nav .nav-link {
-            color: rgba(255, 255, 255, 0.9) !important;
-            font-weight: 500;
-            padding: 0.5rem 1rem !important;
-            border-radius: var(--border-radius);
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .navbar-nav .nav-link:hover {
-            color: white !important;
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-1px);
-        }
-
-        .navbar-nav .nav-link i {
-            font-size: 0.9rem;
-        }
-
-        /* Dropdown Styles */
-        .dropdown-menu {
-            border: none;
-            border-radius: var(--border-radius-lg);
-            box-shadow: var(--box-shadow-lg);
-            padding: 0.5rem 0;
-            margin-top: 0.5rem;
-            min-width: 200px;
-        }
-
-        .dropdown-item {
-            padding: 0.75rem 1.5rem;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-weight: 500;
-        }
-
-        .dropdown-item:hover {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-            color: white;
-            transform: translateX(5px);
-        }
-
-        .dropdown-item.text-danger:hover {
-            background: linear-gradient(135deg, var(--danger-color), #c0392b);
-            color: white;
-        }
-
-        .dropdown-item i {
-            width: 16px;
-            text-align: center;
-        }
-
-        .dropdown-divider {
-            margin: 0.5rem 0;
-            border-color: #e9ecef;
-        }
+        {{-- Hapus gaya navbar yang tidak lagi digunakan --}}
 
         /* Alert Styles */
         .alert {
@@ -198,15 +108,15 @@
 
         /* Main Content */
         main {
-            min-height: calc(100vh - 160px);
-            padding: 2rem 0;
+            min-height: 100vh; /* Mengisi seluruh tinggi viewport */
+            padding: 0; /* Hapus padding jika sidebar akan mengisi penuh tinggi */
         }
 
-        /* Footer Styles */
+        /* Footer Styles (jika masih digunakan, sesuaikan posisinya) */
         footer {
             background: linear-gradient(135deg, var(--secondary-color) 0%, #34495e 100%);
             color: rgba(255, 255, 255, 0.8);
-            margin-top: auto;
+            /* margin-top: auto; Hapus atau sesuaikan jika layout berubah */
         }
 
         footer .container {
@@ -272,15 +182,6 @@
 
         /* Responsive Design */
         @media (max-width: 768px) {
-            .navbar-brand {
-                font-size: 1.2rem;
-            }
-
-            .navbar-brand img {
-                width: 30px;
-                height: 30px;
-            }
-
             main {
                 padding: 1rem 0;
             }
@@ -323,8 +224,14 @@
         .sidebar {
             background-color: var(--secondary-color);
             color: white;
-            min-height: calc(100vh - 70px); /* Adjust based on navbar height */
+            min-height: 100vh; /* Sidebar mengisi seluruh tinggi viewport */
             padding-top: 1rem;
+            position: fixed; /* Sidebar tetap di tempatnya saat scroll */
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 1000; /* Pastikan sidebar di atas konten lain */
+            overflow-y: auto; /* Aktifkan scroll jika konten sidebar terlalu panjang */
         }
         .sidebar .nav-link {
             color: rgba(255, 255, 255, 0.8) !important;
@@ -348,115 +255,18 @@
 </head>
 <body>
     <div id="app">
-        <nav class="navbar navbar-expand-md navbar-dark shadow-sm">
-            <div class="container">
-                <a class="navbar-brand" href="{{ url('/') }}">
-                    <img src="{{ asset('images/logo.png') }}" alt="Logo" 
-                         onerror="this.style.display='none'">
-                    <span>Keluarga Sehati</span>
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav me-auto">
-                        @guest {{-- Hanya tampilkan link ini jika user BELUM login --}}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('login') }}">
-                                    <i class="fas fa-sign-in-alt"></i>{{ __('Masuk') }}
-                                </a>
-                            </li>
-                        @endguest
-                        {{-- Link navigasi untuk user yang sudah login akan ditangani oleh sidebar di tampilan dashboard spesifik --}}
-                    </ul>
-
-                    <ul class="navbar-nav ms-auto">
-                        @guest
-                            {{-- Link Masuk sudah dihandle di atas, jadi ini bisa dikosongkan atau disesuaikan --}}
-                        @else
-                            <li class="nav-item dropdown">
-                                <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                    <i class="fas fa-user-circle me-2"></i>
-                                    <span>{{ Auth::user()->full_name ?? Auth::user()->name }}</span> {{-- Menggunakan full_name atau name --}}
-                                </a>
-
-                                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                    <a class="dropdown-item" href="{{ route('home') }}">
-                                        <i class="fas fa-home"></i>Dashboard
-                                    </a>
-                                    <a class="dropdown-item" href="#">
-                                        <i class="fas fa-user"></i>Profil
-                                    </a>
-                                    <a class="dropdown-item" href="#">
-                                        <i class="fas fa-cog"></i>Pengaturan
-                                    </a>
-                                    <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item text-danger" href="{{ route('logout') }}"
-                                       onclick="event.preventDefault();
-                                                     document.getElementById('logout-form').submit();">
-                                        <i class="fas fa-sign-out-alt"></i>{{ __('Keluar') }}
-                                    </a>
-
-                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                        @csrf
-                                    </form>
-                                </div>
-                            </li>
-                        @endguest
-                    </ul>
-                </div>
-            </div>
-        </nav>
-
-        @if(session('success'))
-            <div class="container mt-3">
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle"></i>
-                    <div>{{ session('success') }}</div>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="container mt-3">
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <div>{{ session('error') }}</div>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            </div>
-        @endif
-
-        @if(session('warning'))
-            <div class="container mt-3">
-                <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <div>{{ session('warning') }}</div>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            </div>
-        @endif
-
-        @if(session('info'))
-            <div class="container mt-3">
-                <div class="alert alert-info alert-dismissible fade show" role="alert">
-                    <i class="fas fa-info-circle"></i>
-                    <div>{{ session('info')}}</div>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            </div>
-        @endif
+        {{-- Navbar yang dihapus --}}
 
         <main>
             @yield('content')
         </main>
 
-        <footer class="text-center text-light mt-5">
+        {{-- Footer akan tetap ada, namun posisinya mungkin perlu disesuaikan tergantung layout akhir --}}
+        {{-- Untuk saat ini, biarkan di sini, dan sesuaikan di manager_dashboard jika perlu --}}
+        <footer class="text-center text-light">
             <div class="container">
                 <div class="row">
-                    <div class="col-md-12"> {{-- Tetap col-md-12 --}}
+                    <div class="col-md-12">
                         <p class="mb-2">
                             <strong>&copy; {{ date('Y') }} Usaha Distributor Keluarga Sehati</strong>
                         </p>
@@ -479,58 +289,61 @@
         </footer>
     </div>
 
+    {{-- Bootstrap JS --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Auto dismiss alerts after 5 seconds
-            const alerts = document.querySelectorAll('.alert-dismissible');
-            alerts.forEach(function(alert) {
-                setTimeout(function() {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                }, 5000);
-            });
+            // Ini akan dipindahkan ke manager_dashboard.blade.php
+            // const alerts = document.querySelectorAll('.alert-dismissible');
+            // alerts.forEach(function(alert) {
+            //     setTimeout(function() {
+            //         const bsAlert = new bootstrap.Alert(alert);
+            //         bsAlert.close();
+            //     }, 5000);
+            // });
 
             // Add smooth fade-in animation for alerts
-            alerts.forEach(function(alert) {
-                alert.style.opacity = '0';
-                alert.style.transform = 'translateY(-20px)';
-                setTimeout(function() {
-                    alert.style.transition = 'all 0.5s ease';
-                    alert.style.opacity = '1';
-                    alert.style.transform = 'translateY(0)';
-                }, 100);
-            });
+            // Ini akan dipindahkan ke manager_dashboard.blade.php
+            // alerts.forEach(function(alert) {
+            //     alert.style.opacity = '0';
+            //     alert.style.transform = 'translateY(-20px)';
+            //     setTimeout(function() {
+            //         alert.style.transition = 'all 0.5s ease';
+            //         alert.style.opacity = '1';
+            //         alert.style.transform = 'translateY(0)';
+            //     }, 100);
+            // });
 
-            // Enhanced navbar behavior
-            const navbar = document.querySelector('.navbar');
-            let lastScrollTop = 0;
-
-            window.addEventListener('scroll', function() {
-                let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                
-                if (scrollTop > 100) {
-                    navbar.style.backdropFilter = 'blur(10px)';
-                    navbar.style.background = 'linear-gradient(135deg, rgba(52, 152, 219, 0.95) 0%, rgba(41, 128, 185, 0.95) 100%)';
-                } else {
-                    navbar.style.backdropFilter = 'none';
-                    navbar.style.background = 'linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%)';
-                }
-                
-                lastScrollTop = scrollTop;
-            });
+            // Remove enhanced navbar behavior as navbar is removed
+            // const navbar = document.querySelector('.navbar');
+            // let lastScrollTop = 0;
+            // window.addEventListener('scroll', function() {
+            //     let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            //     if (scrollTop > 100) {
+            //         navbar.style.backdropFilter = 'blur(10px)';
+            //         navbar.style.background = 'linear-gradient(135deg, rgba(52, 152, 219, 0.95) 0%, rgba(41, 128, 185, 0.95) 100%)';
+            //     } else {
+            //         navbar.style.backdropFilter = 'none';
+            //         navbar.style.background = 'linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%)';
+            //     }
+            //     lastScrollTop = scrollTop;
+            // });
 
             // Add loading state to logout form
-            const logoutLinks = document.querySelectorAll('a[onclick*="logout-form"]');
-            logoutLinks.forEach(function(link) {
-                link.addEventListener('click', function() {
-                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
-                    this.style.pointerEvents = 'none';
+            const logoutForms = document.querySelectorAll('form#logout-form');
+            logoutForms.forEach(function(form) {
+                form.addEventListener('submit', function() {
+                    const logoutBtn = form.querySelector('a[onclick*="logout-form"]');
+                    if (logoutBtn) {
+                        logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
+                        logoutBtn.style.pointerEvents = 'none';
+                    }
                 });
             });
 
-            // Enhanced dropdown behavior
+            // Enhanced dropdown behavior (if any dropdowns remain, e.g., in sidebar)
             const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
             dropdownToggles.forEach(function(toggle) {
                 toggle.addEventListener('click', function() {
