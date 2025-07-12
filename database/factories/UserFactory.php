@@ -24,10 +24,14 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
+            // Sesuaikan field ini dengan field di tabel users Anda
+            'full_name' => fake()->name(), // Sesuaikan jika Anda menggunakan 'full_name' bukan 'name'
+            'username' => fake()->unique()->userName(), // Menambahkan username unik
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'role' => 'user', // Default role untuk factory
+            'phone_number' => fake()->phoneNumber(), // Menambahkan nomor telepon
             'remember_token' => Str::random(10),
         ];
     }

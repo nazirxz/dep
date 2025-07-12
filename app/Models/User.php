@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash; // Tambahkan ini jika Anda akan menggunakan Hash::make() di seeder
 
 class User extends Authenticatable
 {
@@ -18,9 +19,12 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'full_name',    // Tambahkan
         'email',
+        'username',     // Tambahkan
         'password',
+        'role',         // Tambahkan
+        'phone_number', // Tambahkan
     ];
 
     /**
