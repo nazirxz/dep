@@ -241,37 +241,6 @@
     </div>
 </div>
 
-{{-- Modal untuk Tambah/Edit Barang (Generic CRUD Modal) - Pastikan ini sudah dihapus dari sini jika di items_content --}}
-{{-- Jika Anda belum menghapusnya dari item_management.blade.php, pastikan untuk menghapusnya sekarang. --}}
-{{-- <div class="modal fade" id="itemCrudModal" tabindex="-1" aria-labelledby="itemCrudModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="itemCrudModalLabel"></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="itemCrudForm">
-                    @csrf
-                    <input type="hidden" name="_method" value="POST" id="formMethod">
-                    <input type="hidden" name="id" id="crudItemId">
-
-                    <div id="itemCrudFormContent">
-                    </div>
-                    
-                    <div class="d-flex gap-2 justify-content-end mt-3">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary" id="itemCrudSubmitBtn">
-                            <i class="fas fa-save"></i> Simpan
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div> --}}
-
-
 <style>
     .main-content {
         padding-left: 1.5rem;
@@ -456,6 +425,27 @@
                 .then(result => {
                     if (result.success) {
                         const item = result.data;
+                        let locationDisplay = item.lokasi_rak_barang ? 
+                                              `<span class="badge bg-info">${item.lokasi_rak_barang}</span>` : 
+                                              `<span class="badge bg-secondary">Belum ditempatkan</span>`;
+                        let inconsistencyWarning = '';
+
+                        // Check for synchronization: if item's stored location differs from clicked rack position
+                        if (item.lokasi_rak_barang && item.lokasi_rak_barang !== position) {
+                            inconsistencyWarning = `
+                                <div class="alert alert-warning alert-sm mt-2" role="alert">
+                                    <i class="fas fa-exclamation-triangle"></i> Lokasi tersimpan: ${item.lokasi_rak_barang}. Tidak sinkron dengan posisi rak yang diklik.
+                                </div>
+                            `;
+                        } else if (!item.lokasi_rak_barang && item.jumlah_barang > 0) {
+                            // If item has no stored location but is in a physical rack
+                            inconsistencyWarning = `
+                                <div class="alert alert-warning alert-sm mt-2" role="alert">
+                                    <i class="fas fa-exclamation-triangle"></i> Barang ini belum memiliki lokasi rak tersimpan di database.
+                                </div>
+                            `;
+                        }
+                        
                         rackDetailsContainer.innerHTML = `
                             <div class="rack-detail-card">
                                 <div class="position-badge mb-3">
@@ -483,6 +473,11 @@
                                         <strong>Status:</strong>
                                         <span class="badge ${getStatusBadgeClass(item.status_barang)}">${item.status_barang}</span>
                                     </div>
+                                    <div class="detail-row">
+                                        <strong>Lokasi Tersimpan:</strong>
+                                        <span>${locationDisplay}</span>
+                                    </div>
+                                    ${inconsistencyWarning}
                                 </div>
                                 <div class="mt-3">
                                     <button class="btn btn-sm btn-warning w-100 mb-2" onclick="editIncomingItemFromManagement('${item.id}')">
@@ -493,6 +488,9 @@
                                     </button>
                                     <button class="btn btn-sm btn-info w-100" onclick="showItemHistory('${item.id}')">
                                         <i class="fas fa-history"></i> Lihat Riwayat
+                                    </button>
+                                    <button class="btn btn-sm btn-success w-100 mt-2" onclick="updateItemLocationToClickedRack('${item.id}', '${position}')">
+                                        <i class="fas fa-sync-alt"></i> Sinkronkan Lokasi ke Rak Ini
                                     </button>
                                 </div>
                             </div>
@@ -528,8 +526,8 @@
      */
     window.getStatusBadgeClass = function(status) {
         switch(status) {
-            case 'Tersedia': return 'bg-success';
-            case 'Stok Rendah': return 'bg-warning';
+            case 'Banyak': return 'bg-success'; // Changed from 'Tersedia' to 'Banyak' for consistency with items_content
+            case 'Sedikit': return 'bg-warning'; // Changed from 'Stok Rendah' to 'Sedikit'
             case 'Habis': return 'bg-danger';
             default: return 'bg-secondary';
         }
@@ -664,7 +662,61 @@
         // Here you would open a modal or navigate to history page
     }
 
-    // Add some CSS for detail styling
+    /**
+     * Sinkronkan lokasi rak barang di database dengan posisi rak yang diklik.
+     * Ini akan memperbarui `lokasi_rak_barang` di `IncomingItem` di database.
+     * @param {number} itemId - ID barang masuk.
+     * @param {string} newLocation - Posisi rak yang akan disinkronkan.
+     */
+    window.updateItemLocationToClickedRack = async function(itemId, newLocation) {
+        showCustomConfirm(`Apakah Anda yakin ingin memperbarui lokasi rak barang ini di database menjadi ${newLocation}?`, async () => {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            showAlert('info', `Memperbarui lokasi barang #${itemId} ke ${newLocation}...`);
+
+            try {
+                // Fetch current item data to send a complete update request
+                const itemResponse = await fetch(`/staff/incoming-items/${itemId}`);
+                const itemResult = await itemResponse.json();
+
+                if (!itemResult.success) {
+                    showAlert('error', itemResult.message || 'Gagal memuat data barang untuk sinkronisasi lokasi.');
+                    return;
+                }
+                const existingItemData = itemResult.data;
+
+                const formData = new FormData();
+                formData.append('_method', 'PUT');
+                formData.append('nama_barang', existingItemData.nama_barang);
+                formData.append('kategori_barang', existingItemData.kategori_barang);
+                formData.append('jumlah_barang', existingItemData.jumlah_barang);
+                formData.append('tanggal_masuk_barang', existingItemData.tanggal_masuk_barang);
+                formData.append('lokasi_rak_barang', newLocation); // Update only location
+
+                const response = await fetch(`/staff/incoming-items/${itemId}`, {
+                    method: 'POST', // Laravel will interpret PUT via _method
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('success', data.message);
+                    location.reload(); // Reload to reflect changes
+                } else {
+                    showAlert('error', data.message || 'Gagal memperbarui lokasi barang.');
+                }
+            } catch (error) {
+                console.error('Error updating item location:', error);
+                showAlert('error', 'Terjadi kesalahan jaringan saat memperbarui lokasi barang.');
+            }
+        });
+    };
+
+    // Add some CSS for detail styling (ensure these are not duplicated if already in app.blade.php)
     const additionalStyles = `
         <style>
             .detail-row {
@@ -736,6 +788,13 @@
                 alert.style.transform = 'translateY(0)';
             }, 100);
         });
+
+        // Handle URL parameter for highlighting
+        const urlParams = new URLSearchParams(window.location.search);
+        const highlightPosition = urlParams.get('highlight');
+        if (highlightPosition) {
+            window.showRackLocation(highlightPosition);
+        }
     });
 </script>
 @endsection

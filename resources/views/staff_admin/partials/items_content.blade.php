@@ -440,137 +440,32 @@
             {{-- Tab Tambah Barang --}}
             <div class="tab-pane fade" id="add-items" role="tabpanel">
                 <div class="row">
-                    {{-- Form Tambah Barang Masuk --}}
+                    {{-- Tombol Tambah Barang Masuk --}}
                     <div class="col-md-6">
                         <div class="card border-primary">
                             <div class="card-header bg-primary text-white">
                                 <h6 class="mb-0"><i class="fas fa-plus"></i> Tambah Barang Masuk</h6>
                             </div>
-                            <div class="card-body">
-                                <form id="addIncomingForm" onsubmit="handleItemCrudSubmit(event, 'incoming', 'add')">
-                                    @csrf
-                                    <div class="mb-3">
-                                        <label for="incoming_nama_barang" class="form-label">Nama Barang *</label>
-                                        <input type="text" class="form-control" id="incoming_nama_barang" 
-                                               name="nama_barang" required placeholder="Masukkan nama barang">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="incoming_kategori_barang" class="form-label">Kategori Barang *</label>
-                                        <select class="form-select" id="incoming_kategori_barang" name="kategori_barang" required>
-                                            <option value="">Pilih Kategori</option>
-                                            <option value="Makanan">Makanan</option>
-                                            <option value="Minuman">Minuman</option>
-                                            <option value="Elektronik">Elektronik</option>
-                                            <option value="Pakaian">Pakaian</option>
-                                            <option value="Alat Tulis">Alat Tulis</option>
-                                            <option value="Lainnya">Lainnya</option>
-                                        </select>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label for="incoming_jumlah_barang" class="form-label">Jumlah Barang *</label>
-                                                <input type="number" class="form-control" id="incoming_jumlah_barang" 
-                                                       name="jumlah_barang" required min="1" placeholder="0">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label for="incoming_tanggal_masuk" class="form-label">Tanggal Masuk *</label>
-                                                <input type="date" class="form-control" id="incoming_tanggal_masuk" 
-                                                       name="tanggal_masuk_barang" required>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="incoming_lokasi_rak" class="form-label">Lokasi Rak</label>
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" id="incoming_lokasi_rak" 
-                                                   name="lokasi_rak_barang" pattern="R[1-8]-[1-4]-[1-6]" placeholder="R1-1-1 (opsional)">
-                                            <button type="button" class="btn btn-outline-secondary" 
-                                                    onclick="showRackSelector('incoming_lokasi_rak')">
-                                                <i class="fas fa-map"></i> Pilih
-                                            </button>
-                                        </div>
-                                        <small class="form-text text-muted">Format: R[1-8]-[1-4]-[1-6]</small>
-                                    </div>
-                                    <div class="d-flex gap-2">
-                                        <button type="submit" class="btn btn-primary" id="submitIncomingBtn">
-                                            <i class="fas fa-save"></i> Simpan Barang Masuk
-                                        </button>
-                                        <button type="reset" class="btn btn-secondary">
-                                            <i class="fas fa-undo"></i> Reset
-                                        </button>
-                                    </div>
-                                </form>
+                            <div class="card-body text-center py-5">
+                                <p class="text-muted">Klik tombol di bawah untuk menambahkan barang baru ke gudang.</p>
+                                <button type="button" class="btn btn-primary btn-lg" onclick="addNewIncomingItem()">
+                                    <i class="fas fa-box-open"></i> Tambah Barang Masuk
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    {{-- Form Tambah Barang Keluar --}}
+                    {{-- Tombol Tambah Barang Keluar --}}
                     <div class="col-md-6">
                         <div class="card border-danger">
                             <div class="card-header bg-danger text-white">
                                 <h6 class="mb-0"><i class="fas fa-arrow-up"></i> Tambah Barang Keluar</h6>
                             </div>
-                            <div class="card-body">
-                                <form id="addOutgoingForm" onsubmit="handleItemCrudSubmit(event, 'outgoing', 'add')">
-                                    @csrf
-                                    <div class="mb-3">
-                                        <label for="outgoing_nama_barang" class="form-label">Nama Barang *</label>
-                                        <select class="form-select" id="outgoing_nama_barang" name="nama_barang" required>
-                                            <option value="">Pilih dari stok tersedia</option>
-                                            @if(isset($incomingItems))
-                                                @foreach($incomingItems->where('jumlah_barang', '>', 0) as $item)
-                                                    <option value="{{ $item->nama_barang }}" data-category="{{ $item->kategori_barang }}" 
-                                                            data-available="{{ $item->jumlah_barang }}" data-location="{{ $item->lokasi_rak_barang }}">
-                                                        {{ $item->nama_barang }} ({{ $item->jumlah_barang }} unit tersedia)
-                                                    </option>
-                                                @endforeach
-                                            @endif
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="outgoing_kategori_barang" class="form-label">Kategori Barang</label>
-                                        <input type="text" class="form-control" id="outgoing_kategori_barang" 
-                                               name="kategori_barang" readonly placeholder="Otomatis terisi">
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label for="outgoing_jumlah_barang" class="form-label">Jumlah Keluar *</label>
-                                                <input type="number" class="form-control" id="outgoing_jumlah_barang" 
-                                                       name="jumlah_barang" required min="1" placeholder="0">
-                                                <small class="form-text text-muted" id="availableStock"></small>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label for="outgoing_tanggal_keluar" class="form-label">Tanggal Keluar *</label>
-                                                <input type="date" class="form-control" id="outgoing_tanggal_keluar" 
-                                                       name="tanggal_keluar_barang" required>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="outgoing_tujuan" class="form-label">Tujuan Distribusi *</label>
-                                        <input type="text" class="form-control" id="outgoing_tujuan" 
-                                               name="tujuan_distribusi" required placeholder="Nama toko/pelanggan">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="outgoing_lokasi_asal" class="form-label">Lokasi Rak Asal</label>
-                                        <input type="text" class="form-control" id="outgoing_lokasi_asal" 
-                                               name="lokasi_rak_barang" readonly placeholder="Otomatis dari stok">
-                                    </div>
-                                    <div class="d-flex gap-2">
-                                        <button type="submit" class="btn btn-danger" id="submitOutgoingBtn">
-                                            <i class="fas fa-arrow-up"></i> Proses Barang Keluar
-                                        </button>
-                                        <button type="reset" class="btn btn-secondary">
-                                            <i class="fas fa-undo"></i> Reset
-                                        </button>
-                                    </div>
-                                </form>
+                            <div class="card-body text-center py-5">
+                                <p class="text-muted">Klik tombol di bawah untuk memproses pengeluaran barang dari gudang.</p>
+                                <button type="button" class="btn btn-danger btn-lg" onclick="addNewOutgoingItem()">
+                                    <i class="fas fa-shipping-fast"></i> Proses Barang Keluar
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -979,10 +874,10 @@ function setupFilters() {
         rows.forEach(row => {
             if (row.cells.length < 2) return; // Skip empty rows
             
-            const nameCell = row.cells[1]; // Nama Barang column
-            const category = row.dataset.category || '';
-            const destination = row.dataset.destination || '';
-            const date = row.dataset.date || '';
+            const nameCell = rows[i].cells[1]; // Nama Barang column
+            const category = rows[i].dataset.category || '';
+            const destination = rows[i].dataset.destination || '';
+            const date = rows[i].dataset.date || '';
 
             if (nameCell) {
                 const nameText = nameCell.textContent.toLowerCase();
@@ -992,9 +887,9 @@ function setupFilters() {
                 const matchesDate = !selectedDate || date === selectedDate;
 
                 if (matchesSearch && matchesCategory && matchesDestination && matchesDate) {
-                    row.style.display = '';
+                    rows[i].style.display = '';
                 } else {
-                    row.style.display = 'none';
+                    rows[i].style.display = 'none';
                 }
             }
         });
@@ -1038,38 +933,9 @@ function setupBulkActions() {
  * Mengatur fungsionalitas pemilih barang keluar (mengisi kategori dan lokasi otomatis).
  */
 function setupOutgoingItemSelector() {
-    const outgoingItemSelect = document.getElementById('outgoing_nama_barang');
-    const outgoingCategoryInput = document.getElementById('outgoing_kategori_barang');
-    const outgoingLocationInput = document.getElementById('outgoing_lokasi_asal');
-    const availableStockSpan = document.getElementById('availableStock');
-    const outgoingQuantityInput = document.getElementById('outgoing_jumlah_barang');
-    
-    if (outgoingItemSelect) {
-        outgoingItemSelect.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            if (selectedOption.value) {
-                const category = selectedOption.dataset.category || '';
-                const available = selectedOption.dataset.available || '0';
-                const location = selectedOption.dataset.location || '';
-                
-                if (outgoingCategoryInput) outgoingCategoryInput.value = category;
-                if (outgoingLocationInput) outgoingLocationInput.value = location;
-                if (availableStockSpan) availableStockSpan.textContent = `Stok tersedia: ${available} unit`;
-                if (outgoingQuantityInput) {
-                    outgoingQuantityInput.max = available;
-                    outgoingQuantityInput.placeholder = `Max: ${available}`;
-                }
-            } else {
-                if (outgoingCategoryInput) outgoingCategoryInput.value = '';
-                if (outgoingLocationInput) outgoingLocationInput.value = '';
-                if (availableStockSpan) availableStockSpan.textContent = '';
-                if (outgoingQuantityInput) {
-                    outgoingQuantityInput.max = '';
-                    outgoingQuantityInput.placeholder = '0';
-                }
-            }
-        });
-    }
+    // This function is now less critical as the forms are in the modal,
+    // but the logic for updating fields based on selected item is still relevant
+    // for the modal's dynamic form content.
 }
 
 /**
@@ -1252,6 +1118,13 @@ window.addNewIncomingItem = function() {
 }
 
 /**
+ * Menampilkan modal form CRUD untuk menambah barang keluar baru.
+ */
+window.addNewOutgoingItem = function() {
+    renderItemCrudForm('outgoing', 'add');
+}
+
+/**
  * Menampilkan modal form CRUD untuk mengedit barang masuk.
  * @param {number} itemId - ID barang masuk yang akan diedit.
  */
@@ -1305,6 +1178,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
     const itemCrudForm = document.getElementById('itemCrudForm');
     const submitBtn = document.getElementById('itemCrudSubmitBtn');
 
+    // Set the form's onsubmit handler to the generic handler
     itemCrudForm.onsubmit = (event) => handleItemCrudSubmit(event, itemType, mode);
 
     let formHtml = '';
@@ -1314,7 +1188,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
         crudItemIdField.value = '';
         formMethodField.value = 'POST';
         submitBtn.innerHTML = '<i class="fas fa-save"></i> Simpan';
-        submitBtn.classList.remove('btn-warning');
+        submitBtn.classList.remove('btn-warning', 'btn-danger'); // Ensure correct class
         submitBtn.classList.add('btn-primary');
 
         if (itemType === 'incoming') {
@@ -1361,10 +1235,10 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <small class="form-text text-muted">Format: R[1-8]-[1-4]-[1-6]</small>
                 </div>
             `;
-        } else { // outgoing - add mode (e.g., from "Pindah ke Barang Keluar")
+        } else { // outgoing - add mode (e.g., from "Pindah ke Barang Keluar" or "Proses Barang Keluar")
             modalLabel.textContent = 'Proses Barang Keluar Baru';
             submitBtn.innerHTML = '<i class="fas fa-arrow-up"></i> Proses Barang Keluar';
-            submitBtn.classList.remove('btn-primary');
+            submitBtn.classList.remove('btn-primary', 'btn-warning');
             submitBtn.classList.add('btn-danger');
 
             let availableStockText = '';
@@ -1427,7 +1301,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
         crudItemIdField.value = itemData.id;
         formMethodField.value = 'PUT';
         submitBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
-        submitBtn.classList.remove('btn-primary');
+        submitBtn.classList.remove('btn-primary', 'btn-danger');
         submitBtn.classList.add('btn-warning');
 
         if (itemType === 'incoming') {
@@ -1517,6 +1391,20 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
     formContentDiv.innerHTML = formHtml;
     const itemCrudModal = new bootstrap.Modal(document.getElementById('itemCrudModal'));
     itemCrudModal.show();
+
+    // Re-attach event listener for outgoing_nama_barang if it exists in the dynamically loaded form
+    if (itemType === 'outgoing' && mode === 'add') {
+        const crudNamaBarangSelect = document.getElementById('crud_nama_barang');
+        if (crudNamaBarangSelect) {
+            crudNamaBarangSelect.addEventListener('change', function() {
+                window.updateOutgoingFormFields(this);
+            });
+            // Trigger change event if an item was pre-selected (e.g., from moveToOutgoing)
+            if (itemData && itemData.nama_barang) {
+                window.updateOutgoingFormFields(crudNamaBarangSelect);
+            }
+        }
+    }
 }
 
 /**
@@ -1526,7 +1414,7 @@ window.handleItemCrudSubmit = async function(event, itemType, mode) {
     event.preventDefault();
     const form = event.target;
     const formData = new FormData(form);
-    const itemId = document.getElementById('crudItemId').value;
+    const itemId = document.getElementById('crudItemId') ? document.getElementById('crudItemId').value : null; // Add null check
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     const submitBtn = document.getElementById('itemCrudSubmitBtn');
     const originalBtnHtml = submitBtn.innerHTML;
@@ -1578,8 +1466,11 @@ window.handleItemCrudSubmit = async function(event, itemType, mode) {
 
         if (data.success) {
             showAlert('success', data.message);
-            const itemCrudModal = bootstrap.Modal.getInstance(document.getElementById('itemCrudModal'));
-            itemCrudModal.hide();
+            const itemCrudModalElement = document.getElementById('itemCrudModal');
+            if (itemCrudModalElement) {
+                const itemCrudModal = bootstrap.Modal.getInstance(itemCrudModalElement);
+                if (itemCrudModal) itemCrudModal.hide(); // Add null check for instance
+            }
             location.reload(); // Reload page to reflect changes
         } else {
             let errorMessage = data.message || 'Terjadi kesalahan.';
@@ -1862,7 +1753,7 @@ window.confirmRackSelection = async function() {
         
         // Close modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('rackSelectorModal'));
-        modal.hide();
+        if (modal) modal.hide(); // Add null check
         
         // Reset selections
         window.selectedRackPosition = null;
@@ -1954,13 +1845,13 @@ window.moveToOutgoing = function(itemId) {
                 // Render the outgoing form in 'add' mode with incoming item data
                 renderItemCrudForm('outgoing', 'add', itemData);
                 // Pre-select the item in the dropdown
-                const outgoingItemSelect = document.getElementById('crud_nama_barang');
-                if (outgoingItemSelect) {
+                const crudNamaBarangSelect = document.getElementById('crud_nama_barang');
+                if (crudNamaBarangSelect) {
                     // Find the option by value (nama_barang) and set it as selected
-                    for (let i = 0; i < outgoingItemSelect.options.length; i++) {
-                        if (outgoingItemSelect.options[i].value === itemData.nama_barang) {
-                            outgoingItemSelect.selectedIndex = i;
-                            outgoingItemSelect.dispatchEvent(new Event('change')); // Trigger change to populate other fields
+                    for (let i = 0; i < crudNamaBarangSelect.options.length; i++) {
+                        if (crudNamaBarangSelect.options[i].value === itemData.nama_barang) {
+                            crudNamaBarangSelect.selectedIndex = i;
+                            crudNamaBarangSelect.dispatchEvent(new Event('change')); // Trigger change to populate other fields
                             break;
                         }
                     }
@@ -2141,7 +2032,7 @@ window.processCSVImport = async function() {
 
         if (data.success) {
             const modal = bootstrap.Modal.getInstance(document.getElementById('importCSVModal'));
-            modal.hide();
+            if (modal) modal.hide(); // Add null check
             showAlert('success', data.message + (data.errors.length > 0 ? ` Beberapa kesalahan terjadi: ${data.errors.join(', ')}` : ''));
             location.reload();
         } else {
