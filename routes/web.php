@@ -37,10 +37,12 @@ Route::middleware('auth')->group(function () {
     // Route untuk Pemesanan Barang
     Route::get('/order/items', [HomeController::class, 'showOrderItems'])->name('order.items');
 
-    // Route baru untuk Akun Pegawai
+    // Route untuk Akun Pegawai
     Route::get('/employee/accounts', [HomeController::class, 'showEmployeeAccounts'])->name('employee.accounts');
-    // Route untuk menyimpan data akun pegawai baru (POST request)
     Route::post('/employee/accounts', [HomeController::class, 'storeEmployeeAccount'])->name('employee.accounts.store');
+
+    // Route baru untuk Pengelolaan Barang
+    Route::get('/manage/items', [HomeController::class, 'showManageItems'])->name('manage.items');
 
     // Logout route
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');

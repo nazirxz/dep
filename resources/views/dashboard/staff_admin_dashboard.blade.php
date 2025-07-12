@@ -43,10 +43,6 @@
                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                             <i class="fas fa-sign-out-alt"></i>Keluar
                         </a>
-                             {{-- Form logout tersembunyi --}}
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                            @csrf {{-- Pastikan ini ada untuk perlindungan CSRF --}}
-                        </form>
                     </li>
                 </ul>
             </div>
@@ -55,7 +51,7 @@
         {{-- Main Content untuk Staff Admin Dashboard --}}
         <div class="col-md-10 offset-md-2 main-content">
             <div class="d-flex justify-content-end align-items-center mb-4 mt-3">
-                <span class="text-muted me-3"><i class="fas fa-user"></i> {{ Auth::user()->role === 'staff_admin' ? 'Staff Admin' : 'User' }}</span>
+                <span class="text-muted me-3"><i class="fas fa-user"></i> {{ Auth::user()->role === 'admin' ? 'Staff Admin' : 'User' }}</span>
                 {{-- Tombol toggle untuk sidebar di mobile --}}
                 <button class="btn btn-primary d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="fas fa-bars"></span>
