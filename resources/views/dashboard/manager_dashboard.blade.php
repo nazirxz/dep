@@ -22,12 +22,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('order.items') }}"> {{-- Pastikan href ini benar --}}
+                        <a class="nav-link" href="{{ route('order.items') }}"> {{-- Link ke Pemesanan Barang --}}
                             <i class="fas fa-shopping-cart"></i>Pemesanan Barang
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link" href="{{ route('employee.accounts') }}"> {{-- Link ke Akun Pegawai --}}
                             <i class="fas fa-users-cog"></i>Akun Pegawai
                         </a>
                     </li>
@@ -40,14 +40,9 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-danger" href="{{ route('logout') }}"
-                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                           onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                             <i class="fas fa-sign-out-alt"></i>Keluar
                         </a>
-
-                        {{-- Form logout tersembunyi --}}
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                            @csrf {{-- Pastikan ini ada untuk perlindungan CSRF --}}
-                        </form>
                     </li>
                 </ul>
             </div>
@@ -103,7 +98,7 @@
                     <p class="lead">Gunakan navigasi di samping untuk mengakses fitur-fitur manajemen.</p>
                     <div class="alert alert-info" role="alert">
                         <i class="fas fa-info-circle"></i>
-                        <div>Untuk melihat laporan stok dan tren barang, silakan klik "Laporan Stok Barang" di sidebar. Untuk pemesanan barang, klik "Pemesanan Barang".</div>
+                        <div>Untuk melihat laporan stok dan tren barang, silakan klik "Laporan Stok Barang" di sidebar. Untuk pemesanan barang, klik "Pemesanan Barang". Untuk mengelola akun pegawai, klik "Akun Pegawai".</div>
                     </div>
                 </div>
                 {{-- Tambahkan widget atau ringkasan lain untuk dashboard utama di sini --}}
@@ -122,7 +117,7 @@
                         <div class="card-body">
                             <h5 class="card-title"><i class="fas fa-users"></i> Manajemen Pengguna</h5>
                             <p class="card-text">Kelola akun pegawai dan hak akses mereka.</p>
-                            <a href="#" class="btn btn-secondary btn-sm">Kelola Akun</a>
+                            <a href="{{ route('employee.accounts') }}" class="btn btn-secondary btn-sm">Kelola Akun</a>
                         </div>
                     </div>
                 </div>

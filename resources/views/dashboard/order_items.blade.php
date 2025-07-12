@@ -27,7 +27,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link" href="{{ route('employee.accounts') }}"> {{-- Link ke Akun Pegawai --}}
                             <i class="fas fa-users-cog"></i>Akun Pegawai
                         </a>
                     </li>
@@ -40,14 +40,9 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-danger" href="{{ route('logout') }}"
-                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                           onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                             <i class="fas fa-sign-out-alt"></i>Keluar
                         </a>
-
-                        {{-- Form logout tersembunyi --}}
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                            @csrf {{-- Pastikan ini ada untuk perlindungan CSRF --}}
-                        </form>
                     </li>
                 </ul>
             </div>
@@ -139,7 +134,7 @@
                                     <tbody>
                                         @forelse ($producers as $producer)
                                             <tr>
-                                                <td>{{ $loop->iteration }}</td> {{-- Menggunakan $loop->iteration untuk nomor urut --}}
+                                                <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $producer->nama_produsen_supplier }}</td>
                                                 <td>
                                                     <a href="https://wa.me/{{ $producer->kontak_whatsapp }}" target="_blank" class="btn btn-success btn-sm">
