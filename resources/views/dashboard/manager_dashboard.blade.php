@@ -135,7 +135,7 @@
                                 </div>
                             </div>
 
-                            {{-- Tabel Stok --}}
+                            {{-- Tabel Stok Barang Masuk --}}
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <thead class="table-light">
@@ -143,56 +143,47 @@
                                             <th>No.</th>
                                             <th>Nama Barang</th>
                                             <th>Kategori Barang</th>
-                                            <th>Tanggal Masuk Barang</th>
-                                            <th>Jumlah Barang</th>
-                                            <th>Status Barang</th>
+                                            <th>Tanggal Masuk</th>
+                                            <th>Jumlah</th>
+                                            <th>Lokasi Rak</th>
+                                            <th>Status</th>
                                             <th>Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>1</td>
-                                            <td>Laptop ASUS ROG</td>
-                                            <td>Elektronik</td>
-                                            <td>01 Jan 2025</td>
-                                            <td>10</td>
-                                            <td><span class="badge bg-success">Banyak</span></td>
-                                            <td>
-                                                <button class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i> Lihat Detail</button>
-                                                <button class="btn btn-sm btn-primary"><i class="fas fa-search-plus"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>2</td>
-                                            <td>Meja Gaming</td>
-                                            <td>Furniture</td>
-                                            <td>02 Jan 2025</td>
-                                            <td>3</td>
-                                            <td><span class="badge bg-warning">Sedikit</span></td>
-                                            <td>
-                                                <button class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i> Lihat Detail</button>
-                                                <button class="btn btn-sm btn-primary"><i class="fas fa-search-plus"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>3</td>
-                                            <td>Kursi Ergonomis</td>
-                                            <td>Furniture</td>
-                                            <td>03 Jan 2025</td>
-                                            <td>0</td>
-                                            <td><span class="badge bg-danger">Habis</span></td>
-                                            <td>
-                                                <button class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i> Lihat Detail</button>
-                                                <button class="btn btn-sm btn-primary"><i class="fas fa-search-plus"></i></button>
-                                            </td>
-                                        </tr>
-                                        {{-- Tambahkan baris lain sesuai kebutuhan --}}
+                                        @forelse ($incomingItems as $item)
+                                            <tr>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>{{ $item->nama_barang }}</td>
+                                                <td>{{ $item->kategori_barang }}</td>
+                                                <td>{{ $item->tanggal_masuk_barang->format('d M Y') }}</td>
+                                                <td>{{ $item->jumlah_barang }}</td>
+                                                <td>{{ $item->lokasi_rak_barang }}</td>
+                                                <td>
+                                                    @if ($item->status_barang == 'Banyak')
+                                                        <span class="badge bg-success">{{ $item->status_barang }}</span>
+                                                    @elseif ($item->status_barang == 'Sedikit')
+                                                        <span class="badge bg-warning">{{ $item->status_barang }}</span>
+                                                    @else
+                                                        <span class="badge bg-danger">{{ $item->status_barang }}</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i> Lihat Detail</button>
+                                                    <button class="btn btn-sm btn-primary"><i class="fas fa-search-plus"></i></button>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="8" class="text-center">Tidak ada data barang masuk.</td>
+                                            </tr>
+                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>
                             {{-- Paginasi (placeholder) --}}
                             <div class="d-flex justify-content-between align-items-center mt-3">
-                                <small>Menampilkan 1 hingga 3 dari 100 tabel</small>
+                                <small>Menampilkan 1 hingga {{ $incomingItems->count() }} dari {{ $incomingItems->count() }} tabel</small>
                                 <div>
                                     <button class="btn btn-sm btn-light">Sebelumnya</button>
                                     <button class="btn btn-sm btn-light">Berikutnya</button>
@@ -206,8 +197,81 @@
                             </div>
                         </div>
                         <div class="tab-pane fade" id="outgoing-stock" role="tabpanel" aria-labelledby="outgoing-tab">
-                            <p>Konten untuk Barang Keluar akan tampil di sini.</p>
-                            {{-- Anda bisa duplikasi struktur tabel dari incoming-stock di sini --}}
+                            {{-- Filter dan Pencarian untuk Barang Keluar --}}
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <select class="form-select">
+                                        <option selected>Semua Item</option>
+                                        <option value="1">Item 1</option>
+                                        <option value="2">Item 2</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select">
+                                        <option selected>Pilih Kategori Barang</option>
+                                        <option value="1">Kategori A</option>
+                                        <option value="2">Kategori B</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" placeholder="Mencari">
+                                        <button class="btn btn-outline-secondary" type="button"><i class="fas fa-search"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Tabel Stok Barang Keluar --}}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>No.</th>
+                                            <th>Nama Barang</th>
+                                            <th>Kategori Barang</th>
+                                            <th>Tanggal Keluar</th>
+                                            <th>Jumlah</th>
+                                            <th>Tujuan Distribusi</th>
+                                            <th>Lokasi Rak</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($outgoingItems as $item)
+                                            <tr>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>{{ $item->nama_barang }}</td>
+                                                <td>{{ $item->kategori_barang }}</td>
+                                                <td>{{ $item->tanggal_keluar_barang->format('d M Y') }}</td>
+                                                <td>{{ $item->jumlah_barang }}</td>
+                                                <td>{{ $item->tujuan_distribusi }}</td>
+                                                <td>{{ $item->lokasi_rak_barang }}</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i> Lihat Detail</button>
+                                                    <button class="btn btn-sm btn-primary"><i class="fas fa-search-plus"></i></button>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="8" class="text-center">Tidak ada data barang keluar.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                            {{-- Paginasi (placeholder) --}}
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <small>Menampilkan 1 hingga {{ $outgoingItems->count() }} dari {{ $outgoingItems->count() }} tabel</small>
+                                <div>
+                                    <button class="btn btn-sm btn-light">Sebelumnya</button>
+                                    <button class="btn btn-sm btn-light">Berikutnya</button>
+                                </div>
+                            </div>
+                            {{-- Tombol Laporan --}}
+                            <div class="mt-3 text-start">
+                                <button class="btn btn-danger me-2"><i class="fas fa-file-pdf"></i> Cetak PDF</button>
+                                <button class="btn btn-success me-2"><i class="fas fa-file-excel"></i> Cetak Excel</button>
+                            </div>
                         </div>
                     </div>
                 </div>
