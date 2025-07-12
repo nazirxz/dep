@@ -21,8 +21,9 @@
                             <i class="fas fa-boxes"></i>Laporan Stok Barang
                         </a>
                     </li>
+
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link" href="{{ route('order.items') }}"> {{-- Ubah href ini --}}
                             <i class="fas fa-shopping-cart"></i>Pemesanan Barang
                         </a>
                     </li>
@@ -40,9 +41,14 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-danger" href="{{ route('logout') }}"
-                           onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                             <i class="fas fa-sign-out-alt"></i>Keluar
                         </a>
+
+                        {{-- Form logout tersembunyi --}}
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                            @csrf {{-- Pastikan ini ada untuk perlindungan CSRF --}}
+                        </form>
                     </li>
                 </ul>
             </div>

@@ -36,8 +36,11 @@ Route::middleware('auth')->group(function () {
     // Home route (after login)
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 
-    // Route baru untuk Laporan Stok Barang
+    // Route untuk Laporan Stok Barang
     Route::get('/report/stock', [HomeController::class, 'showStockReport'])->name('report.stock');
+
+    // Route baru untuk Pemesanan Barang
+    Route::get('/order/items', [HomeController::class, 'showOrderItems'])->name('order.items'); // Tambahkan baris ini
 
     // Logout route
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');

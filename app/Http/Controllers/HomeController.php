@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\IncomingItem; // Import model IncomingItem
 use App\Models\OutgoingItem; // Import model OutgoingItem
+use App\Models\Producer; // Import Data Producer
 use Carbon\Carbon; // Import Carbon untuk manipulasi tanggal
 
 class HomeController extends Controller
@@ -101,6 +102,16 @@ class HomeController extends Controller
             'purchaseTrendData' => $purchaseData,
             'salesTrendData' => $salesData,
             'chartPeriod' => $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y'),
+        ]);
+    }
+    public function showOrderItems()
+    {
+        // Mengambil data produsen dari database
+        // Urutkan berdasarkan nama_produsen_supplier untuk tampilan yang rapi
+        $producers = Producer::orderBy('nama_produsen_supplier')->get();
+
+        return view('dashboard.order_items', [
+            'producers' => $producers,
         ]);
     }
 }

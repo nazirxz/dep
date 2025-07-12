@@ -22,7 +22,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link" href="{{ route('order.items') }}"> {{-- Pastikan href ini benar --}}
                             <i class="fas fa-shopping-cart"></i>Pemesanan Barang
                         </a>
                     </li>
@@ -40,9 +40,14 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-danger" href="{{ route('logout') }}"
-                           onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                             <i class="fas fa-sign-out-alt"></i>Keluar
                         </a>
+
+                        {{-- Form logout tersembunyi --}}
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                            @csrf {{-- Pastikan ini ada untuk perlindungan CSRF --}}
+                        </form>
                     </li>
                 </ul>
             </div>
@@ -98,7 +103,7 @@
                     <p class="lead">Gunakan navigasi di samping untuk mengakses fitur-fitur manajemen.</p>
                     <div class="alert alert-info" role="alert">
                         <i class="fas fa-info-circle"></i>
-                        <div>Untuk melihat laporan stok dan tren barang, silakan klik "Laporan Stok Barang" di sidebar.</div>
+                        <div>Untuk melihat laporan stok dan tren barang, silakan klik "Laporan Stok Barang" di sidebar. Untuk pemesanan barang, klik "Pemesanan Barang".</div>
                     </div>
                 </div>
                 {{-- Tambahkan widget atau ringkasan lain untuk dashboard utama di sini --}}

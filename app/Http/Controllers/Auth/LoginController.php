@@ -47,7 +47,8 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
             
-            return redirect()->intended('/home')->with('success', 'Login berhasil! Selamat datang kembali.');
+            // Ubah baris ini untuk selalu mengarahkan ke halaman dashboard
+            return redirect()->route('home')->with('success', 'Login berhasil! Selamat datang kembali.');
         }
 
         // If unsuccessful, redirect back with error
