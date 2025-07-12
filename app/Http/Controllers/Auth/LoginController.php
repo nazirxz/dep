@@ -47,12 +47,12 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
             
-            return redirect()->intended('/home')->with('success', 'Login berhasil!');
+            return redirect()->intended('/home')->with('success', 'Login berhasil! Selamat datang kembali.');
         }
 
         // If unsuccessful, redirect back with error
         return redirect()->back()
-            ->withErrors(['email' => 'Email atau password tidak valid.'])
+            ->withErrors(['email' => 'Email atau password tidak valid. Silakan coba lagi atau hubungi administrator.'])
             ->withInput($request->only('email', 'remember'));
     }
 
@@ -66,6 +66,6 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/')->with('success', 'Anda telah logout.');
+        return redirect('/')->with('success', 'Anda telah logout dengan aman.');
     }
 }
