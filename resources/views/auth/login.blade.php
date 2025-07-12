@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.auth')
 
 @section('content')
 <div class="auth-container">
@@ -134,13 +134,15 @@
 <style>
 /* Auth Container */
 .auth-container {
-    min-height: 100vh;
+    height: 100vh;
+    max-height: 100vh;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem 1rem;
+    padding: 1rem;
     position: relative;
+    overflow: hidden;
 }
 
 .auth-container::before {
@@ -162,28 +164,35 @@
 .auth-wrapper {
     max-width: 1200px;
     width: 100%;
+    max-height: calc(100vh - 2rem);
     position: relative;
     z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .auth-card {
     background: white;
     border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
     overflow: hidden;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    min-height: 600px;
+    min-height: 500px;
+    max-height: calc(100vh - 4rem);
+    width: 100%;
 }
 
 /* Brand Side */
 .auth-brand-side {
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
     color: white;
-    padding: 3rem;
+    padding: 2rem 1.5rem;
     display: flex;
     align-items: center;
     position: relative;
+    overflow-y: auto;
 }
 
 .auth-brand-side::before {
@@ -193,73 +202,68 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><path d="M0,100 Q50,50 100,100 T200,100 L200,200 L0,200 Z" fill="rgba(255,255,255,0.05)"/></svg>') no-repeat center center;
-    background-size: cover;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="b" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="white" stop-opacity="0.1"/><stop offset="100%" stop-color="white" stop-opacity="0"/></radialGradient></defs><circle cx="10" cy="10" r="1" fill="url(%23b)"/><circle cx="90" cy="20" r="1.5" fill="url(%23b)"/><circle cx="20" cy="90" r="1" fill="url(%23b)"/><circle cx="80" cy="80" r="1.2" fill="url(%23b)"/></svg>') repeat;
+    opacity: 0.3;
 }
 
 .brand-content {
     position: relative;
     z-index: 1;
+    text-align: center;
 }
 
 .brand-logo {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 2rem;
+    margin-bottom: 1rem;
     display: flex;
-    align-items: center;
     justify-content: center;
 }
 
 .brand-logo img {
-    width: 100%;
-    height: 100%;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     object-fit: cover;
     border: 3px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
 .logo-fallback {
-    width: 80px;
-    height: 80px;
-    background: rgba(255, 255, 255, 0.1);
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
+    font-size: 1.5rem;
     color: white;
     border: 3px solid rgba(255, 255, 255, 0.3);
 }
 
 .brand-title {
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
-    text-align: center;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .brand-subtitle {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 600;
-    margin-bottom: 1.5rem;
-    text-align: center;
-    color: #3498db;
+    margin-bottom: 1rem;
+    opacity: 0.9;
 }
 
 .brand-description {
-    font-size: 1rem;
-    line-height: 1.6;
-    margin-bottom: 2rem;
-    text-align: center;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
     opacity: 0.9;
 }
 
 .brand-features {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 .feature-item {
@@ -276,9 +280,10 @@
 
 /* Form Side */
 .auth-form-side {
-    padding: 3rem;
+    padding: 2rem 1.5rem;
     display: flex;
     align-items: center;
+    overflow-y: auto;
 }
 
 .form-content {
@@ -289,11 +294,11 @@
 
 .form-header {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .form-title {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: #2c3e50;
     margin-bottom: 0.5rem;
@@ -301,7 +306,7 @@
 
 .form-subtitle {
     color: #7f8c8d;
-    font-size: 1rem;
+    font-size: 0.9rem;
     margin-bottom: 0;
 }
 
@@ -311,7 +316,7 @@
 }
 
 .form-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.2rem;
 }
 
 .form-label {
@@ -397,7 +402,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     flex-wrap: wrap;
     gap: 1rem;
 }
@@ -434,7 +439,7 @@
 
 .btn-primary {
     width: 100%;
-    padding: 1rem 2rem;
+    padding: 0.8rem 2rem;
     background: linear-gradient(135deg, #3498db, #2980b9);
     color: white;
     border: none;
@@ -528,34 +533,41 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .auth-container {
+        padding: 0.5rem;
+    }
+    
     .auth-card {
         grid-template-columns: 1fr;
-        min-height: auto;
+        min-height: calc(100vh - 1rem);
+        max-height: calc(100vh - 1rem);
     }
     
     .auth-brand-side {
-        padding: 2rem;
+        padding: 1.5rem 1rem;
         text-align: center;
+        min-height: 200px;
     }
     
     .brand-title {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
     }
     
     .brand-subtitle {
-        font-size: 1.25rem;
+        font-size: 1.1rem;
     }
     
     .brand-description {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
     }
     
     .auth-form-side {
-        padding: 2rem;
+        padding: 1.5rem 1rem;
     }
     
     .form-title {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
     }
     
     .form-options {
@@ -566,23 +578,38 @@
 
 @media (max-width: 480px) {
     .auth-container {
-        padding: 1rem;
+        padding: 0.25rem;
+        height: 100vh;
+    }
+    
+    .auth-wrapper {
+        max-height: calc(100vh - 0.5rem);
+    }
+    
+    .auth-card {
+        min-height: calc(100vh - 0.5rem);
+        max-height: calc(100vh - 0.5rem);
+        border-radius: 10px;
     }
     
     .auth-brand-side,
     .auth-form-side {
-        padding: 1.5rem;
+        padding: 1rem;
     }
     
-    .brand-logo {
-        width: 60px;
-        height: 60px;
-    }
-    
+    .brand-logo img,
     .logo-fallback {
-        width: 60px;
-        height: 60px;
-        font-size: 1.5rem;
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+    
+    .brand-features {
+        gap: 0.5rem;
+    }
+    
+    .feature-item {
+        font-size: 0.85rem;
     }
 }
 </style>
