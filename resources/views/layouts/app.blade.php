@@ -4,19 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ config('app.name', 'Usaha Distributor Keluarga Sehati') }}</title>
 
-    <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
@@ -322,6 +318,32 @@
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
             outline: none;
         }
+
+        /* Dashboard specific styles (added for this task) */
+        .sidebar {
+            background-color: var(--secondary-color);
+            color: white;
+            min-height: calc(100vh - 70px); /* Adjust based on navbar height */
+            padding-top: 1rem;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+            padding: 0.75rem 1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: var(--primary-color);
+            color: white !important;
+            transform: translateX(5px);
+            box-shadow: var(--box-shadow);
+        }
+        .sidebar .nav-link i {
+            margin-right: 0.75rem;
+            width: 20px; /* Align icons */
+        }
     </style>
 </head>
 <body>
@@ -338,31 +360,25 @@
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <!-- Left Side Of Navbar -->
                     <ul class="navbar-nav me-auto">
-                        @auth
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('home') }}">
-                                    <i class="fas fa-home"></i>Dashboard
-                                </a>
-                            </li>
-                        @endauth
-                    </ul>
-
-                    <!-- Right Side Of Navbar -->
-                    <ul class="navbar-nav ms-auto">
-                        <!-- Authentication Links -->
-                        @guest
+                        @guest {{-- Hanya tampilkan link ini jika user BELUM login --}}
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('login') }}">
                                     <i class="fas fa-sign-in-alt"></i>{{ __('Masuk') }}
                                 </a>
                             </li>
+                        @endguest
+                        {{-- Link navigasi untuk user yang sudah login akan ditangani oleh sidebar di tampilan dashboard spesifik --}}
+                    </ul>
+
+                    <ul class="navbar-nav ms-auto">
+                        @guest
+                            {{-- Link Masuk sudah dihandle di atas, jadi ini bisa dikosongkan atau disesuaikan --}}
                         @else
                             <li class="nav-item dropdown">
                                 <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                     <i class="fas fa-user-circle me-2"></i>
-                                    <span>{{ Auth::user()->name }}</span>
+                                    <span>{{ Auth::user()->full_name ?? Auth::user()->name }}</span> {{-- Menggunakan full_name atau name --}}
                                 </a>
 
                                 <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
@@ -393,7 +409,6 @@
             </div>
         </nav>
 
-        <!-- Flash Messages -->
         @if(session('success'))
             <div class="container mt-3">
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -428,7 +443,7 @@
             <div class="container mt-3">
                 <div class="alert alert-info alert-dismissible fade show" role="alert">
                     <i class="fas fa-info-circle"></i>
-                    <div>{{ session('info') }}</div>
+                    <div>{{ session('info')}}</div>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             </div>
@@ -438,11 +453,10 @@
             @yield('content')
         </main>
 
-        <!-- Footer -->
         <footer class="text-center text-light mt-5">
             <div class="container">
                 <div class="row">
-                    <div class="col-md-12">
+                    <div class="col-md-12"> {{-- Tetap col-md-12 --}}
                         <p class="mb-2">
                             <strong>&copy; {{ date('Y') }} Usaha Distributor Keluarga Sehati</strong>
                         </p>
@@ -465,10 +479,8 @@
         </footer>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Custom Scripts -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Auto dismiss alerts after 5 seconds
