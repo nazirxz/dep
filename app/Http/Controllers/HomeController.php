@@ -19,11 +19,46 @@ class HomeController extends Controller
         $user = Auth::user();
 
         // Mengambil data barang masuk dari database
-        // Mengurutkan berdasarkan tanggal masuk terbaru
         $incomingItems = IncomingItem::orderBy('tanggal_masuk_barang', 'desc')->get();
 
         // Mengambil data barang keluar dari database
-        // Mengurutkan berdasarkan tanggal keluar terbaru
+        $outgoingItems = OutgoingItem::orderBy('tanggal_keluar_barang', 'desc')->get();
+
+        // Memeriksa role user dan memuat tampilan yang sesuai
+        if ($user->role === 'manager') {
+            return view('home', [
+                'dashboardView' => 'dashboard.manager_dashboard',
+                'incomingItems' => $incomingItems, // Kirim data barang masuk ke view
+                'outgoingItems' => $outgoingItems, // Kirim data barang keluar ke view
+            ]);
+        } elseif ($user->role === 'staff_admin') {
+            return view('home', [
+                'dashboardView' => 'dashboard.staff_admin_dashboard',
+                'incomingItems' => $incomingItems,
+                'outgoingItems' => $outgoingItems,
+            ]);
+        }
+        
+        // Default jika role tidak dikenali atau untuk user biasa
+        return view('home', [
+            'dashboardView' => 'dashboard.default_dashboard',
+            'incomingItems' => $incomingItems,
+            'outgoingItems' => $outgoingItems,
+        ]);
+    }
+
+    /**
+     * Show the stock report page.
+     */
+    public function showStockReport()
+    {
+        // Mendapatkan user yang sedang login
+        $user = Auth::user();
+
+        // Mengambil data barang masuk dari database
+        $incomingItems = IncomingItem::orderBy('tanggal_masuk_barang', 'desc')->get();
+
+        // Mengambil data barang keluar dari database
         $outgoingItems = OutgoingItem::orderBy('tanggal_keluar_barang', 'desc')->get();
 
         // --- Data untuk Grafik Tren Penjualan/Pembelian ---
@@ -59,33 +94,7 @@ class HomeController extends Controller
 
         // --- Akhir Data untuk Grafik ---
 
-        // Memeriksa role user dan memuat tampilan yang sesuai
-        if ($user->role === 'manager') {
-            return view('home', [
-                'dashboardView' => 'dashboard.manager_dashboard',
-                'incomingItems' => $incomingItems,
-                'outgoingItems' => $outgoingItems,
-                'chartLabels' => $daysOfWeek,         // Label hari untuk grafik
-                'purchaseTrendData' => $purchaseData, // Data tren pembelian
-                'salesTrendData' => $salesData,       // Data tren penjualan
-                'chartPeriod' => $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y'), // Periode grafik
-            ]);
-        } elseif ($user->role === 'staff_admin') {
-            // Jika ada dashboard khusus untuk staff_admin, teruskan data chart juga
-            return view('home', [
-                'dashboardView' => 'dashboard.staff_admin_dashboard',
-                'incomingItems' => $incomingItems,
-                'outgoingItems' => $outgoingItems,
-                'chartLabels' => $daysOfWeek,
-                'purchaseTrendData' => $purchaseData,
-                'salesTrendData' => $salesData,
-                'chartPeriod' => $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y'),
-            ]);
-        }
-        
-        // Default jika role tidak dikenali atau untuk user biasa
-        return view('home', [
-            'dashboardView' => 'dashboard.default_dashboard',
+        return view('dashboard.report_stock', [
             'incomingItems' => $incomingItems,
             'outgoingItems' => $outgoingItems,
             'chartLabels' => $daysOfWeek,
