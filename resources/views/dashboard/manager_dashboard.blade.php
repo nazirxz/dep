@@ -54,7 +54,7 @@
                 <span class="text-muted me-3"><i class="fas fa-user"></i> {{ Auth::user()->role === 'manager' ? 'Manajer' : 'Admin' }}</span>
                 {{-- Tombol toggle untuk sidebar di mobile --}}
                 <button class="btn btn-primary d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <i class="fas fa-bars"></i>
+                    <span class="fas fa-bars"></span>
                 </button>
             </div>
 
@@ -279,19 +279,18 @@
 
             {{-- Card Tren Pembelian Barang (Grafik) --}}
             <div class="card shadow-sm mb-4">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Tren Pembelian Barang</h5>
+                <div class="card-header bg-white d-flex justify-content-between align-items-center" id="chartCardHeader">
+                    <h5 class="mb-0">Tren Pembelian Barang</h5> {{-- Judul awal --}}
                     <div class="d-flex align-items-center">
-                        <span class="me-2">Periode : 1-7 Januari 2025</span>
+                        <span class="me-2">Periode : {{ $chartPeriod }}</span> {{-- Tampilkan periode dari controller --}}
                         <button class="btn btn-sm btn-outline-secondary me-2"><i class="fas fa-calendar-alt"></i> Detail Kalender</button>
                         <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-chevron-right"></i> Minggu Berikutnya</button>
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="d-flex justify-content-center align-items-center" style="height: 300px; background-color: #f8f9fa; border-radius: 8px;">
-                        {{-- Placeholder untuk grafik batang --}}
-                        {{-- Anda akan mengintegrasikan Chart.js atau library grafik lain di sini --}}
-                        <img src="{{ asset('images/chart_placeholder.png') }}" alt="Chart Placeholder" style="max-width: 90%; max-height: 90%; opacity: 0.7;">
+                    {{-- Canvas untuk Chart.js --}}
+                    <div style="height: 300px;">
+                        <canvas id="salesChart"></canvas>
                     </div>
                     <div class="mt-3 text-end">
                         <small class="text-muted">
@@ -371,6 +370,7 @@
     }
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Auto dismiss alerts after 5 seconds
@@ -392,6 +392,124 @@
                 alert.style.transform = 'translateY(0)';
             }, 100);
         });
+
+        // Data dari Laravel Controller
+        const chartLabels = @json($chartLabels);
+        const purchaseTrendData = @json($purchaseTrendData);
+        const salesTrendData = @json($salesTrendData);
+        const chartPeriod = @json($chartPeriod);
+
+        // Update periode di HTML
+        document.querySelector('.card-header .me-2').textContent = 'Periode : ' + chartPeriod;
+
+        let salesChart; // Deklarasikan variabel chart di scope yang lebih luas
+
+        // Fungsi untuk merender/update grafik
+        function renderChart(type) {
+            // Hapus chart yang sudah ada jika ada
+            if (salesChart) {
+                salesChart.destroy();
+            }
+
+            let dataToDisplay;
+            let chartTitleText;
+            let backgroundColor;
+
+            if (type === 'purchase') {
+                dataToDisplay = purchaseTrendData;
+                chartTitleText = 'Tren Pembelian Barang';
+                backgroundColor = '#3498db'; // Warna untuk pembelian (biru)
+            } else { // type === 'sales'
+                dataToDisplay = salesTrendData;
+                chartTitleText = 'Tren Penjualan Barang';
+                backgroundColor = '#27ae60'; // Warna untuk penjualan (hijau)
+            }
+
+            // Update judul card
+            document.querySelector('#chartCardHeader h5').textContent = chartTitleText;
+
+
+            const chartData = {
+                labels: chartLabels,
+                datasets: [{
+                    label: chartTitleText, // Label dataset mengikuti judul chart
+                    data: dataToDisplay,
+                    backgroundColor: backgroundColor,
+                    borderColor: backgroundColor,
+                    borderWidth: 1
+                }]
+            };
+
+            const salesConfig = {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Jumlah' // Label sumbu Y yang lebih umum
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Hari'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false // Sembunyikan legend default Chart.js karena kita punya legend kustom
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    return 'Hari: ' + context[0].label;
+                                },
+                                label: function(context) {
+                                    return chartTitleText + ': ' + context.raw;
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            const salesChartCtx = document.getElementById('salesChart');
+            if (salesChartCtx) {
+                salesChart = new Chart(salesChartCtx, salesConfig);
+            }
+        }
+
+        // Event listener untuk tab
+        const incomingTab = document.getElementById('incoming-tab');
+        const outgoingTab = document.getElementById('outgoing-tab');
+
+        if (incomingTab) {
+            incomingTab.addEventListener('shown.bs.tab', function (event) {
+                renderChart('purchase'); // Render grafik pembelian saat tab barang masuk aktif
+            });
+        }
+
+        if (outgoingTab) {
+            outgoingTab.addEventListener('shown.bs.tab', function (event) {
+                renderChart('sales'); // Render grafik penjualan saat tab barang keluar aktif
+            });
+        }
+
+        // Render grafik awal saat halaman dimuat (default: pembelian)
+        // Periksa tab mana yang aktif secara default saat halaman dimuat
+        if (incomingTab && incomingTab.classList.contains('active')) {
+            renderChart('purchase');
+        } else if (outgoingTab && outgoingTab.classList.contains('active')) {
+            renderChart('sales');
+        } else {
+            // Fallback jika tidak ada tab yang aktif secara default, render pembelian
+            renderChart('purchase');
+        }
     });
 </script>
-@endsection
