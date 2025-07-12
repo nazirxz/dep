@@ -43,6 +43,10 @@
                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                             <i class="fas fa-sign-out-alt"></i>Keluar
                         </a>
+                             {{-- Form logout tersembunyi --}}
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                            @csrf {{-- Pastikan ini ada untuk perlindungan CSRF --}}
+                        </form>
                     </li>
                 </ul>
             </div>

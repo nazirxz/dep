@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid"> {{-- Menggunakan container-fluid untuk lebar penuh --}}
+<div class="container-fluid">
     <div class="row">
-        {{-- Sidebar (seperti di gambar) --}}
-        <div class="col-md-2 d-none d-md-block sidebar"> {{-- Sembunyikan di mobile, tampil di desktop --}}
+        {{-- Sidebar --}}
+        <div class="col-md-2 d-none d-md-block sidebar">
             <div class="position-sticky">
                 <div class="d-flex align-items-center mb-4 mt-3">
                     <img src="{{ asset('images/logo.png') }}" alt="Logo KS" class="img-fluid rounded-circle me-2" style="width: 40px; height: 40px;">
@@ -12,22 +12,22 @@
                 </div>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="{{ route('home') }}">
+                        <a class="nav-link active" aria-current="page" href="{{ route('home') }}"> {{-- Dashboard aktif untuk staff_admin --}}
                             <i class="fas fa-tachometer-alt"></i>Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('report.stock') }}"> {{-- Link ke Laporan Stok Barang --}}
+                        <a class="nav-link" href="{{ route('report.stock') }}">
                             <i class="fas fa-boxes"></i>Laporan Stok Barang
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('order.items') }}"> {{-- Link ke Pemesanan Barang --}}
+                        <a class="nav-link" href="{{ route('order.items') }}">
                             <i class="fas fa-shopping-cart"></i>Pemesanan Barang
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('employee.accounts') }}"> {{-- Link ke Akun Pegawai --}}
+                        <a class="nav-link" href="{{ route('employee.accounts') }}">
                             <i class="fas fa-users-cog"></i>Akun Pegawai
                         </a>
                     </li>
@@ -52,10 +52,10 @@
             </div>
         </div>
 
-        {{-- Main Content Dashboard --}}
-        <div class="col-md-10 offset-md-2 main-content"> {{-- offset-md-2 tetap dipertahankan untuk mengimbangi sidebar --}}
+        {{-- Main Content untuk Staff Admin Dashboard --}}
+        <div class="col-md-10 offset-md-2 main-content">
             <div class="d-flex justify-content-end align-items-center mb-4 mt-3">
-                <span class="text-muted me-3"><i class="fas fa-user"></i> {{ Auth::user()->role === 'manager' ? 'Manajer' : 'Admin' }}</span>
+                <span class="text-muted me-3"><i class="fas fa-user"></i> {{ Auth::user()->role === 'staff_admin' ? 'Staff Admin' : 'User' }}</span>
                 {{-- Tombol toggle untuk sidebar di mobile --}}
                 <button class="btn btn-primary d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="fas fa-bars"></span>
@@ -95,62 +95,81 @@
                 </div>
             @endif
 
-            {{-- Konten Dashboard Utama --}}
+            {{-- Konten Dashboard Staff Admin --}}
             <div class="row">
                 <div class="col-12">
-                    <h2 class="mb-4">Selamat Datang di Dashboard Manajer!</h2>
-                    <p class="lead">Gunakan navigasi di samping untuk mengakses fitur-fitur manajemen.</p>
+                    <h2 class="mb-4">Selamat Datang di Dashboard Staff Admin!</h2>
+                    <p class="lead">Anda dapat mengelola operasi harian dan melihat laporan dasar.</p>
                     <div class="alert alert-info" role="alert">
                         <i class="fas fa-info-circle"></i>
-                        <div>Untuk melihat laporan stok dan tren barang, silakan klik "Laporan Stok Barang" di sidebar. Untuk pemesanan barang, klik "Pemesanan Barang". Untuk mengelola akun pegawai, klik "Akun Pegawai".</div>
+                        <div>Gunakan navigasi di samping untuk mengakses fitur-fitur yang tersedia.</div>
                     </div>
                 </div>
-                {{-- Tambahkan widget atau ringkasan lain untuk dashboard utama di sini --}}
+                
+                {{-- Widget Ringkasan Stok Barang --}}
                 <div class="col-md-6 mb-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-chart-line"></i> Ringkasan Stok Barang</h5>
+                            <h5 class="card-title"><i class="fas fa-boxes"></i> Ringkasan Stok Barang</h5>
                             <p class="card-text">Total barang masuk: {{ $incomingItems->sum('jumlah_barang') }} unit</p>
                             <p class="card-text">Total barang keluar: {{ $outgoingItems->sum('jumlah_barang') }} unit</p>
                             <a href="{{ route('report.stock') }}" class="btn btn-primary btn-sm">Lihat Detail Laporan</a>
                         </div>
                     </div>
                 </div>
+
+                {{-- Widget Pemesanan Barang --}}
                 <div class="col-md-6 mb-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-users"></i> Manajemen Pengguna</h5>
-                            <p class="card-text">Kelola akun pegawai dan hak akses mereka.</p>
-                            <a href="{{ route('employee.accounts') }}" class="btn btn-secondary btn-sm">Kelola Akun</a>
+                            <h5 class="card-title"><i class="fas fa-shopping-cart"></i> Pemesanan Barang</h5>
+                            <p class="card-text">Kelola daftar produsen dan lakukan pemesanan.</p>
+                            <a href="{{ route('order.items') }}" class="btn btn-success btn-sm">Buat Pemesanan</a>
                         </div>
                     </div>
                 </div>
-            </div>
 
+                {{-- Widget Aktivitas Terbaru (Contoh) --}}
+                <div class="col-12 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">Aktivitas Terbaru</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">Barang "Laptop ASUS" masuk gudang (10 unit) - 1 jam lalu</li>
+                                <li class="list-group-item">Barang "Meja Gaming" keluar (1 unit) - 3 jam lalu</li>
+                                <li class="list-group-item">Pemesanan baru ke PT. Elektronik Jaya - kemarin</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 </div>
 
 <style>
-    /* Tambahan CSS khusus untuk Manager Dashboard */
+    /* Tambahan CSS khusus untuk Dashboard */
     .main-content {
-        padding-left: 1.5rem; /* Tambahkan padding agar tidak terlalu mepet sidebar */
-        padding-right: 1.5rem; /* Tambahkan padding kanan juga */
-        margin-left: 16.66666667%; /* Sesuaikan margin-left untuk mengimbangi col-md-2 */
-        width: 83.33333333%; /* Sesuaikan lebar untuk col-md-10 */
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+        margin-left: 16.66666667%;
+        width: 83.33333333%;
     }
 
     @media (max-width: 767.98px) {
         .main-content {
-            margin-left: 0; /* Hapus margin di mobile */
-            width: 100%; /* Lebar penuh di mobile */
-            padding-left: 1rem; /* Sesuaikan padding mobile */
-            padding-right: 1rem; /* Sesuaikan padding mobile */
+            margin-left: 0;
+            width: 100%;
+            padding-left: 1rem;
+            padding-right: 1rem;
         }
         .sidebar {
-            position: relative; /* Sidebar menjadi relatif di mobile */
-            min-height: auto; /* Tinggi otomatis di mobile */
-            width: 100%; /* Lebar penuh di mobile */
+            position: relative;
+            min-height: auto;
+            width: 100%;
             padding-bottom: 1rem;
         }
     }
@@ -175,7 +194,7 @@
     .card-header .nav-link.active {
         color: var(--primary-color);
         border-bottom-color: var(--primary-color);
-        background-color: transparent; /* Override Bootstrap's active background */
+        background-color: transparent;
     }
     .card-header .nav-link:hover {
         border-bottom-color: var(--primary-color);
