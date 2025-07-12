@@ -355,6 +355,17 @@ class ItemManagementController extends Controller
             ], 404);
         }
     }
+    public function showWarehouseMonitor()
+    {
+        $incomingItems = IncomingItem::orderBy('tanggal_masuk_barang', 'desc')->get();
+        $outgoingItems = OutgoingItem::orderBy('tanggal_keluar_barang', 'desc')->get();
+
+        return view('staff_admin.warehouse_monitor', [
+            'incomingItems' => $incomingItems,
+            'outgoingItems' => $outgoingItems,
+        ]);
+    }
+
 
     /**
      * Get outgoing item by ID.

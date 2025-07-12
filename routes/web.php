@@ -44,7 +44,8 @@ Route::middleware(['auth'])->group(function () {
         // Pengelolaan Barang
         Route::get('/staff/item-management', [ItemManagementController::class, 'itemManagement'])->name('staff.item.management');
         Route::post('/staff/item-management', [ItemManagementController::class, 'storeItem'])->name('staff.item.store');
-        
+        Route::get('/staff/warehouse-monitor', [ItemManagementController::class, 'showWarehouseMonitor'])->name('staff.warehouse_monitor');
+
         // Item Management Routes
         Route::get('/staff/items/create', [ItemManagementController::class, 'create'])->name('staff.items.create');
         Route::post('/staff/items', [ItemManagementController::class, 'store'])->name('staff.items.store');
