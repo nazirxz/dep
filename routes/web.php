@@ -38,19 +38,40 @@ Route::middleware(['auth'])->group(function () {
     
     // Routes untuk Staff Admin (role: admin)
     Route::middleware([RoleMiddleware::class.':admin'])->group(function () {
-        // Data Barang
+        // Halaman utama data barang
         Route::get('/staff/items', [ItemManagementController::class, 'index'])->name('staff.items.index');
         
-        // Pengelolaan Barang
+        // Halaman pengelolaan barang (tempat form tambah/edit)
         Route::get('/staff/item-management', [ItemManagementController::class, 'itemManagement'])->name('staff.item.management');
-        Route::post('/staff/item-management', [ItemManagementController::class, 'storeItem'])->name('staff.item.store');
+        
+        // CRUD untuk Barang Masuk (Incoming Items)
+        Route::post('/staff/incoming-items', [ItemManagementController::class, 'storeIncomingItem'])->name('staff.incoming_items.store');
+        Route::put('/staff/incoming-items/{id}', [ItemManagementController::class, 'updateIncomingItem'])->name('staff.incoming_items.update');
+        Route::delete('/staff/incoming-items/{id}', [ItemManagementController::class, 'deleteIncomingItem'])->name('staff.incoming_items.delete');
+        Route::get('/staff/incoming-items/{id}', [ItemManagementController::class, 'getIncomingItem'])->name('staff.incoming_items.show'); // Untuk mendapatkan detail item
+
+        // CRUD untuk Barang Keluar (Outgoing Items)
+        Route::post('/staff/outgoing-items', [ItemManagementController::class, 'storeOutgoingItem'])->name('staff.outgoing_items.store');
+        Route::put('/staff/outgoing-items/{id}', [ItemManagementController::class, 'updateOutgoingItem'])->name('staff.outgoing_items.update');
+        Route::delete('/staff/outgoing-items/{id}', [ItemManagementController::class, 'deleteOutgoingItem'])->name('staff.outgoing_items.delete');
+        Route::get('/staff/outgoing-items/{id}', [ItemManagementController::class, 'getOutgoingItem'])->name('staff.outgoing_items.show'); // Untuk mendapatkan detail item keluar
+
+        // Monitor Gudang
         Route::get('/staff/warehouse-monitor', [ItemManagementController::class, 'showWarehouseMonitor'])->name('staff.warehouse_monitor');
 
-        // Item Management Routes
-        Route::get('/staff/items/create', [ItemManagementController::class, 'create'])->name('staff.items.create');
-        Route::post('/staff/items', [ItemManagementController::class, 'store'])->name('staff.items.store');
-        Route::get('/staff/items/{item}/edit', [ItemManagementController::class, 'edit'])->name('staff.items.edit');
-        Route::put('/staff/items/{item}', [ItemManagementController::class, 'update'])->name('staff.items.update');
-        Route::delete('/staff/items/{item}', [ItemManagementController::class, 'destroy'])->name('staff.items.destroy');
+        // Fungsi Lainnya
+        Route::get('/staff/items/search', [ItemManagementController::class, 'searchItems'])->name('staff.items.search');
+        Route::get('/staff/items/category/{category}', [ItemManagementController::class, 'getItemsByCategory'])->name('staff.items.by_category');
+        Route::get('/staff/dashboard/stats', [ItemManagementController::class, 'getDashboardStats'])->name('staff.dashboard.stats');
+        Route::post('/staff/items/auto-assign-locations', [ItemManagementController::class, 'autoAssignLocations'])->name('staff.items.auto_assign_locations');
+        Route::post('/staff/items/import-csv', [ItemManagementController::class, 'importFromCSV'])->name('staff.items.import_csv');
+        Route::get('/staff/items/export-csv', [ItemManagementController::class, 'exportToCSV'])->name('staff.items.export_csv');
+        Route::get('/staff/items/{id}/barcode', [ItemManagementController::class, 'generateBarcode'])->name('staff.items.generate_barcode');
+        Route::get('/staff/items/{id}/qrcode', [ItemManagementController::class, 'generateQRCode'])->name('staff.items.generate_qrcode');
+        Route::post('/staff/items/{id}/duplicate', [ItemManagementController::class, 'duplicateItem'])->name('staff.items.duplicate');
+        Route::get('/staff/inventory/report', [ItemManagementController::class, 'getInventoryReport'])->name('staff.inventory.report');
+        Route::get('/staff/items/{id}/movement-history', [ItemManagementController::class, 'getItemMovementHistory'])->name('staff.items.movement_history');
+        Route::post('/staff/items/bulk-update', [ItemManagementController::class, 'bulkUpdate'])->name('staff.items.bulk_update');
+        Route::get('/staff/locations/available', [ItemManagementController::class, 'getAvailableLocations'])->name('staff.locations.available');
     });
 });

@@ -45,17 +45,17 @@ class IncomingItem extends Model
      *
      * @return void
      */
-    protected static function booted()
-    {
-        // Contoh: Mengatur status barang secara otomatis berdasarkan jumlah
-        static::saving(function ($item) {
-            if ($item->jumlah_barang <= 0) {
-                $item->status_barang = 'Habis';
-            } elseif ($item->jumlah_barang < 5) { // Contoh threshold untuk 'Sedikit'
-                $item->status_barang = 'Sedikit';
-            } else {
-                $item->status_barang = 'Banyak';
-            }
-        });
-    }
+    // Hapus atau komentari metode booted() ini untuk menghindari konflik dengan controller
+    // protected static function booted()
+    // {
+    //     static::saving(function ($item) {
+    //         if ($item->jumlah_barang <= 0) {
+    //             $item->status_barang = 'Habis';
+    //         } elseif ($item->jumlah_barang < 5) {
+    //             $item->status_barang = 'Sedikit';
+    //         } else {
+    //             $item->status_barang = 'Banyak';
+    //         }
+    //     });
+    // }
 }

@@ -101,6 +101,9 @@
             font-weight: 500;
             transition: all 0.3s ease;
             min-height: 40px;
+            overflow: hidden; /* Ensure text doesn't overflow */
+            text-overflow: ellipsis; /* Add ellipsis for long text */
+            white-space: nowrap; /* Prevent text wrapping */
         }
 
         .rack-monitor-cell.empty {
@@ -250,11 +253,11 @@
                     <div class="stat-label">Total Slot</div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-number text-success" id="occupiedRacks">{{ $incomingItems->whereNotNull('lokasi_rak_barang')->count() }}</span>
+                    <span class="stat-number text-success" id="occupiedRacks">{{ $occupiedRacksCount }}</span>
                     <div class="stat-label">Slot Terisi</div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-number text-warning" id="emptyRacks">{{ (8 * 4 * 6) - $incomingItems->whereNotNull('lokasi_rak_barang')->count() }}</span>
+                    <span class="stat-number text-warning" id="emptyRacks">{{ (8 * 4 * 6) - $occupiedRacksCount }}</span>
                     <div class="stat-label">Slot Kosong</div>
                 </div>
             </div>
@@ -272,15 +275,18 @@
                                     @for($col = 1; $col <= 6; $col++)
                                         @php
                                             $position = "R{$rak}-{$row}-{$col}";
-                                            $hasItem = $incomingItems->where('lokasi_rak_barang', $position)->first();
+                                            // Check if the current position has aggregated item data
+                                            $itemData = $aggregatedItems->get($position);
+                                            $hasItem = !empty($itemData);
                                         @endphp
                                         <div class="rack-monitor-cell {{ $hasItem ? 'occupied' : 'empty' }}" 
                                              data-position="{{ $position }}"
-                                             title="{{ $hasItem ? $hasItem->nama_barang : 'Kosong' }}">
+                                             title="{{ $hasItem ? $itemData['nama_barang'] . ' (' . $itemData['jumlah_barang'] . ')' : 'Kosong' }}">
                                             @if($hasItem)
                                                 <div class="text-center">
-                                                    <div style="font-size: 0.7rem;">{{ substr($hasItem->nama_barang, 0, 6) }}</div>
-                                                    <div style="font-size: 0.6rem; opacity: 0.8;">{{ $hasItem->jumlah_barang }}</div>
+                                                    {{-- Display shortened item name and quantity --}}
+                                                    <div style="font-size: 0.7rem;">{{ substr($itemData['nama_barang'], 0, 6) }}</div>
+                                                    <div style="font-size: 0.6rem; opacity: 0.8;">{{ $itemData['jumlah_barang'] }}</div>
                                                 </div>
                                             @endif
                                         </div>
@@ -407,7 +413,9 @@
         // Initialize effects after a short delay
         setTimeout(addVisualEffects, 1000);
 
-        // Update statistics periodically
+        // Update statistics periodically (though this is now handled by server-side rendering)
+        // This function might not be strictly necessary if stats are always rendered server-side
+        // but kept for completeness if client-side updates are desired later.
         function updateStatistics() {
             const totalSlots = 8 * 4 * 6;
             const occupiedSlots = document.querySelectorAll('.rack-monitor-cell.occupied').length;
@@ -418,7 +426,8 @@
             document.getElementById('emptyRacks').textContent = emptySlots;
         }
 
-        updateStatistics();
+        // Call updateStatistics initially if needed for any dynamic client-side changes
+        // updateStatistics(); 
     </script>
 </body>
 </html>
