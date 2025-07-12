@@ -241,55 +241,35 @@
     </div>
 </div>
 
-<!-- Modal untuk Tambah/Edit Barang Masuk -->
-<div class="modal fade" id="itemFormModal" tabindex="-1" aria-labelledby="itemFormModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+{{-- Modal untuk Tambah/Edit Barang (Generic CRUD Modal) - Pastikan ini sudah dihapus dari sini jika di items_content --}}
+{{-- Jika Anda belum menghapusnya dari item_management.blade.php, pastikan untuk menghapusnya sekarang. --}}
+{{-- <div class="modal fade" id="itemCrudModal" tabindex="-1" aria-labelledby="itemCrudModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="itemFormModalLabel">Tambah Barang Masuk</h5>
+                <h5 class="modal-title" id="itemCrudModalLabel"></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="incomingItemForm">
+                <form id="itemCrudForm">
                     @csrf
-                    {{-- Hidden field for method spoofing for PUT requests --}}
                     <input type="hidden" name="_method" value="POST" id="formMethod">
-                    {{-- Hidden field for item ID in case of editing --}}
-                    <input type="hidden" name="id" id="itemId">
+                    <input type="hidden" name="id" id="crudItemId">
 
-                    <div class="mb-3">
-                        <label for="nama_barang" class="form-label">Nama Barang</label>
-                        <input type="text" class="form-control" id="nama_barang" name="nama_barang" required>
+                    <div id="itemCrudFormContent">
                     </div>
-                    <div class="mb-3">
-                        <label for="kategori_barang" class="form-label">Kategori Barang</label>
-                        <input type="text" class="form-control" id="kategori_barang" name="kategori_barang" required>
+                    
+                    <div class="d-flex gap-2 justify-content-end mt-3">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary" id="itemCrudSubmitBtn">
+                            <i class="fas fa-save"></i> Simpan
+                        </button>
                     </div>
-                    <div class="mb-3">
-                        <label for="jumlah_barang" class="form-label">Jumlah Barang</label>
-                        <input type="number" class="form-control" id="jumlah_barang" name="jumlah_barang" min="1" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="tanggal_masuk_barang" class="form-label">Tanggal Masuk Barang</label>
-                        <input type="date" class="form-control" id="tanggal_masuk_barang" name="tanggal_masuk_barang" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="lokasi_rak_barang" class="form-label">Lokasi Rak Barang (Contoh: R1-1-1)</label>
-                        <input type="text" class="form-control" id="lokasi_rak_barang" name="lokasi_rak_barang" pattern="R[1-8]-[1-4]-[1-6]" placeholder="Contoh: R1-1-1">
-                        <div class="form-text">Format: R[1-8]-[1-4]-[1-6]</div>
-                    </div>
-                    <div id="form-messages" class="alert d-none mt-3"></div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Simpan Barang Masuk
-                    </button>
-                    <button type="button" class="btn btn-danger d-none" id="deleteItemButton">
-                        <i class="fas fa-trash"></i> Hapus Barang
-                    </button>
                 </form>
             </div>
         </div>
     </div>
-</div>
+</div> --}}
 
 
 <style>
@@ -458,17 +438,260 @@
 </style>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Inisialisasi modal Bootstrap
-        const itemFormModal = new bootstrap.Modal(document.getElementById('itemFormModal'));
-        const incomingItemForm = document.getElementById('incomingItemForm');
-        const formMethodField = document.getElementById('formMethod');
-        const itemIdField = document.getElementById('itemId');
-        const itemFormModalLabel = document.getElementById('itemFormModalLabel');
-        const deleteItemButton = document.getElementById('deleteItemButton');
-        const formMessages = document.getElementById('form-messages');
+    // Fungsi-fungsi yang akan dipanggil dari HTML (onclick) harus berada di lingkup global
+    // atau diakses melalui window.namaFungsi. Untuk kemudahan, kita akan membuatnya global.
 
-        // Search functionality for outgoing items
+    /**
+     * Menampilkan detail rak dan barang di dalamnya.
+     * @param {string} position - Posisi rak (misal: "R1-1-1").
+     * @param {number|null} itemId - ID barang di rak tersebut, atau null jika kosong.
+     */
+    window.showRackDetails = function(position, itemId) {
+        const rackDetailsContainer = document.getElementById('rackDetailsContainer');
+        
+        if (itemId && itemId !== 'null') {
+            // Fetch item data from backend
+            fetch(`/staff/incoming-items/${itemId}`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        const item = result.data;
+                        rackDetailsContainer.innerHTML = `
+                            <div class="rack-detail-card">
+                                <div class="position-badge mb-3">
+                                    <span class="badge bg-primary fs-6">${position}</span>
+                                </div>
+                                <div class="item-details">
+                                    <h6 class="text-primary">Rak ${position.split('-')[0].substring(1)}</h6>
+                                    <div class="detail-row">
+                                        <strong>Nama Barang:</strong>
+                                        <span>${item.nama_barang}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <strong>Kategori Barang:</strong>
+                                        <span>${item.kategori_barang}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <strong>Jumlah Barang:</strong>
+                                        <span>${item.jumlah_barang} unit</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <strong>Tanggal Masuk:</strong>
+                                        <span>${new Date(item.tanggal_masuk_barang).toLocaleDateString('id-ID')}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <strong>Status:</strong>
+                                        <span class="badge ${getStatusBadgeClass(item.status_barang)}">${item.status_barang}</span>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <button class="btn btn-sm btn-warning w-100 mb-2" onclick="editIncomingItemFromManagement('${item.id}')">
+                                        <i class="fas fa-edit"></i> Edit Barang
+                                    </button>
+                                    <button class="btn btn-sm btn-danger w-100 mb-2" onclick="deleteIncomingItemFromManagement('${item.id}')">
+                                        <i class="fas fa-trash"></i> Hapus Barang
+                                    </button>
+                                    <button class="btn btn-sm btn-info w-100" onclick="showItemHistory('${item.id}')">
+                                        <i class="fas fa-history"></i> Lihat Riwayat
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        rackDetailsContainer.innerHTML = `<p class="text-danger text-center">Gagal memuat detail barang: ${result.message}</p>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching item details:', error);
+                    rackDetailsContainer.innerHTML = `<p class="text-danger text-center">Terjadi kesalahan jaringan saat memuat detail barang.</p>`;
+                });
+        } else {
+            rackDetailsContainer.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="position-badge mb-3">
+                        <span class="badge bg-secondary fs-6">${position}</span>
+                    </div>
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">Rak Kosong</h6>
+                    <p class="text-muted small">Lokasi ini belum digunakan</p>
+                    <button class="btn btn-sm btn-success" onclick="assignItemToRack('${position}')">
+                        <i class="fas fa-plus"></i> Tempatkan Barang
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Helper function to get status badge class.
+     * Duplicated from items_content for self-containment if needed, or can be globalized.
+     */
+    window.getStatusBadgeClass = function(status) {
+        switch(status) {
+            case 'Tersedia': return 'bg-success';
+            case 'Stok Rendah': return 'bg-warning';
+            case 'Habis': return 'bg-danger';
+            default: return 'bg-secondary';
+        }
+    }
+
+    /**
+     * Menampilkan tampilan gudang di layar monitor terpisah.
+     */
+    window.showWarehouseView = function() {
+        const monitorWindow = window.open('{{ route("staff.warehouse_monitor") }}', 'warehouseMonitor', 
+            'width=1920,height=1080,fullscreen=yes,scrollbars=no,resizable=no');
+        
+        if (monitorWindow) {
+            monitorWindow.focus();
+        } else {
+            showAlert('error', 'Pop-up diblokir. Silakan izinkan pop-up untuk fitur ini.');
+        }
+    }
+
+    /**
+     * Memuat ulang data gudang.
+     */
+    window.refreshWarehouse = function() {
+        location.reload();
+    }
+
+    /**
+     * Menampilkan lokasi rak untuk barang keluar dan menyorotnya di peta gudang.
+     * @param {string} rackPosition - Posisi rak.
+     */
+    window.showRackLocation = function(rackPosition) {
+        if (!rackPosition || rackPosition === '-') {
+            showAlert('info', 'Lokasi rak tidak tersedia untuk barang ini.');
+            return;
+        }
+        
+        const warehouseTab = document.getElementById('warehouse-location-tab');
+        if (warehouseTab) {
+            warehouseTab.click(); // Activate the warehouse tab
+            
+            setTimeout(() => {
+                const rackCell = document.querySelector(`[data-position="${rackPosition}"]`);
+                if (rackCell) {
+                    // Highlight the cell
+                    rackCell.style.border = '3px solid #ff6b6b';
+                    rackCell.style.boxShadow = '0 0 15px rgba(255, 107, 107, 0.5)';
+                    rackCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    const itemId = rackCell.dataset.itemId || null;
+                    showRackDetails(rackPosition, itemId); // Show details in the right panel
+                    
+                    // Remove highlight after a few seconds
+                    setTimeout(() => {
+                        rackCell.style.border = '';
+                        rackCell.style.boxShadow = '';
+                    }, 3000);
+                } else {
+                    showAlert('warning', `Lokasi rak ${rackPosition} tidak ditemukan di peta gudang.`);
+                }
+            }, 500); // Small delay to allow tab to activate
+        } else {
+            showAlert('info', 'Tab Lokasi Barang di Gudang tidak ditemukan.');
+        }
+    }
+
+    /**
+     * Menandai pesanan barang keluar sebagai selesai dikemas.
+     * @param {number} itemId - ID barang keluar.
+     */
+    window.markAsCompleted = function(itemId) {
+        showCustomConfirm('Apakah barang ini sudah selesai dikemas dan siap dikirim?', () => {
+            // Implement AJAX call to update outgoing item status
+            showAlert('success', 'Status barang berhasil diperbarui menjadi "Selesai Dikemas"');
+            // location.reload(); // Reload to reflect changes
+        });
+    }
+
+    /**
+     * Menetapkan barang ke rak kosong (membuka modal tambah barang masuk).
+     * @param {string} position - Posisi rak yang akan diisi.
+     */
+    window.assignItemToRack = function(position) {
+        // Panggil fungsi renderItemCrudForm dari items_content.blade.php
+        // Asumsi items_content.blade.php sudah dimuat dan fungsi renderItemCrudForm tersedia secara global.
+        if (typeof window.renderItemCrudForm === 'function') {
+            window.renderItemCrudForm('incoming', 'add');
+            // Pre-fill location if the form has the field
+            setTimeout(() => {
+                const crudLokasiRak = document.getElementById('crud_lokasi_rak');
+                if (crudLokasiRak) {
+                    crudLokasiRak.value = position;
+                    crudLokasiRak.readOnly = true; // Make location read-only
+                }
+            }, 100);
+        } else {
+            showAlert('error', 'Fungsi renderItemCrudForm tidak ditemukan. Pastikan items_content.blade.php dimuat dengan benar.');
+        }
+    }
+
+    /**
+     * Mengedit barang masuk dari halaman manajemen gudang.
+     * @param {number} itemId - ID barang masuk.
+     */
+    window.editIncomingItemFromManagement = function(itemId) {
+        // Panggil fungsi editIncomingItem dari items_content.blade.php
+        if (typeof window.editIncomingItem === 'function') {
+            window.editIncomingItem(itemId);
+        } else {
+            showAlert('error', 'Fungsi editIncomingItem tidak ditemukan. Pastikan items_content.blade.php dimuat dengan benar.');
+        }
+    }
+
+    /**
+     * Menghapus barang masuk dari halaman manajemen gudang.
+     * @param {number} itemId - ID barang masuk.
+     */
+    window.deleteIncomingItemFromManagement = function(itemId) {
+        // Panggil fungsi deleteIncomingItem dari items_content.blade.php
+        if (typeof window.deleteIncomingItem === 'function') {
+            window.deleteIncomingItem(itemId);
+        } else {
+            showAlert('error', 'Fungsi deleteIncomingItem tidak ditemukan. Pastikan items_content.blade.php dimuat dengan benar.');
+        }
+    }
+
+    /**
+     * Menampilkan riwayat barang (placeholder).
+     * @param {number} itemId - ID barang.
+     */
+    window.showItemHistory = function(itemId) {
+        showAlert('info', 'Fitur riwayat barang akan segera hadir!');
+        // Here you would open a modal or navigate to history page
+    }
+
+    // Add some CSS for detail styling
+    const additionalStyles = `
+        <style>
+            .detail-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 0;
+                border-bottom: 1px solid #f1f3f4;
+            }
+            .detail-row:last-child {
+                border-bottom: none;
+            }
+            .rack-detail-card {
+                background: #f8f9fa;
+                padding: 1rem;
+                border-radius: 8px;
+                border: 1px solid #e9ecef;
+            }
+            .position-badge {
+                text-align: center;
+            }
+        </style>
+    `;
+    document.head.insertAdjacentHTML('beforeend', additionalStyles);
+
+    // Search functionality for outgoing items table in this specific blade file
+    document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('searchOutgoingInput');
         const outgoingTable = document.getElementById('outgoingTable');
 
@@ -478,13 +701,13 @@
                 const rows = outgoingTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
 
                 for (let i = 0; i < rows.length; i++) {
-                    const nameCell = rows[i].getElementsByTagName('td')[1];
-                    const itemCell = rows[i].getElementsByTagName('td')[3];
+                    const nameCell = rows[i].getElementsByTagName('td')[1]; // Nama Pengecer
+                    const itemCell = rows[i].getElementsByTagName('td')[3]; // Daftar Barang
                     if (nameCell && itemCell) {
                         const nameValue = nameCell.textContent || nameCell.innerText;
                         const itemValue = itemCell.textContent || itemCell.innerText;
-                        if (nameValue.toLowerCase().indexOf(filter) > -1 || 
-                            itemValue.toLowerCase().indexOf(filter) > -1) {
+                        if (nameValue.toLowerCase().includes(filter) || 
+                            itemValue.toLowerCase().includes(filter)) {
                             rows[i].style.display = '';
                         } else {
                             rows[i].style.display = 'none';
@@ -494,318 +717,25 @@
             });
         }
 
-        // Function to show rack details
-        window.showRackDetails = function(position, itemId) {
-            const rackDetailsContainer = document.getElementById('rackDetailsContainer');
-            
-            if (itemId && itemId !== 'null') {
-                // Fetch item data from backend
-                fetch(`/staff/incoming-items/${itemId}`)
-                    .then(response => response.json())
-                    .then(result => {
-                        if (result.success) {
-                            const item = result.data;
-                            rackDetailsContainer.innerHTML = `
-                                <div class="rack-detail-card">
-                                    <div class="position-badge mb-3">
-                                        <span class="badge bg-primary fs-6">${position}</span>
-                                    </div>
-                                    <div class="item-details">
-                                        <h6 class="text-primary">Rak ${position.split('-')[0].substring(1)}</h6>
-                                        <div class="detail-row">
-                                            <strong>Nama Barang:</strong>
-                                            <span>${item.nama_barang}</span>
-                                        </div>
-                                        <div class="detail-row">
-                                            <strong>Kategori Barang:</strong>
-                                            <span>${item.kategori_barang}</span>
-                                        </div>
-                                        <div class="detail-row">
-                                            <strong>Jumlah Barang:</strong>
-                                            <span>${item.jumlah_barang} unit</span>
-                                        </div>
-                                        <div class="detail-row">
-                                            <strong>Tanggal Masuk:</strong>
-                                            <span>${new Date(item.tanggal_masuk_barang).toLocaleDateString('id-ID')}</span>
-                                        </div>
-                                        <div class="detail-row">
-                                            <strong>Status:</strong>
-                                            <span class="badge ${getStatusBadgeClass(item.status_barang)}">${item.status_barang}</span>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3">
-                                        <button class="btn btn-sm btn-warning w-100 mb-2" onclick="editIncomingItem('${item.id}')">
-                                            <i class="fas fa-edit"></i> Edit Barang
-                                        </button>
-                                        <button class="btn btn-sm btn-danger w-100 mb-2" onclick="deleteIncomingItem('${item.id}')">
-                                            <i class="fas fa-trash"></i> Hapus Barang
-                                        </button>
-                                        <button class="btn btn-sm btn-info w-100" onclick="showItemHistory('${item.id}')">
-                                            <i class="fas fa-history"></i> Lihat Riwayat
-                                        </button>
-                                    </div>
-                                </div>
-                            `;
-                        } else {
-                            rackDetailsContainer.innerHTML = `<p class="text-danger text-center">Gagal memuat detail barang: ${result.message}</p>`;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching item details:', error);
-                        rackDetailsContainer.innerHTML = `<p class="text-danger text-center">Terjadi kesalahan jaringan saat memuat detail barang.</p>`;
-                    });
-            } else {
-                rackDetailsContainer.innerHTML = `
-                    <div class="text-center py-4">
-                        <div class="position-badge mb-3">
-                            <span class="badge bg-secondary fs-6">${position}</span>
-                        </div>
-                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                        <h6 class="text-muted">Rak Kosong</h6>
-                        <p class="text-muted small">Lokasi ini belum digunakan</p>
-                        <button class="btn btn-sm btn-success" onclick="assignItemToRack('${position}')">
-                            <i class="fas fa-plus"></i> Tempatkan Barang
-                        </button>
-                    </div>
-                `;
-            }
-        }
-
-        // Function to get status badge class
-        window.getStatusBadgeClass = function(status) {
-            switch(status) {
-                case 'Tersedia': return 'bg-success';
-                case 'Stok Rendah': return 'bg-warning';
-                case 'Habis': return 'bg-danger';
-                default: return 'bg-secondary';
-            }
-        }
-
-        // Function to show warehouse view on monitor
-        window.showWarehouseView = function() {
-            const monitorWindow = window.open('{{ route("staff.warehouse_monitor") }}', 'warehouseMonitor', 
-                'width=1920,height=1080,fullscreen=yes,scrollbars=no,resizable=no');
-            
-            if (monitorWindow) {
-                monitorWindow.focus();
-            } else {
-                alert('Pop-up diblokir. Silakan izinkan pop-up untuk fitur ini.');
-            }
-        }
-
-        // Function to refresh warehouse data
-        window.refreshWarehouse = function() {
-            location.reload();
-        }
-
-        // Function to show rack location for outgoing items
-        window.showRackLocation = function(rackPosition) {
-            if (!rackPosition) {
-                alert('Lokasi rak tidak tersedia untuk barang ini.');
-                return;
-            }
-            
-            const warehouseTab = document.getElementById('warehouse-location-tab');
-            warehouseTab.click();
-            
-            setTimeout(() => {
-                const rackCell = document.querySelector(`[data-position="${rackPosition}"]`);
-                if (rackCell) {
-                    rackCell.style.border = '3px solid #ff6b6b';
-                    rackCell.style.boxShadow = '0 0 15px rgba(255, 107, 107, 0.5)';
-                    rackCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    
-                    const itemId = rackCell.dataset.itemId || null;
-                    showRackDetails(rackPosition, itemId);
-                    
-                    setTimeout(() => {
-                        rackCell.style.border = '';
-                        rackCell.style.boxShadow = '';
-                    }, 3000);
-                }
-            }, 500);
-        }
-
-        // Function to mark item as completed (Placeholder for outgoing items)
-        window.markAsCompleted = function(itemId) {
-            if (confirm('Apakah barang sudah selesai dikemas dan siap dikirim?')) {
-                // Implement AJAX call to update outgoing item status
-                alert('Status barang berhasil diperbarui menjadi "Selesai Dikemas"');
-                // location.reload(); 
-            }
-        }
-
-        // Function to assign item to empty rack (Opens modal for ADD)
-        window.assignItemToRack = function(position) {
-            itemFormModalLabel.textContent = 'Tambah Barang Masuk';
-            incomingItemForm.reset(); // Clear form fields
-            formMethodField.value = 'POST'; // Set method to POST for new item
-            itemIdField.value = ''; // Clear item ID
-            document.getElementById('lokasi_rak_barang').value = position; // Pre-fill location
-            document.getElementById('lokasi_rak_barang').readOnly = true; // Make location read-only
-            deleteItemButton.classList.add('d-none'); // Hide delete button
-            formMessages.classList.add('d-none'); // Hide messages
-            formMessages.textContent = '';
-            itemFormModal.show();
-        }
-
-        // Function to edit existing incoming item (Opens modal for EDIT)
-        window.editIncomingItem = function(itemId) {
-            itemFormModalLabel.textContent = 'Edit Barang Masuk';
-            incomingItemForm.reset(); // Clear form fields
-            formMethodField.value = 'PUT'; // Set method to PUT for update
-            itemIdField.value = itemId; // Set item ID
-            document.getElementById('lokasi_rak_barang').readOnly = false; // Make location editable
-            deleteItemButton.classList.remove('d-none'); // Show delete button
-            formMessages.classList.add('d-none'); // Hide messages
-            formMessages.textContent = '';
-
-            // Fetch item data to populate the form
-            fetch(`/staff/incoming-items/${itemId}`)
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        const item = result.data;
-                        document.getElementById('nama_barang').value = item.nama_barang;
-                        document.getElementById('kategori_barang').value = item.kategori_barang;
-                        document.getElementById('jumlah_barang').value = item.jumlah_barang;
-                        document.getElementById('tanggal_masuk_barang').value = item.tanggal_masuk_barang; // Date format 'YYYY-MM-DD'
-                        document.getElementById('lokasi_rak_barang').value = item.lokasi_rak_barang || '';
-                        itemFormModal.show();
-                    } else {
-                        alert('Gagal memuat data barang untuk diedit: ' + result.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching item for edit:', error);
-                    alert('Terjadi kesalahan saat memuat data barang.');
-                });
-        }
-
-        // Handle form submission for Add/Edit Incoming Item
-        incomingItemForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            const formData = new FormData(this);
-            const id = itemIdField.value;
-            const method = formMethodField.value; // Will be POST or PUT
-
-            let url = '{{ route("staff.incoming_items.store") }}';
-            if (method === 'PUT') {
-                url = `/staff/incoming-items/${id}`; // URL for update
-            }
-
-            // Get CSRF token from meta tag
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-            fetch(url, {
-                method: 'POST', // Always POST for Laravel with _method spoofing
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json' // Expect JSON response
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Server Response:', data); // Log the full server response
-                if (data.success) {
-                    formMessages.classList.remove('alert-danger');
-                    formMessages.classList.add('alert-success');
-                    formMessages.textContent = data.message;
-                    formMessages.classList.remove('d-none');
-                    // Optionally, close modal after a delay or refresh page
-                    setTimeout(() => {
-                        itemFormModal.hide();
-                        location.reload(); // Reload page to reflect changes
-                    }, 1500);
-                } else {
-                    formMessages.classList.remove('alert-success');
-                    formMessages.classList.add('alert-danger');
-                    let errorMessage = data.message;
-                    if (data.errors) {
-                        for (const key in data.errors) {
-                            errorMessage += `\n- ${data.errors[key][0]}`;
-                        }
-                    }
-                    formMessages.textContent = errorMessage;
-                    formMessages.classList.remove('d-none');
-                }
-            })
-            .catch((error) => {
-                console.error('Fetch Error:', error); // Log any network or parsing errors
-                formMessages.classList.remove('alert-success');
-                formMessages.classList.add('alert-danger');
-                formMessages.textContent = 'Terjadi kesalahan jaringan atau server: ' + error.message;
-                formMessages.classList.remove('d-none');
-            });
+        // Auto dismiss alerts (copied from app.blade.php for consistency)
+        const alerts = document.querySelectorAll('.alert-dismissible');
+        alerts.forEach(function(alert) {
+            setTimeout(function() {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }, 5000);
         });
 
-        // Handle Delete Incoming Item
-        deleteItemButton.addEventListener('click', function() {
-            const id = itemIdField.value;
-            if (!confirm('Apakah Anda yakin ingin menghapus barang ini?')) { // Ganti dengan modal konfirmasi yang lebih baik
-                return;
-            }
-
-            const url = `/staff/incoming-items/${id}`;
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-            fetch(url, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json'
-                },
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Delete Response:', data);
-                if (data.success) {
-                    alert(data.message); // Ganti dengan notifikasi yang lebih baik
-                    itemFormModal.hide();
-                    location.reload(); // Reload page to reflect changes
-                } else {
-                    alert('Gagal menghapus barang: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Delete Error:', error);
-                alert('Terjadi kesalahan jaringan saat menghapus barang.');
-            });
+        // Add smooth fade-in animation for alerts
+        alerts.forEach(function(alert) {
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateY(-20px)';
+            setTimeout(function() {
+                alert.style.transition = 'all 0.5s ease';
+                alert.style.opacity = '1';
+                alert.style.transform = 'translateY(0)';
+            }, 100);
         });
-
-        // Function to show item history (Placeholder)
-        window.showItemHistory = function(itemId) {
-            alert('Fitur riwayat barang akan segera hadir!');
-            // Here you would open a modal or navigate to history page
-        }
-
-        // Add some CSS for detail styling
-        const additionalStyles = `
-            <style>
-                .detail-row {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 0.5rem 0;
-                    border-bottom: 1px solid #f1f3f4;
-                }
-                .detail-row:last-child {
-                    border-bottom: none;
-                }
-                .rack-detail-card {
-                    background: #f8f9fa;
-                    padding: 1rem;
-                    border-radius: 8px;
-                    border: 1px solid #e9ecef;
-                }
-                .position-badge {
-                    text-align: center;
-                }
-            </style>
-        `;
-        document.head.insertAdjacentHTML('beforeend', additionalStyles);
     });
 </script>
 @endsection
