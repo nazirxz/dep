@@ -3,7 +3,7 @@
 @section('content')
 <div class="container-fluid">
     <div class="row">
-        {{-- Sidebar --}}
+        {{-- Sidebar untuk Staff Admin --}}
         <div class="col-md-2 d-none d-md-block sidebar">
             <div class="position-sticky">
                 <div class="d-flex align-items-center mb-4 mt-3">
@@ -12,23 +12,18 @@
                 </div>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="{{ route('home') }}"> {{-- Dashboard aktif untuk staff_admin --}}
+                        <a class="nav-link active" aria-current="page" href="{{ route('home') }}">
                             <i class="fas fa-tachometer-alt"></i>Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('report.stock') }}">
-                            <i class="fas fa-boxes"></i>Laporan Stok Barang
+                        <a class="nav-link" href="{{ route('staff.items.index') }}">
+                            <i class="fas fa-boxes"></i>Barang
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('order.items') }}">
-                            <i class="fas fa-shopping-cart"></i>Pemesanan Barang
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('employee.accounts') }}">
-                            <i class="fas fa-users-cog"></i>Akun Pegawai
+                        <a class="nav-link" href="{{ route('staff.item.management') }}">
+                            <i class="fas fa-cogs"></i>Pengelolaan Barang
                         </a>
                     </li>
                     {{-- Bagian bawah sidebar --}}
@@ -43,6 +38,9 @@
                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                             <i class="fas fa-sign-out-alt"></i>Keluar
                         </a>
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                            @csrf
+                        </form>
                     </li>
                 </ul>
             </div>
@@ -58,7 +56,7 @@
                 </button>
             </div>
 
-            {{-- Menampilkan pesan sesi di dalam konten utama --}}
+            {{-- Menampilkan pesan sesi --}}
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <i class="fas fa-check-circle"></i>
@@ -109,23 +107,23 @@
                             <h5 class="card-title"><i class="fas fa-boxes"></i> Ringkasan Stok Barang</h5>
                             <p class="card-text">Total barang masuk: {{ $incomingItems->sum('jumlah_barang') }} unit</p>
                             <p class="card-text">Total barang keluar: {{ $outgoingItems->sum('jumlah_barang') }} unit</p>
-                            <a href="{{ route('report.stock') }}" class="btn btn-primary btn-sm">Lihat Detail Laporan</a>
+                            <a href="{{ route('staff.items.index') }}" class="btn btn-primary btn-sm">Lihat Data Barang</a>
                         </div>
                     </div>
                 </div>
 
-                {{-- Widget Pemesanan Barang --}}
+                {{-- Widget Pengelolaan Barang --}}
                 <div class="col-md-6 mb-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-shopping-cart"></i> Pemesanan Barang</h5>
-                            <p class="card-text">Kelola daftar produsen dan lakukan pemesanan.</p>
-                            <a href="{{ route('order.items') }}" class="btn btn-success btn-sm">Buat Pemesanan</a>
+                            <h5 class="card-title"><i class="fas fa-cogs"></i> Pengelolaan Barang</h5>
+                            <p class="card-text">Kelola lokasi barang di gudang dan pesanan barang keluar.</p>
+                            <a href="{{ route('staff.item.management') }}" class="btn btn-success btn-sm">Kelola Barang</a>
                         </div>
                     </div>
                 </div>
 
-                {{-- Widget Aktivitas Terbaru (Contoh) --}}
+                {{-- Widget Aktivitas Terbaru --}}
                 <div class="col-12 mb-4">
                     <div class="card shadow-sm">
                         <div class="card-header bg-white">
@@ -133,9 +131,23 @@
                         </div>
                         <div class="card-body">
                             <ul class="list-group list-group-flush">
-                                <li class="list-group-item">Barang "Laptop ASUS" masuk gudang (10 unit) - 1 jam lalu</li>
-                                <li class="list-group-item">Barang "Meja Gaming" keluar (1 unit) - 3 jam lalu</li>
-                                <li class="list-group-item">Pemesanan baru ke PT. Elektronik Jaya - kemarin</li>
+                                @if($incomingItems->count() > 0)
+                                    @foreach($incomingItems->take(3) as $item)
+                                        <li class="list-group-item">
+                                            Barang "{{ $item->nama_barang }}" masuk gudang ({{ $item->jumlah_barang }} unit) - {{ $item->tanggal_masuk_barang->diffForHumans() }}
+                                        </li>
+                                    @endforeach
+                                @else
+                                    <li class="list-group-item">Belum ada aktivitas barang masuk.</li>
+                                @endif
+                                
+                                @if($outgoingItems->count() > 0)
+                                    @foreach($outgoingItems->take(2) as $item)
+                                        <li class="list-group-item">
+                                            Barang "{{ $item->nama_barang }}" keluar ({{ $item->jumlah_barang }} unit) - {{ $item->tanggal_keluar_barang->diffForHumans() }}
+                                        </li>
+                                    @endforeach
+                                @endif
                             </ul>
                         </div>
                     </div>
@@ -147,7 +159,7 @@
 </div>
 
 <style>
-    /* Tambahan CSS khusus untuk Dashboard */
+    /* CSS yang sama seperti sebelumnya */
     .main-content {
         padding-left: 1.5rem;
         padding-right: 1.5rem;
@@ -233,4 +245,4 @@
         });
     });
 </script>
-@endsection
+@endsection 
