@@ -5,6 +5,7 @@ use App\Http\Controllers\SplashController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ItemManagementController;
+use App\Http\Controllers\EmployeeAccountController; // Import controller baru
 use App\Http\Middleware\RoleMiddleware;
 
 // Route untuk splash screen
@@ -32,8 +33,13 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware([RoleMiddleware::class.':manager'])->group(function () {
         Route::get('/report/stock', [HomeController::class, 'showStockReport'])->name('report.stock');
         Route::get('/order/items', [HomeController::class, 'showOrderItems'])->name('order.items');
-        Route::get('/employee/accounts', [HomeController::class, 'showEmployeeAccounts'])->name('employee.accounts');
-        Route::post('/employee/accounts', [HomeController::class, 'storeEmployeeAccount'])->name('employee.accounts.store');
+        
+        // Routes untuk Akun Pegawai (sekarang di EmployeeAccountController)
+        Route::get('/employee/accounts', [EmployeeAccountController::class, 'showEmployeeAccounts'])->name('employee.accounts');
+        Route::post('/employee/accounts', [EmployeeAccountController::class, 'storeEmployeeAccount'])->name('employee.accounts.store');
+        Route::get('/employee/accounts/{user}/edit', [EmployeeAccountController::class, 'edit'])->name('employee.accounts.edit'); // Untuk ambil data edit
+        Route::put('/employee/accounts/{user}', [EmployeeAccountController::class, 'update'])->name('employee.accounts.update');
+        Route::delete('/employee/accounts/{user}', [EmployeeAccountController::class, 'destroy'])->name('employee.accounts.destroy');
     });
     
     // Routes untuk Staff Admin (role: admin)
