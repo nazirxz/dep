@@ -43,15 +43,15 @@ class OutgoingItemSeeder extends Seeder
 
             // Kurangi jumlah barang di IncomingItem
             $incomingItem->jumlah_barang -= $quantityToMove;
-            // Perbarui status barang masuk berdasarkan sisa jumlah
-            if ($incomingItem->jumlah_barang <= 0) {
-                $incomingItem->status_barang = 'Habis';
-            } elseif ($incomingItem->jumlah_barang <= 10) { // Contoh threshold untuk 'Sedikit'
-                $incomingItem->status_barang = 'Sedikit';
-            } else {
-                $incomingItem->status_barang = 'Banyak';
-            }
+            // Di sini Anda tidak perlu memperbarui status_barang karena kolom tersebut sudah tidak ada.
+            // Jika Anda memiliki logika lain yang bergantung pada jumlah_barang, pastikan itu sesuai.
             $incomingItem->save();
+
+            // Tentukan data pengecer dan transaksi secara acak atau berdasarkan logika lain
+            $namaPengecer = $faker->randomElement(['Pembeli A', 'Pembeli B', 'Reseller C', 'Pelanggan Online XYZ']);
+            $metodeBayar = $faker->randomElement(['Cash', 'Transfer Bank', 'Kartu Kredit']);
+            $pembayaranTransaksi = $faker->randomFloat(2, 100000, 5000000); // Contoh rentang harga
+            $notaTransaksi = 'NOTA-' . strtoupper(uniqid()); // Contoh nota transaksi
 
             // Buat entri OutgoingItem
             OutgoingItem::create([
@@ -60,7 +60,11 @@ class OutgoingItemSeeder extends Seeder
                 'tanggal_keluar_barang' => $faker->dateTimeBetween('-1 year', 'now')->format('Y-m-d'),
                 'jumlah_barang' => $quantityToMove,
                 'tujuan_distribusi' => $faker->randomElement(['Toko A', 'Toko B', 'Pelanggan Online', 'Distributor XYZ', 'Cabang Pusat']),
-                'lokasi_rak_barang' => $incomingItem->lokasi_rak_barang, // Lokasi rak asal
+                'lokasi_rak_barang' => $incomingItem->lokasi_rak_barang,
+                'nama_pengecer' => $namaPengecer, // Data baru
+                'metode_bayar' => $metodeBayar, // Data baru
+                'pembayaran_transaksi' => $pembayaranTransaksi, // Data baru
+                'nota_transaksi' => $notaTransaksi, // Data baru
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -68,4 +72,3 @@ class OutgoingItemSeeder extends Seeder
         $this->command->info('Outgoing items seeded successfully!');
     }
 }
-

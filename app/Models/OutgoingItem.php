@@ -28,7 +28,11 @@ class OutgoingItem extends Model
         'tanggal_keluar_barang',
         'jumlah_barang',
         'tujuan_distribusi',
-        'lokasi_rak_barang', // Tambahkan kolom baru
+        'lokasi_rak_barang',
+        'nama_pengecer', // Kolom baru
+        'metode_bayar', // Kolom baru
+        'pembayaran_transaksi', // Kolom baru
+        'nota_transaksi', // Kolom baru
     ];
 
     /**
@@ -38,5 +42,6 @@ class OutgoingItem extends Model
      */
     protected $casts = [
         'tanggal_keluar_barang' => 'date', // Mengubah tanggal menjadi objek Carbon
+        'pembayaran_transaksi' => 'decimal:2', // Pastikan dicasting sebagai decimal
     ];
 }

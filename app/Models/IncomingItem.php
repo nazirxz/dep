@@ -27,8 +27,11 @@ class IncomingItem extends Model
         'kategori_barang',
         'tanggal_masuk_barang',
         'jumlah_barang',
-        'status_barang',
-        'lokasi_rak_barang', // Tambahkan kolom baru
+        'lokasi_rak_barang',
+        'nama_pengecer', // Kolom baru
+        'metode_bayar', // Kolom baru
+        'pembayaran_transaksi', // Kolom baru
+        'nota_transaksi', // Kolom baru
     ];
 
     /**
@@ -38,24 +41,6 @@ class IncomingItem extends Model
      */
     protected $casts = [
         'tanggal_masuk_barang' => 'date', // Mengubah tanggal menjadi objek Carbon
+        'pembayaran_transaksi' => 'decimal:2', // Pastikan dicasting sebagai decimal
     ];
-
-    /**
-     * The "booted" method of the model.
-     *
-     * @return void
-     */
-    // Hapus atau komentari metode booted() ini untuk menghindari konflik dengan controller
-    // protected static function booted()
-    // {
-    //     static::saving(function ($item) {
-    //         if ($item->jumlah_barang <= 0) {
-    //             $item->status_barang = 'Habis';
-    //         } elseif ($item->jumlah_barang < 5) {
-    //             $item->status_barang = 'Sedikit';
-    //         } else {
-    //             $item->status_barang = 'Banyak';
-    //         }
-    //     });
-    // }
 }
