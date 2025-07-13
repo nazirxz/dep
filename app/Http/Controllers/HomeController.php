@@ -28,12 +28,32 @@ class HomeController extends Controller
         // Mengambil data barang keluar dari database
         $outgoingItems = OutgoingItem::orderBy('tanggal_keluar_barang', 'desc')->get();
 
+        // --- Data untuk Status Stok (Banyak, Sedikit, Habis) ---
+        // Hitungan ini relevan untuk dashboard manajer juga
+        $plentyStockCount = 0;
+        $lowStockCount = 0;
+        $outOfStockCount = 0;
+
+        foreach ($incomingItems as $item) {
+            if ($item->jumlah_barang > 50) { // Asumsi: Banyak jika > 50 unit
+                $plentyStockCount++;
+            } elseif ($item->jumlah_barang > 0 && $item->jumlah_barang <= 50) { // Asumsi: Sedikit jika 1-50 unit
+                $lowStockCount++;
+            } else { // Asumsi: Habis jika 0 unit
+                $outOfStockCount++;
+            }
+        }
+        // --- Akhir Data untuk Status Stok ---
+
         // Memeriksa role user dan memuat tampilan yang sesuai
         if ($user->role === 'manager') {
             return view('home', [
                 'dashboardView' => 'dashboard.manager_dashboard',
-                'incomingItems' => $incomingItems,
-                'outgoingItems' => $outgoingItems,
+                'incomingItems' => $incomingItems, // Tetap diperlukan untuk ringkasan total
+                'outgoingItems' => $outgoingItems, // Tetap diperlukan untuk ringkasan total
+                'plentyStockCount' => $plentyStockCount,
+                'lowStockCount' => $lowStockCount,
+                'outOfStockCount' => $outOfStockCount,
             ]);
         } elseif ($user->role === 'admin') { // Diubah dari 'staff_admin' menjadi 'admin'
             return view('home', [
@@ -49,6 +69,9 @@ class HomeController extends Controller
             'dashboardView' => 'dashboard.manager_dashboard', // Fallback ke dashboard manager
             'incomingItems' => $incomingItems,
             'outgoingItems' => $outgoingItems,
+            'plentyStockCount' => $plentyStockCount,
+            'lowStockCount' => $lowStockCount,
+            'outOfStockCount' => $outOfStockCount,
         ])->with('error', 'Role pengguna tidak dikenali atau tidak memiliki dashboard khusus. Anda diarahkan ke dashboard manager.');
     }
 
@@ -94,6 +117,23 @@ class HomeController extends Controller
         }
         // --- Akhir Data untuk Grafik ---
 
+        // --- Data untuk Status Stok (Banyak, Sedikit, Habis) ---
+        // Data ini tidak lagi diperlukan di sini karena sudah dipindahkan ke index()
+        $plentyStockCount = 0;
+        $lowStockCount = 0;
+        $outOfStockCount = 0;
+
+        foreach ($incomingItems as $item) {
+            if ($item->jumlah_barang > 50) { // Asumsi: Banyak jika > 50 unit
+                $plentyStockCount++;
+            } elseif ($item->jumlah_barang > 0 && $item->jumlah_barang <= 50) { // Asumsi: Sedikit jika 1-50 unit
+                $lowStockCount++;
+            } else { // Asumsi: Habis jika 0 unit
+                $outOfStockCount++;
+            }
+        }
+        // --- Akhir Data untuk Status Stok ---
+
         return view('dashboard.report_stock', [
             'incomingItems' => $incomingItems,
             'outgoingItems' => $outgoingItems,
@@ -101,6 +141,10 @@ class HomeController extends Controller
             'purchaseTrendData' => $purchaseData,
             'salesTrendData' => $salesData,
             'chartPeriod' => $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y'),
+            // Variabel status stok tidak lagi diteruskan dari sini karena sudah di index()
+            'plentyStockCount' => $plentyStockCount, // Tetap diteruskan untuk tabel ringkasan di report_stock
+            'lowStockCount' => $lowStockCount,
+            'outOfStockCount' => $outOfStockCount,
         ]);
     }
 

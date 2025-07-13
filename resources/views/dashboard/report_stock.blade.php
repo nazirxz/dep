@@ -158,6 +158,7 @@
                                             <th>Metode Bayar</th>
                                             <th>Pembayaran Transaksi</th>
                                             <th>Nota Transaksi</th>
+                                            <th>Status Barang</th> {{-- Kolom baru --}}
                                             <th>Aksi</th>
                                         </tr>
                                     </thead>
@@ -175,6 +176,23 @@
                                                 <td>Rp{{ number_format($item->pembayaran_transaksi, 2, ',', '.') }}</td>
                                                 <td>{{ $item->nota_transaksi ?? '-' }}</td>
                                                 <td>
+                                                    @php
+                                                        $status = '';
+                                                        $badgeClass = '';
+                                                        if ($item->jumlah_barang > 50) {
+                                                            $status = 'Banyak';
+                                                            $badgeClass = 'bg-success';
+                                                        } elseif ($item->jumlah_barang > 0 && $item->jumlah_barang <= 50) {
+                                                            $status = 'Sedikit';
+                                                            $badgeClass = 'bg-warning text-dark'; // Tambahkan text-dark untuk visibilitas
+                                                        } else {
+                                                            $status = 'Habis';
+                                                            $badgeClass = 'bg-danger';
+                                                        }
+                                                    @endphp
+                                                    <span class="badge {{ $badgeClass }}">{{ $status }}</span>
+                                                </td>
+                                                <td>
                                                     <button class="btn btn-sm btn-info me-1" onclick="viewItemDetails({{ $item->id }})"><i class="fas fa-eye"></i> Lihat Detail</button>
                                                     {{-- Tombol lokasi rak (jika perlu ditampilkan di laporan) --}}
                                                     @if($item->lokasi_rak_barang)
@@ -184,7 +202,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="11" class="text-center">Tidak ada data barang masuk.</td>
+                                                <td colspan="12" class="text-center">Tidak ada data barang masuk.</td> {{-- colspan disesuaikan --}}
                                             </tr>
                                         @endforelse
                                     </tbody>

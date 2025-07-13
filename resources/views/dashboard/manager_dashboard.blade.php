@@ -105,14 +105,94 @@
                         <div>Untuk melihat laporan stok dan tren barang, silakan klik "Laporan Stok Barang" di sidebar. Untuk pemesanan barang, klik "Pemesanan Barang". Untuk mengelola akun pegawai, klik "Akun Pegawai".</div>
                     </div>
                 </div>
+                
+                {{-- Card Ringkasan Stok Barang (Dipindahkan dari report_stock.blade.php) --}}
+                <div class="col-12 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">Ringkasan Stok Barang</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-3 mb-3">
+                                    <div class="card border-0 bg-light py-3">
+                                        <div class="card-body">
+                                            <i class="fas fa-box-open fa-2x text-primary mb-2"></i>
+                                            <h4 class="text-primary">{{ isset($incomingItems) ? $incomingItems->count() : 0 }}</h4>
+                                            <small class="text-muted">Total Item</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="card border-0 bg-light py-3">
+                                        <div class="card-body">
+                                            <i class="fas fa-cubes fa-2x text-success mb-2"></i>
+                                            <h4 class="text-success">{{ isset($incomingItems) ? $incomingItems->sum('jumlah_barang') : 0 }}</h4>
+                                            <small class="text-muted">Total Unit</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="card border-0 bg-light py-3">
+                                        <div class="card-body">
+                                            <i class="fas fa-warehouse fa-2x text-info mb-2"></i>
+                                            <h4 class="text-info">{{ isset($incomingItems) ? $incomingItems->whereNotNull('lokasi_rak_barang')->count() : 0 }}</h4>
+                                            <small class="text-muted">Sudah Ditempatkan</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="card border-0 bg-light py-3">
+                                        <div class="card-body">
+                                            <i class="fas fa-question-circle fa-2x text-warning mb-2"></i>
+                                            <h4 class="text-warning">{{ isset($incomingItems) ? $incomingItems->whereNull('lokasi_rak_barang')->count() : 0 }}</h4>
+                                            <small class="text-muted">Belum Ditempatkan</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {{-- Ringkasan Status Stok (Baru Ditambahkan) --}}
+                            <div class="row text-center mt-3">
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-0 bg-light py-3">
+                                        <div class="card-body">
+                                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                            <h4 class="text-success">{{ $plentyStockCount }}</h4>
+                                            <small class="text-muted">Barang Banyak</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-0 bg-light py-3">
+                                        <div class="card-body">
+                                            <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                                            <h4 class="text-warning">{{ $lowStockCount }}</h4>
+                                            <small class="text-muted">Barang Sedikit</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-0 bg-light py-3">
+                                        <div class="card-body">
+                                            <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                                            <h4 class="text-danger">{{ $outOfStockCount }}</h4>
+                                            <small class="text-muted">Barang Habis</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Tambahkan widget atau ringkasan lain untuk dashboard utama di sini --}}
                 <div class="col-md-6 mb-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-chart-line"></i> Ringkasan Stok Barang</h5>
-                            <p class="card-text">Total barang masuk: {{ $incomingItems->sum('jumlah_barang') }} unit</p>
-                            <p class="card-text">Total barang keluar: {{ $outgoingItems->sum('jumlah_barang') }} unit</p>
-                            <a href="{{ route('report.stock') }}" class="btn btn-primary btn-sm">Lihat Detail Laporan</a>
+                            <h5 class="card-title"><i class="fas fa-chart-line"></i> Ringkasan Laporan Stok</h5>
+                            <p class="card-text">Lihat detail laporan stok barang masuk dan keluar, serta tren pembelian dan penjualan.</p>
+                            <a href="{{ route('report.stock') }}" class="btn btn-primary btn-sm">Lihat Laporan Lengkap</a>
                         </div>
                     </div>
                 </div>
