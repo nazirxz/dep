@@ -57,6 +57,10 @@ class ItemManagementController extends Controller
             'jumlah_barang' => 'required|integer|min:1',
             'tanggal_masuk_barang' => 'required|date',
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
+            'nama_pengecer' => 'nullable|string|max:255',
+            'metode_bayar' => 'nullable|string|max:50',
+            'pembayaran_transaksi' => 'nullable|numeric|min:0',
+            'nota_transaksi' => 'nullable|string|max:255',
         ], [
             'nama_barang.required' => 'Nama barang wajib diisi.',
             'kategori_barang.required' => 'Kategori barang wajib diisi.',
@@ -64,6 +68,8 @@ class ItemManagementController extends Controller
             'jumlah_barang.min' => 'Jumlah barang minimal 1.',
             'tanggal_masuk_barang.required' => 'Tanggal masuk wajib diisi.',
             'lokasi_rak_barang.regex' => 'Format lokasi rak tidak valid. Gunakan format R[1-8]-[1-4]-[1-6].',
+            'pembayaran_transaksi.numeric' => 'Pembayaran transaksi harus berupa angka.',
+            'pembayaran_transaksi.min' => 'Pembayaran transaksi minimal 0.',
         ]);
 
         if ($validator->fails()) {
@@ -98,7 +104,7 @@ class ItemManagementController extends Controller
                 // Jika barang yang sama sudah ada, perbarui jumlahnya
                 \Log::info('storeIncomingItem: Updating quantity for existing item on rack', ['item_id' => $existingSameItemOnRack->id, 'old_qty' => $existingSameItemOnRack->jumlah_barang, 'new_qty_added' => $request->jumlah_barang]);
                 $existingSameItemOnRack->jumlah_barang += $request->jumlah_barang;
-                $existingSameItemOnRack->status_barang = $this->determineStatus($existingSameItemOnRack->jumlah_barang);
+                // Tidak perlu memperbarui status_barang karena kolom sudah dihapus
                 $existingSameItemOnRack->save();
                 \Log::info('storeIncomingItem: Item quantity updated successfully', ['item_id' => $existingSameItemOnRack->id, 'final_qty' => $existingSameItemOnRack->jumlah_barang]);
 
@@ -117,7 +123,11 @@ class ItemManagementController extends Controller
                 'jumlah_barang' => $request->jumlah_barang,
                 'tanggal_masuk_barang' => $request->tanggal_masuk_barang,
                 'lokasi_rak_barang' => $request->lokasi_rak_barang,
-                'status_barang' => $this->determineStatus($request->jumlah_barang),
+                'nama_pengecer' => $request->nama_pengecer,
+                'metode_bayar' => $request->metode_bayar,
+                'pembayaran_transaksi' => $request->pembayaran_transaksi,
+                'nota_transaksi' => $request->nota_transaksi,
+                // 'status_barang' => $this->determineStatus($request->jumlah_barang), // Kolom dihapus
             ]);
             \Log::info('storeIncomingItem: New item created successfully', ['item_id' => $incomingItem->id, 'data' => $incomingItem->toArray()]);
 
@@ -150,6 +160,10 @@ class ItemManagementController extends Controller
             'tanggal_keluar_barang' => 'required|date',
             'tujuan_distribusi' => 'required|string|max:255',
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/', // Opsional, tapi penting untuk penarikan spesifik
+            'nama_pengecer' => 'nullable|string|max:255', // Kolom baru
+            'metode_bayar' => 'nullable|string|max:50', // Kolom baru
+            'pembayaran_transaksi' => 'nullable|numeric|min:0', // Kolom baru
+            'nota_transaksi' => 'nullable|string|max:255', // Kolom baru
         ], [
             'nama_barang.required' => 'Nama barang wajib diisi.',
             'kategori_barang.required' => 'Kategori barang wajib diisi.',
@@ -158,6 +172,8 @@ class ItemManagementController extends Controller
             'tanggal_keluar_barang.required' => 'Tanggal keluar wajib diisi.',
             'tujuan_distribusi.required' => 'Tujuan distribusi wajib diisi.',
             'lokasi_rak_barang.regex' => 'Format lokasi rak tidak valid. Gunakan format R[1-8]-[1-4]-[1-6].',
+            'pembayaran_transaksi.numeric' => 'Pembayaran transaksi harus berupa angka.',
+            'pembayaran_transaksi.min' => 'Pembayaran transaksi minimal 0.',
         ]);
 
         if ($validator->fails()) {
@@ -208,15 +224,19 @@ class ItemManagementController extends Controller
                 'tanggal_keluar_barang' => $request->tanggal_keluar_barang,
                 'tujuan_distribusi' => $request->tujuan_distribusi,
                 'lokasi_rak_barang' => $request->lokasi_rak_barang, // Simpan lokasi rak dari mana barang keluar
+                'nama_pengecer' => $request->nama_pengecer, // Kolom baru
+                'metode_bayar' => $request->metode_bayar, // Kolom baru
+                'pembayaran_transaksi' => $request->pembayaran_transaksi, // Kolom baru
+                'nota_transaksi' => $request->nota_transaksi, // Kolom baru
             ]);
             \Log::info('storeOutgoingItem: Outgoing item created', ['outgoing_item_id' => $outgoingItem->id, 'data' => $outgoingItem->toArray()]);
 
 
             // Perbarui stok barang masuk
             $incomingItem->jumlah_barang -= $request->jumlah_barang;
-            $incomingItem->status_barang = $this->determineStatus($incomingItem->jumlah_barang);
+            // $incomingItem->status_barang = $this->determineStatus($incomingItem->jumlah_barang); // Kolom dihapus
             $incomingItem->save();
-            \Log::info('storeOutgoingItem: Incoming item stock updated', ['item_id' => $incomingItem->id, 'final_qty' => $incomingItem->jumlah_barang, 'final_status' => $incomingItem->status_barang]);
+            \Log::info('storeOutgoingItem: Incoming item stock updated', ['item_id' => $incomingItem->id, 'final_qty' => $incomingItem->jumlah_barang]);
 
 
             // Jika stok menjadi 0 dan lokasi rak tidak null, kosongkan lokasi rak
@@ -257,6 +277,10 @@ class ItemManagementController extends Controller
             'jumlah_barang' => 'required|integer|min:0',
             'tanggal_masuk_barang' => 'required|date',
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
+            'nama_pengecer' => 'nullable|string|max:255',
+            'metode_bayar' => 'nullable|string|max:50',
+            'pembayaran_transaksi' => 'nullable|numeric|min:0',
+            'nota_transaksi' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -304,7 +328,11 @@ class ItemManagementController extends Controller
                 'jumlah_barang' => $request->jumlah_barang,
                 'tanggal_masuk_barang' => $request->tanggal_masuk_barang,
                 'lokasi_rak_barang' => $newLocation, // Gunakan newLocation yang sudah disesuaikan
-                'status_barang' => $this->determineStatus($request->jumlah_barang),
+                'nama_pengecer' => $request->nama_pengecer,
+                'metode_bayar' => $request->metode_bayar,
+                'pembayaran_transaksi' => $request->pembayaran_transaksi,
+                'nota_transaksi' => $request->nota_transaksi,
+                // 'status_barang' => $this->determineStatus($request->jumlah_barang), // Kolom dihapus
             ]);
             \Log::info('updateIncomingItem: Item updated successfully', ['item_id' => $incomingItem->id, 'updated_data' => $incomingItem->toArray()]);
 
@@ -338,6 +366,10 @@ class ItemManagementController extends Controller
             'tanggal_keluar_barang' => 'required|date',
             'tujuan_distribusi' => 'required|string|max:255',
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
+            'nama_pengecer' => 'nullable|string|max:255', // Kolom baru
+            'metode_bayar' => 'nullable|string|max:50', // Kolom baru
+            'pembayaran_transaksi' => 'nullable|numeric|min:0', // Kolom baru
+            'nota_transaksi' => 'nullable|string|max:255', // Kolom baru
         ]);
 
         if ($validator->fails()) {
@@ -360,6 +392,10 @@ class ItemManagementController extends Controller
                 'tanggal_keluar_barang' => $request->tanggal_keluar_barang,
                 'tujuan_distribusi' => $request->tujuan_distribusi,
                 'lokasi_rak_barang' => $request->lokasi_rak_barang,
+                'nama_pengecer' => $request->nama_pengecer, // Kolom baru
+                'metode_bayar' => $request->metode_bayar, // Kolom baru
+                'pembayaran_transaksi' => $request->pembayaran_transaksi, // Kolom baru
+                'nota_transaksi' => $request->nota_transaksi, // Kolom baru
             ]);
             \Log::info('updateOutgoingItem: Item updated successfully', ['item_id' => $outgoingItem->id, 'updated_data' => $outgoingItem->toArray()]);
 
@@ -529,12 +565,16 @@ class ItemManagementController extends Controller
                 $items = IncomingItem::where('nama_barang', 'like', '%' . $query . '%')
                                    ->orWhere('kategori_barang', 'like', '%' . $query . '%')
                                    ->orWhere('lokasi_rak_barang', 'like', '%' . $query . '%')
+                                   ->orWhere('nama_pengecer', 'like', '%' . $query . '%') // Kolom baru
+                                   ->orWhere('nota_transaksi', 'like', '%' . $query . '%') // Kolom baru
                                    ->orderBy('tanggal_masuk_barang', 'desc')
                                    ->get();
             } else {
                 $items = OutgoingItem::where('nama_barang', 'like', '%' . $query . '%')
                                    ->orWhere('kategori_barang', 'like', '%' . $query . '%')
                                    ->orWhere('tujuan_distribusi', 'like', '%' . $query . '%')
+                                   ->orWhere('nama_pengecer', 'like', '%' . $query . '%') // Kolom baru
+                                   ->orWhere('nota_transaksi', 'like', '%' . $query . '%') // Kolom baru
                                    ->orderBy('tanggal_keluar_barang', 'desc')
                                    ->get();
             }
@@ -589,12 +629,17 @@ class ItemManagementController extends Controller
                 'total_incoming_items' => IncomingItem::count(),
                 'total_outgoing_items' => OutgoingItem::count(),
                 'total_stock' => IncomingItem::sum('jumlah_barang'),
-                'low_stock_items' => IncomingItem::where('jumlah_barang', '<', 10)->count(),
-                'empty_stock_items' => IncomingItem::where('jumlah_barang', '=', 0)->count(),
+                // 'low_stock_items' => IncomingItem::where('jumlah_barang', '<', 10)->count(), // Status barang dihapus
+                // 'empty_stock_items' => IncomingItem::where('jumlah_barang', '=', 0)->count(), // Status barang dihapus
                 'categories' => IncomingItem::distinct('kategori_barang')->count('kategori_barang'),
                 'recent_incoming' => IncomingItem::orderBy('tanggal_masuk_barang', 'desc')->take(5)->get(),
                 'recent_outgoing' => OutgoingItem::orderBy('tanggal_keluar_barang', 'desc')->take(5)->get(),
             ];
+            // Jika Anda ingin tetap menampilkan statistik stok rendah/habis, Anda bisa menghitungnya secara manual
+            // tanpa bergantung pada kolom status_barang:
+            $stats['low_stock_items'] = IncomingItem::where('jumlah_barang', '>', 0)->where('jumlah_barang', '<', 10)->count();
+            $stats['empty_stock_items'] = IncomingItem::where('jumlah_barang', '=', 0)->count();
+
             \Log::info('getDashboardStats: Stats calculated', ['stats' => $stats]);
 
             return response()->json([
@@ -638,7 +683,7 @@ class ItemManagementController extends Controller
             // Dapatkan lokasi yang sudah ditempati oleh barang dengan jumlah > 0
             $occupiedLocations = IncomingItem::whereNotNull('lokasi_rak_barang')
                                            ->where('lokasi_rak_barang', '!=', '')
-                                           ->where('jumlah_barang', '>', 0)
+                                           ->where('jumlah_barang', '>', 0) // Hanya pertimbangkan rak dengan item aktif
                                            ->pluck('lokasi_rak_barang')
                                            ->toArray();
             \Log::info('autoAssignLocations: Currently occupied locations', ['locations' => $occupiedLocations]);
@@ -766,7 +811,8 @@ class ItemManagementController extends Controller
                 $items = IncomingItem::all();
                 $callback = function() use ($items) {
                     $file = fopen('php://output', 'w');
-                    fputcsv($file, ['ID', 'Nama Barang', 'Kategori', 'Jumlah', 'Tanggal Masuk', 'Lokasi Rak', 'Status']);
+                    // Header CSV baru
+                    fputcsv($file, ['ID', 'Nama Barang', 'Kategori', 'Jumlah', 'Tanggal Masuk', 'Lokasi Rak', 'Nama Pengecer', 'Metode Bayar', 'Pembayaran Transaksi', 'Nota Transaksi']);
                     foreach ($items as $item) {
                         fputcsv($file, [
                             $item->id,
@@ -775,7 +821,10 @@ class ItemManagementController extends Controller
                             $item->jumlah_barang,
                             $item->tanggal_masuk_barang,
                             $item->lokasi_rak_barang,
-                            $item->status_barang
+                            $item->nama_pengecer,
+                            $item->metode_bayar,
+                            $item->pembayaran_transaksi,
+                            $item->nota_transaksi,
                         ]);
                     }
                     fclose($file);
@@ -784,7 +833,8 @@ class ItemManagementController extends Controller
                 $items = OutgoingItem::all();
                 $callback = function() use ($items) {
                     $file = fopen('php://output', 'w');
-                    fputcsv($file, ['ID', 'Nama Barang', 'Kategori', 'Jumlah', 'Tanggal Keluar', 'Tujuan Distribusi', 'Lokasi Rak']);
+                    // Header CSV baru
+                    fputcsv($file, ['ID', 'Nama Barang', 'Kategori', 'Jumlah', 'Tanggal Keluar', 'Tujuan Distribusi', 'Lokasi Rak', 'Nama Pengecer', 'Metode Bayar', 'Pembayaran Transaksi', 'Nota Transaksi']);
                     foreach ($items as $item) {
                         fputcsv($file, [
                             $item->id,
@@ -793,7 +843,11 @@ class ItemManagementController extends Controller
                             $item->jumlah_barang,
                             $item->tanggal_keluar_barang,
                             $item->tujuan_distribusi,
-                            $item->lokasi_rak_barang
+                            $item->lokasi_rak_barang,
+                            $item->nama_pengecer,
+                            $item->metode_bayar,
+                            $item->pembayaran_transaksi,
+                            $item->nota_transaksi,
                         ]);
                     }
                     fclose($file);
@@ -827,6 +881,7 @@ class ItemManagementController extends Controller
                 'code' => 'ITM' . str_pad($item->id, 6, '0', STR_PAD_LEFT),
                 'category' => $item->kategori_barang,
                 'location' => $item->lokasi_rak_barang,
+                // 'status' => $item->status_barang, // Kolom dihapus
             ];
             \Log::info('generateBarcode: Barcode data generated', ['barcode_data' => $barcodeData]);
 
@@ -860,7 +915,7 @@ class ItemManagementController extends Controller
                 'quantity' => $item->jumlah_barang,
                 'location' => $item->lokasi_rak_barang,
                 'date_added' => $item->tanggal_masuk_barang->format('Y-m-d'),
-                'status' => $item->status_barang,
+                // 'status' => $item->status_barang, // Kolom dihapus
                 'url' => url('/staff/items?item=' . $item->id)
             ];
             \Log::info('generateQRCode: QR Code data generated', ['qr_data' => $qrData]);
@@ -896,7 +951,11 @@ class ItemManagementController extends Controller
                 'jumlah_barang' => $originalItem->jumlah_barang,
                 'tanggal_masuk_barang' => now(),
                 'lokasi_rak_barang' => null, // Setel ke null agar penempatan otomatis bisa menempatkannya
-                'status_barang' => $this->determineStatus($originalItem->jumlah_barang),
+                'nama_pengecer' => $originalItem->nama_pengecer, // Kolom baru
+                'metode_bayar' => $originalItem->metode_bayar, // Kolom baru
+                'pembayaran_transaksi' => $originalItem->pembayaran_transaksi, // Kolom baru
+                'nota_transaksi' => $originalItem->nota_transaksi, // Kolom baru
+                // 'status_barang' => $this->determineStatus($originalItem->jumlah_barang), // Kolom dihapus
             ]);
             \Log::info('duplicateItem: Item duplicated successfully', ['new_item_id' => $duplicatedItem->id, 'data' => $duplicatedItem->toArray()]);
 
@@ -952,10 +1011,14 @@ class ItemManagementController extends Controller
                         'items' => $items
                     ];
                 }),
-                'low_stock_items' => $items->where('jumlah_barang', '<', 10),
-                'out_of_stock_items' => $items->where('jumlah_barang', '=', 0),
+                // 'low_stock_items' => $items->where('jumlah_barang', '<', 10), // Status barang dihapus
+                // 'out_of_stock_items' => $items->where('jumlah_barang', '=', 0), // Status barang dihapus
                 'items_by_location' => $items->whereNotNull('lokasi_rak_barang')->groupBy('lokasi_rak_barang')
             ];
+            // Hitung ulang statistik stok rendah/habis jika diperlukan di laporan
+            $report['low_stock_items'] = $items->where('jumlah_barang', '>', 0)->where('jumlah_barang', '<', 10)->values();
+            $report['out_of_stock_items'] = $items->where('jumlah_barang', '=', 0)->values();
+
 
             return response()->json([
                 'success' => true,
@@ -996,6 +1059,10 @@ class ItemManagementController extends Controller
                 'date' => $incomingItem->tanggal_masuk_barang,
                 'quantity' => $incomingItem->jumlah_barang,
                 'location' => $incomingItem->lokasi_rak_barang,
+                'nama_pengecer' => $incomingItem->nama_pengecer,
+                'metode_bayar' => $incomingItem->metode_bayar,
+                'pembayaran_transaksi' => $incomingItem->pembayaran_transaksi,
+                'nota_transaksi' => $incomingItem->nota_transaksi,
                 'description' => 'Barang masuk'
             ];
 
@@ -1006,7 +1073,12 @@ class ItemManagementController extends Controller
                     'date' => $outgoing->tanggal_keluar_barang,
                     'quantity' => $outgoing->jumlah_barang,
                     'destination' => $outgoing->tujuan_distribusi,
-                    'description' => 'Barang keluar ke ' . $outgoing->tujuan_distribusi
+                    'location' => $outgoing->lokasi_rak_barang,
+                    'nama_pengecer' => $outgoing->nama_pengecer,
+                    'metode_bayar' => $outgoing->metode_bayar,
+                    'pembayaran_transaksi' => $outgoing->pembayaran_transaksi,
+                    'nota_transaksi' => $outgoing->nota_transaksi,
+                    'description' => 'Barang keluar ke ' . ($outgoing->tujuan_distribusi ?? $outgoing->nama_pengecer)
                 ];
             }
 
@@ -1173,18 +1245,18 @@ class ItemManagementController extends Controller
     // ============ METODE PEMBANTU PRIBADI ============
 
     /**
-     * Menentukan status item berdasarkan kuantitas.
+     * Metode determineStatus dihapus karena kolom status_barang sudah tidak ada.
      */
-    private function determineStatus($quantity)
-    {
-        if ($quantity == 0) {
-            return 'Habis';
-        } elseif ($quantity < 10) {
-            return 'Stok Rendah';
-        } else {
-            return 'Tersedia';
-        }
-    }
+    // private function determineStatus($quantity)
+    // {
+    //     if ($quantity == 0) {
+    //         return 'Habis';
+    //     } elseif ($quantity < 10) {
+    //         return 'Stok Rendah';
+    //     } else {
+    //         return 'Tersedia';
+    //     }
+    // }
 
     /**
      * Mencari lokasi yang tersedia untuk penempatan item.
@@ -1212,34 +1284,43 @@ class ItemManagementController extends Controller
         \Log::info('importIncomingItem (private): Processing record', ['record' => $record, 'index' => $index]);
         $data = array_values($record);
         
-        if (count($data) < 4) {
-            throw new \Exception("Data tidak lengkap pada baris " . ($index + ($hasHeader ? 2 : 1)) . ".");
-        }
-
-        $validator = Validator::make([
+        // Sesuaikan indeks data dengan kolom CSV yang baru
+        // Format CSV: nama_barang,kategori_barang,jumlah_barang,tanggal_masuk_barang,lokasi_rak_barang,nama_pengecer,metode_bayar,pembayaran_transaksi,nota_transaksi
+        $csvData = [
             'nama_barang' => $data[0] ?? '',
             'kategori_barang' => $data[1] ?? '',
             'jumlah_barang' => $data[2] ?? 0,
             'tanggal_masuk_barang' => $data[3] ?? '',
             'lokasi_rak_barang' => $data[4] ?? null,
-        ], [
+            'nama_pengecer' => $data[5] ?? null,
+            'metode_bayar' => $data[6] ?? null,
+            'pembayaran_transaksi' => $data[7] ?? 0,
+            'nota_transaksi' => $data[8] ?? null,
+        ];
+
+        // Validasi data impor
+        $validator = Validator::make($csvData, [
             'nama_barang' => 'required|string|max:255',
             'kategori_barang' => 'required|string|max:100',
             'jumlah_barang' => 'required|integer|min:1',
             'tanggal_masuk_barang' => 'required|date',
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
+            'nama_pengecer' => 'nullable|string|max:255',
+            'metode_bayar' => 'nullable|string|max:50',
+            'pembayaran_transaksi' => 'nullable|numeric|min:0',
+            'nota_transaksi' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
-            throw new \Exception($validator->errors()->first());
+            throw new \Exception("Validasi gagal pada baris " . ($index + ($hasHeader ? 2 : 1)) . ": " . $validator->errors()->first());
         }
 
         // Logika untuk menangani lokasi rak barang saat impor
-        if (!empty($data[4])) {
-            $lokasi_rak_barang = $data[4];
+        if (!empty($csvData['lokasi_rak_barang'])) {
+            $lokasi_rak_barang = $csvData['lokasi_rak_barang'];
             // Cek apakah ada barang lain (dengan nama berbeda) di lokasi rak ini
             $existingDifferentItemOnRack = IncomingItem::where('lokasi_rak_barang', $lokasi_rak_barang)
-                                                        ->where('nama_barang', '!=', $data[0])
+                                                        ->where('nama_barang', '!=', $csvData['nama_barang'])
                                                         ->where('jumlah_barang', '>', 0)
                                                         ->first();
             if ($existingDifferentItemOnRack) {
@@ -1248,12 +1329,12 @@ class ItemManagementController extends Controller
             
             // Cek apakah ada barang yang sama di lokasi rak ini
             $existingSameItemOnRack = IncomingItem::where('lokasi_rak_barang', $lokasi_rak_barang)
-                                                    ->where('nama_barang', $data[0])
+                                                    ->where('nama_barang', $csvData['nama_barang'])
                                                     ->first();
             if ($existingSameItemOnRack) {
                 // Jika barang yang sama sudah ada, perbarui jumlahnya
-                $existingSameItemOnRack->jumlah_barang += $data[2];
-                $existingSameItemOnRack->status_barang = $this->determineStatus($existingSameItemOnRack->jumlah_barang);
+                $existingSameItemOnRack->jumlah_barang += $csvData['jumlah_barang'];
+                // Tidak perlu memperbarui status_barang karena kolom sudah dihapus
                 $existingSameItemOnRack->save();
                 \Log::info('importIncomingItem (private): Updated existing item on rack', ['item_id' => $existingSameItemOnRack->id, 'final_qty' => $existingSameItemOnRack->jumlah_barang]);
                 return; // Barang diperbarui, tidak perlu membuat yang baru
@@ -1261,14 +1342,18 @@ class ItemManagementController extends Controller
         }
 
         IncomingItem::create([
-            'nama_barang' => $data[0],
-            'kategori_barang' => $data[1],
-            'jumlah_barang' => $data[2],
-            'tanggal_masuk_barang' => $data[3],
-            'lokasi_rak_barang' => $data[4] ?? null,
-            'status_barang' => $this->determineStatus($data[2]),
+            'nama_barang' => $csvData['nama_barang'],
+            'kategori_barang' => $csvData['kategori_barang'],
+            'jumlah_barang' => $csvData['jumlah_barang'],
+            'tanggal_masuk_barang' => $csvData['tanggal_masuk_barang'],
+            'lokasi_rak_barang' => $csvData['lokasi_rak_barang'],
+            'nama_pengecer' => $csvData['nama_pengecer'],
+            'metode_bayar' => $csvData['metode_bayar'],
+            'pembayaran_transaksi' => $csvData['pembayaran_transaksi'],
+            'nota_transaksi' => $csvData['nota_transaksi'],
+            // 'status_barang' => $this->determineStatus($csvData['jumlah_barang']), // Kolom dihapus
         ]);
-        \Log::info('importIncomingItem (private): New item created', ['nama_barang' => $data[0], 'jumlah_barang' => $data[2]]);
+        \Log::info('importIncomingItem (private): New item created', ['nama_barang' => $csvData['nama_barang'], 'jumlah_barang' => $csvData['jumlah_barang']]);
     }
 
     /**
@@ -1279,64 +1364,77 @@ class ItemManagementController extends Controller
         \Log::info('importOutgoingItem (private): Processing record', ['record' => $record, 'index' => $index]);
         $data = array_values($record);
         
-        if (count($data) < 5) {
-            throw new \Exception("Data tidak lengkap pada baris " . ($index + ($hasHeader ? 2 : 1)) . ".");
-        }
-
-        $validator = Validator::make([
+        // Sesuaikan indeks data dengan kolom CSV yang baru
+        // Format CSV: nama_barang,kategori_barang,jumlah_barang,tanggal_keluar_barang,tujuan_distribusi,lokasi_rak_barang,nama_pengecer,metode_bayar,pembayaran_transaksi,nota_transaksi
+        $csvData = [
             'nama_barang' => $data[0] ?? '',
             'kategori_barang' => $data[1] ?? '',
             'jumlah_barang' => $data[2] ?? 0,
             'tanggal_keluar_barang' => $data[3] ?? '',
             'tujuan_distribusi' => $data[4] ?? '',
             'lokasi_rak_barang' => $data[5] ?? null,
-        ], [
+            'nama_pengecer' => $data[6] ?? null,
+            'metode_bayar' => $data[7] ?? null,
+            'pembayaran_transaksi' => $data[8] ?? 0,
+            'nota_transaksi' => $data[9] ?? null,
+        ];
+
+        // Validasi data impor
+        $validator = Validator::make($csvData, [
             'nama_barang' => 'required|string|max:255',
             'kategori_barang' => 'required|string|max:100',
             'jumlah_barang' => 'required|integer|min:1',
             'tanggal_keluar_barang' => 'required|date',
             'tujuan_distribusi' => 'required|string|max:255',
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
+            'nama_pengecer' => 'nullable|string|max:255',
+            'metode_bayar' => 'nullable|string|max:50',
+            'pembayaran_transaksi' => 'nullable|numeric|min:0',
+            'nota_transaksi' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
-            throw new \Exception($validator->errors()->first());
+            throw new \Exception("Validasi gagal pada baris " . ($index + ($hasHeader ? 2 : 1)) . ": " . $validator->errors()->first());
         }
 
         // Cek ketersediaan stok berdasarkan nama barang, kategori, dan lokasi rak (jika disediakan)
-        $incomingItemQuery = IncomingItem::where('nama_barang', $data[0])
-                                         ->where('kategori_barang', $data[1]);
+        $incomingItemQuery = IncomingItem::where('nama_barang', $csvData['nama_barang'])
+                                         ->where('kategori_barang', $csvData['kategori_barang']);
 
-        if (!empty($data[5])) {
-            $incomingItemQuery->where('lokasi_rak_barang', $data[5]);
+        if (!empty($csvData['lokasi_rak_barang'])) {
+            $incomingItemQuery->where('lokasi_rak_barang', $csvData['lokasi_rak_barang']);
         }
 
         $incomingItem = $incomingItemQuery->first();
-        \Log::info('importOutgoingItem (private): Checking stock for', ['nama_barang' => $data[0], 'lokasi_rak_barang' => $data[5], 'incoming_item_found' => $incomingItem ? $incomingItem->toArray() : 'not found']);
+        \Log::info('importOutgoingItem (private): Checking stock for', ['nama_barang' => $csvData['nama_barang'], 'lokasi_rak_barang' => $csvData['lokasi_rak_barang'], 'incoming_item_found' => $incomingItem ? $incomingItem->toArray() : 'not found']);
 
 
         if (!$incomingItem) {
-            throw new \Exception('Barang ' . $data[0] . ' tidak ditemukan dalam stok atau di lokasi rak ' . ($data[5] ?? 'mana pun') . '.');
+            throw new \Exception('Barang ' . $csvData['nama_barang'] . ' tidak ditemukan dalam stok atau di lokasi rak ' . ($csvData['lokasi_rak_barang'] ?? 'mana pun') . '.');
         }
 
-        if ($incomingItem->jumlah_barang < $data[2]) {
-            throw new \Exception("Stok barang {$data[0]} tidak mencukupi. Tersedia: {$incomingItem->jumlah_barang}, diminta: {$data[2]}");
+        if ($incomingItem->jumlah_barang < $csvData['jumlah_barang']) {
+            throw new \Exception("Stok barang {$csvData['nama_barang']} tidak mencukupi. Tersedia: {$incomingItem->jumlah_barang}, diminta: {$csvData['jumlah_barang']}");
         }
 
-        DB::transaction(function () use ($data, $incomingItem) {
+        DB::transaction(function () use ($csvData, $incomingItem) {
             OutgoingItem::create([
-                'nama_barang' => $data[0],
-                'kategori_barang' => $data[1],
-                'jumlah_barang' => $data[2],
-                'tanggal_keluar_barang' => $data[3],
-                'tujuan_distribusi' => $data[4],
-                'lokasi_rak_barang' => $data[5] ?? null,
+                'nama_barang' => $csvData['nama_barang'],
+                'kategori_barang' => $csvData['kategori_barang'],
+                'jumlah_barang' => $csvData['jumlah_barang'],
+                'tanggal_keluar_barang' => $csvData['tanggal_keluar_barang'],
+                'tujuan_distribusi' => $csvData['tujuan_distribusi'],
+                'lokasi_rak_barang' => $csvData['lokasi_rak_barang'],
+                'nama_pengecer' => $csvData['nama_pengecer'],
+                'metode_bayar' => $csvData['metode_bayar'],
+                'pembayaran_transaksi' => $csvData['pembayaran_transaksi'],
+                'nota_transaksi' => $csvData['nota_transaksi'],
             ]);
-            \Log::info('importOutgoingItem (private): Outgoing item created during import', ['nama_barang' => $data[0], 'jumlah' => $data[2]]);
+            \Log::info('importOutgoingItem (private): Outgoing item created during import', ['nama_barang' => $csvData['nama_barang'], 'jumlah' => $csvData['jumlah_barang']]);
 
 
-            $incomingItem->jumlah_barang -= $data[2];
-            $incomingItem->status_barang = $this->determineStatus($incomingItem->jumlah_barang);
+            $incomingItem->jumlah_barang -= $csvData['jumlah_barang'];
+            // $incomingItem->status_barang = $this->determineStatus($incomingItem->jumlah_barang); // Kolom dihapus
             $incomingItem->save();
             \Log::info('importOutgoingItem (private): Incoming item stock reduced during import', ['item_id' => $incomingItem->id, 'final_qty' => $incomingItem->jumlah_barang]);
 

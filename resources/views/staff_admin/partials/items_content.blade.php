@@ -54,13 +54,13 @@
             </li>
         </ul>
         <div class="d-flex align-items-center gap-2">
-            <button class="btn btn-outline-primary btn-sm" onclick="exportData('pdf')">
+            <button class="btn btn-outline-primary btn-sm" onclick="window.exportData('pdf')">
                 <i class="fas fa-file-pdf"></i> Export PDF
             </button>
-            <button class="btn btn-outline-success btn-sm" onclick="exportData('excel')">
+            <button class="btn btn-outline-success btn-sm" onclick="window.exportData('excel')">
                 <i class="fas fa-file-excel"></i> Export Excel
             </button>
-            <button class="btn btn-primary btn-sm" onclick="refreshData()">
+            <button class="btn btn-primary btn-sm" onclick="window.refreshData()">
                 <i class="fas fa-sync-alt"></i> Refresh
             </button>
         </div>
@@ -81,14 +81,15 @@
                             @endif
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    {{-- Filter Status Barang dihapus karena kolom status_barang dihapus --}}
+                    {{-- <div class="col-md-3">
                         <select class="form-select" id="statusFilter">
                             <option value="">Pilih Status Barang</option>
                             <option value="Banyak">Banyak</option>
                             <option value="Sedikit">Sedikit</option>
                             <option value="Habis">Habis</option>
                         </select>
-                    </div>
+                    </div> --}}
                     <div class="col-md-3">
                         <input type="date" class="form-control" id="dateIncomingFilter" placeholder="Filter Tanggal">
                     </div>
@@ -108,10 +109,10 @@
                         <div class="d-flex gap-2 align-items-center">
                             <input type="checkbox" id="selectAllIncoming" class="form-check-input">
                             <label for="selectAllIncoming" class="form-check-label me-3">Pilih Semua</label>
-                            <button class="btn btn-sm btn-warning" onclick="bulkEditLocation()" disabled id="bulkEditBtn">
+                            <button class="btn btn-sm btn-warning" onclick="window.bulkEditLocation()" disabled id="bulkEditBtn">
                                 <i class="fas fa-edit"></i> Edit Lokasi Terpilih
                             </button>
-                            <button class="btn btn-sm btn-danger" onclick="bulkDelete()" disabled id="bulkDeleteBtn">
+                            <button class="btn btn-sm btn-danger" onclick="window.bulkDelete()" disabled id="bulkDeleteBtn">
                                 <i class="fas fa-trash"></i> Hapus Terpilih
                             </button>
                         </div>
@@ -129,10 +130,13 @@
                                 <th>No.</th>
                                 <th>Nama Barang</th>
                                 <th>Kategori</th>
-                                <th>Tanggal Masuk</th>
                                 <th>Jumlah</th>
+                                <th>Tanggal Masuk</th>
                                 <th>Lokasi Rak</th>
-                                <th>Status</th>
+                                <th>Nama Pengecer</th>
+                                <th>Metode Bayar</th>
+                                <th>Pembayaran Transaksi</th>
+                                <th>Nota Transaksi</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -141,11 +145,10 @@
                                 @foreach ($incomingItems as $item)
                                     <tr data-id="{{ $item->id }}"
                                         data-category="{{ $item->kategori_barang }}" 
-                                        data-status="{{ $item->status_barang }}"
                                         data-date="{{ $item->tanggal_masuk_barang->format('Y-m-d') }}">
                                         <td>
                                             <input type="checkbox" class="form-check-input item-checkbox" 
-                                                   value="{{ $item->id }}" onchange="updateBulkActions()">
+                                                   value="{{ $item->id }}" onchange="window.updateBulkActions()">
                                         </td>
                                         <td>{{ $loop->iteration }}</td>
                                         <td>
@@ -162,51 +165,46 @@
                                         <td>
                                             <span class="badge bg-secondary">{{ $item->kategori_barang }}</span>
                                         </td>
-                                        <td>{{ $item->tanggal_masuk_barang->format('d M Y') }}</td>
                                         <td>
                                             <span class="fw-bold">{{ $item->jumlah_barang }}</span> unit
                                         </td>
+                                        <td>{{ $item->tanggal_masuk_barang->format('d M Y') }}</td>
                                         <td>
                                             @if($item->lokasi_rak_barang)
                                                 <span class="badge bg-info">{{ $item->lokasi_rak_barang }}</span>
                                                 <button class="btn btn-sm btn-outline-info ms-1" 
-                                                        onclick="showRackLocation('{{ $item->lokasi_rak_barang }}')"
+                                                        onclick="window.showRackLocation('{{ $item->lokasi_rak_barang }}')"
                                                         title="Lihat di Peta Gudang">
                                                     <i class="fas fa-map-marker-alt"></i>
                                                 </button>
                                             @else
                                                 <span class="badge bg-secondary">Belum Ditempatkan</span>
                                                 <button class="btn btn-sm btn-outline-success ms-1" 
-                                                        onclick="quickAssignLocation({{ $item->id }})"
+                                                        onclick="window.quickAssignLocation({{ $item->id }})"
                                                         title="Tetapkan Lokasi Cepat">
                                                     <i class="fas fa-plus"></i>
                                                 </button>
                                             @endif
                                         </td>
-                                        <td>
-                                            @if ($item->status_barang == 'Banyak')
-                                                <span class="badge bg-success">{{ $item->status_barang }}</span>
-                                            @elseif ($item->status_barang == 'Sedikit')
-                                                <span class="badge bg-warning">{{ $item->status_barang }}</span>
-                                            @else
-                                                <span class="badge bg-danger">{{ $item->status_barang }}</span>
-                                            @endif
-                                        </td>
+                                        <td>{{ $item->nama_pengecer ?? '-' }}</td>
+                                        <td>{{ $item->metode_bayar ?? '-' }}</td>
+                                        <td>Rp{{ number_format($item->pembayaran_transaksi, 2, ',', '.') }}</td>
+                                        <td>{{ $item->nota_transaksi ?? '-' }}</td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                <button class="btn btn-sm btn-info" onclick="viewItemDetails({{ $item->id }})" 
+                                                <button class="btn btn-sm btn-info" onclick="window.viewItemDetails({{ $item->id }})" 
                                                         title="Lihat Detail">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
-                                                <button class="btn btn-sm btn-warning" onclick="editIncomingItem({{ $item->id }})" 
+                                                <button class="btn btn-sm btn-warning" onclick="window.editIncomingItem({{ $item->id }})" 
                                                         title="Edit Item">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button class="btn btn-sm btn-success" onclick="moveToOutgoing({{ $item->id }})" 
+                                                <button class="btn btn-sm btn-success" onclick="window.moveToOutgoing({{ $item->id }})" 
                                                         title="Pindah ke Barang Keluar">
                                                     <i class="fas fa-arrow-right"></i>
                                                 </button>
-                                                <button class="btn btn-sm btn-danger" onclick="deleteIncomingItem({{ $item->id }})" 
+                                                <button class="btn btn-sm btn-danger" onclick="window.deleteIncomingItem({{ $item->id }})" 
                                                         title="Hapus Item">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
@@ -216,10 +214,10 @@
                                 @endforeach
                             @else
                                 <tr>
-                                    <td colspan="9" class="text-center py-4">
+                                    <td colspan="12" class="text-center py-4">
                                         <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                                         <p class="text-muted">Tidak ada data barang masuk.</p>
-                                        <button class="btn btn-primary" onclick="addNewIncomingItem()">
+                                        <button class="btn btn-primary" onclick="window.addNewIncomingItem()">
                                             <i class="fas fa-plus"></i> Tambah Barang Baru
                                         </button>
                                     </td>
@@ -326,11 +324,13 @@
                                 <th>No.</th>
                                 <th>Nama Barang</th>
                                 <th>Kategori</th>
-                                <th>Tanggal Keluar</th>
                                 <th>Jumlah</th>
-                                <th>Tujuan</th>
+                                <th>Tanggal Keluar</th>
                                 <th>Lokasi Rak Asal</th>
-                                <th>Status</th>
+                                <th>Nama Pengecer</th>
+                                <th>Metode Bayar</th>
+                                <th>Pembayaran Transaksi</th>
+                                <th>Nota Transaksi</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -356,11 +356,10 @@
                                         <td>
                                             <span class="badge bg-secondary">{{ $item->kategori_barang }}</span>
                                         </td>
-                                        <td>{{ $item->tanggal_keluar_barang->format('d M Y') }}</td>
                                         <td>
                                             <span class="fw-bold text-danger">{{ $item->jumlah_barang }}</span> unit
                                         </td>
-                                        <td>{{ $item->tujuan_distribusi ?? 'Tidak Diketahui' }}</td>
+                                        <td>{{ $item->tanggal_keluar_barang->format('d M Y') }}</td>
                                         <td>
                                             @if($item->lokasi_rak_barang)
                                                 <span class="badge bg-info">{{ $item->lokasi_rak_barang }}</span>
@@ -368,24 +367,25 @@
                                                 <span class="badge bg-secondary">-</span>
                                             @endif
                                         </td>
-                                        <td>
-                                            <span class="badge bg-success">Selesai</span>
-                                        </td>
+                                        <td>{{ $item->nama_pengecer ?? '-' }}</td>
+                                        <td>{{ $item->metode_bayar ?? '-' }}</td>
+                                        <td>Rp{{ number_format($item->pembayaran_transaksi, 2, ',', '.') }}</td>
+                                        <td>{{ $item->nota_transaksi ?? '-' }}</td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                <button class="btn btn-sm btn-info" onclick="viewItemDetails({{ $item->id }}, 'outgoing')" 
+                                                <button class="btn btn-sm btn-info" onclick="window.viewItemDetails({{ $item->id }}, 'outgoing')" 
                                                         title="Lihat Detail">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
-                                                <button class="btn btn-sm btn-warning" onclick="editOutgoingItem({{ $item->id }})" 
+                                                <button class="btn btn-sm btn-warning" onclick="window.editOutgoingItem({{ $item->id }})" 
                                                         title="Edit Item Keluar">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button class="btn btn-sm btn-primary" onclick="printDeliveryNote({{ $item->id }})" 
+                                                <button class="btn btn-sm btn-primary" onclick="window.printDeliveryNote({{ $item->id }})" 
                                                         title="Cetak Surat Jalan">
                                                     <i class="fas fa-print"></i>
                                                 </button>
-                                                <button class="btn btn-sm btn-danger" onclick="deleteOutgoingItem({{ $item->id }})" 
+                                                <button class="btn btn-sm btn-danger" onclick="window.deleteOutgoingItem({{ $item->id }})" 
                                                         title="Hapus Item Keluar">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
@@ -395,7 +395,7 @@
                                 @endforeach
                             @else
                                 <tr>
-                                    <td colspan="9" class="text-center py-4">
+                                    <td colspan="11" class="text-center py-4">
                                         <i class="fas fa-truck fa-3x text-muted mb-3"></i>
                                         <p class="text-muted">Tidak ada data barang keluar.</p>
                                     </td>
@@ -448,7 +448,7 @@
                             </div>
                             <div class="card-body text-center py-5">
                                 <p class="text-muted">Klik tombol di bawah untuk menambahkan barang baru ke gudang.</p>
-                                <button type="button" class="btn btn-primary btn-lg" onclick="addNewIncomingItem()">
+                                <button type="button" class="btn btn-primary btn-lg" onclick="window.addNewIncomingItem()">
                                     <i class="fas fa-box-open"></i> Tambah Barang Masuk
                                 </button>
                             </div>
@@ -463,7 +463,7 @@
                             </div>
                             <div class="card-body text-center py-5">
                                 <p class="text-muted">Klik tombol di bawah untuk memproses pengeluaran barang dari gudang.</p>
-                                <button type="button" class="btn btn-danger btn-lg" onclick="addNewOutgoingItem()">
+                                <button type="button" class="btn btn-danger btn-lg" onclick="window.addNewOutgoingItem()">
                                     <i class="fas fa-shipping-fast"></i> Proses Barang Keluar
                                 </button>
                             </div>
@@ -481,22 +481,22 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <button class="btn btn-outline-primary w-100 mb-2" onclick="importFromCSV()">
+                                        <button class="btn btn-outline-primary w-100 mb-2" onclick="window.importFromCSV()">
                                             <i class="fas fa-file-csv"></i> Import dari CSV
                                         </button>
                                     </div>
                                     <div class="col-md-3">
-                                        <button class="btn btn-outline-success w-100 mb-2" onclick="generateBarcode()">
+                                        <button class="btn btn-outline-success w-100 mb-2" onclick="window.generateBarcode()">
                                             <i class="fas fa-barcode"></i> Generate Barcode
                                         </button>
                                     </div>
                                     <div class="col-md-3">
-                                        <button class="btn btn-outline-warning w-100 mb-2" onclick="stockOpname()">
+                                        <button class="btn btn-outline-warning w-100 mb-2" onclick="window.stockOpname()">
                                             <i class="fas fa-clipboard-check"></i> Stock Opname
                                         </button>
                                     </div>
                                     <div class="col-md-3">
-                                        <button class="btn btn-outline-info w-100 mb-2" onclick="viewWarehouse()">
+                                        <button class="btn btn-outline-info w-100 mb-2" onclick="window.viewWarehouse()">
                                             <i class="fas fa-warehouse"></i> Lihat Gudang
                                         </button>
                                     </div>
@@ -523,7 +523,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                <button type="button" class="btn btn-primary" onclick="printItemDetails()">
+                <button type="button" class="btn btn-primary" onclick="window.printItemDetails()">
                     <i class="fas fa-print"></i> Cetak Detail
                 </button>
             </div>
@@ -578,7 +578,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" onclick="confirmRackSelection()" disabled id="confirmRackBtn">
+                <button type="button" class="btn btn-primary" onclick="window.confirmRackSelection()" disabled id="confirmRackBtn">
                     <i class="fas fa-check"></i> Pilih Lokasi
                 </button>
             </div>
@@ -601,7 +601,7 @@
                         <label for="csvFile" class="form-label">File CSV</label>
                         <input type="file" class="form-control" id="csvFile" name="csv_file" accept=".csv" required>
                         <small class="form-text text-muted">
-                            Format: nama_barang, kategori_barang, jumlah_barang, tanggal_masuk_barang, lokasi_rak_barang
+                            Format: nama_barang, kategori_barang, jumlah_barang, tanggal_masuk_barang, lokasi_rak_barang, nama_pengecer, metode_bayar, pembayaran_transaksi, nota_transaksi
                         </small>
                     </div>
                     <div class="mb-3">
@@ -615,13 +615,13 @@
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i>
                         <strong>Template CSV:</strong>
-                        <a href="#" onclick="downloadCSVTemplate()" class="alert-link">Download template CSV</a>
+                        <a href="#" onclick="window.downloadCSVTemplate()" class="alert-link">Download template CSV</a>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" onclick="processCSVImport()">
+                <button type="button" class="btn btn-primary" onclick="window.processCSVImport()">
                     <i class="fas fa-upload"></i> Import Data
                 </button>
             </div>
@@ -792,6 +792,10 @@
 }
 </style>
 
+{{-- PENTING: BLOK SCRIPT INI HARUS DIPINDAHKAN KE LAYOUT UTAMA (misal: layouts/app.blade.php) --}}
+{{-- ATAU GUNAKAN @push('scripts') DI LAYOUT UTAMA DAN @push('scripts') DI SINI --}}
+{{-- JANGAN BIARKAN BLOK SCRIPT INI DI DALAM PARTIAL INI SECARA LANGSUNG --}}
+{{-- Karena ini menyebabkan masalah scope dan urutan pemuatan script --}}
 <script>
 // Fungsi-fungsi yang akan dipanggil dari HTML (onclick) harus berada di lingkup global
 // atau diakses melalui window.namaFungsi. Untuk kemudahan, kita akan membuatnya global.
@@ -799,31 +803,31 @@
 /**
  * Menginisialisasi fungsionalitas halaman setelah DOM dimuat.
  */
-function initializePage() {
+window.initializePage = function() {
     // Setup filter functionality
-    setupFilters();
+    window.setupFilters();
     
     // Setup bulk actions
-    setupBulkActions();
+    window.setupBulkActions();
     
     // Setup outgoing item selector
-    setupOutgoingItemSelector();
+    window.setupOutgoingItemSelector();
 }
 
 /**
  * Mengatur fungsionalitas filter dan pencarian untuk tabel barang.
  */
-function setupFilters() {
+window.setupFilters = function() {
     // Incoming items filters
     const searchIncomingInput = document.getElementById('searchIncomingInput');
     const categoryFilter = document.getElementById('categoryFilter');
-    const statusFilter = document.getElementById('statusFilter');
+    // const statusFilter = document.getElementById('statusFilter'); // Dihapus
     const dateIncomingFilter = document.getElementById('dateIncomingFilter');
 
     function filterIncomingTable() {
         const searchText = searchIncomingInput ? searchIncomingInput.value.toLowerCase() : '';
         const selectedCategory = categoryFilter ? categoryFilter.value : '';
-        const selectedStatus = statusFilter ? statusFilter.value : '';
+        // const selectedStatus = statusFilter ? statusFilter.value : ''; // Dihapus
         const selectedDate = dateIncomingFilter ? dateIncomingFilter.value : '';
         
         const rows = document.querySelectorAll('#incomingTable tbody tr');
@@ -833,17 +837,17 @@ function setupFilters() {
             
             const nameCell = row.cells[2]; // Nama Barang column
             const category = row.dataset.category || '';
-            const status = row.dataset.status || '';
+            // const status = row.dataset.status || ''; // Dihapus
             const date = row.dataset.date || '';
 
             if (nameCell) {
                 const nameText = nameCell.textContent.toLowerCase();
                 const matchesSearch = nameText.includes(searchText);
                 const matchesCategory = !selectedCategory || category === selectedCategory;
-                const matchesStatus = !selectedStatus || status === selectedStatus;
+                // const matchesStatus = !selectedStatus || status === selectedStatus; // Dihapus
                 const matchesDate = !selectedDate || date === selectedDate;
 
-                if (matchesSearch && matchesCategory && matchesStatus && matchesDate) {
+                if (matchesSearch && matchesCategory && matchesDate) { // Diperbarui
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
@@ -854,7 +858,7 @@ function setupFilters() {
 
     if (searchIncomingInput) searchIncomingInput.addEventListener('keyup', filterIncomingTable);
     if (categoryFilter) categoryFilter.addEventListener('change', filterIncomingTable);
-    if (statusFilter) statusFilter.addEventListener('change', filterIncomingTable);
+    // if (statusFilter) statusFilter.addEventListener('change', filterIncomingTable); // Dihapus
     if (dateIncomingFilter) dateIncomingFilter.addEventListener('change', filterIncomingTable);
 
     // Outgoing items filters
@@ -874,10 +878,10 @@ function setupFilters() {
         rows.forEach(row => {
             if (row.cells.length < 2) return; // Skip empty rows
             
-            const nameCell = rows[i].cells[1]; // Nama Barang column
-            const category = rows[i].dataset.category || '';
-            const destination = rows[i].dataset.destination || '';
-            const date = rows[i].dataset.date || '';
+            const nameCell = row.cells[1]; // Nama Barang column (index 1 karena No. di index 0)
+            const category = row.dataset.category || '';
+            const destination = row.dataset.destination || '';
+            const date = row.dataset.date || '';
 
             if (nameCell) {
                 const nameText = nameCell.textContent.toLowerCase();
@@ -887,9 +891,9 @@ function setupFilters() {
                 const matchesDate = !selectedDate || date === selectedDate;
 
                 if (matchesSearch && matchesCategory && matchesDestination && matchesDate) {
-                    rows[i].style.display = '';
+                    row.style.display = '';
                 } else {
-                    rows[i].style.display = 'none';
+                    row.style.display = 'none';
                 }
             }
         });
@@ -904,7 +908,7 @@ function setupFilters() {
 /**
  * Mengatur fungsionalitas aksi bulk (pilih semua, edit/hapus terpilih).
  */
-function setupBulkActions() {
+window.setupBulkActions = function() {
     const selectAllIncoming = document.getElementById('selectAllIncoming');
     const selectAllIncomingHeader = document.getElementById('selectAllIncomingHeader');
     
@@ -914,7 +918,7 @@ function setupBulkActions() {
             checkboxes.forEach(checkbox => {
                 checkbox.checked = this.checked;
             });
-            updateBulkActions();
+            window.updateBulkActions();
         });
     }
     
@@ -924,7 +928,7 @@ function setupBulkActions() {
             checkboxes.forEach(checkbox => {
                 checkbox.checked = this.checked;
             });
-            updateBulkActions();
+            window.updateBulkActions();
         });
     }
 }
@@ -932,7 +936,7 @@ function setupBulkActions() {
 /**
  * Mengatur fungsionalitas pemilih barang keluar (mengisi kategori dan lokasi otomatis).
  */
-function setupOutgoingItemSelector() {
+window.setupOutgoingItemSelector = function() {
     // This function is now less critical as the forms are in the modal,
     // but the logic for updating fields based on selected item is still relevant
     // for the modal's dynamic form content.
@@ -941,7 +945,7 @@ function setupOutgoingItemSelector() {
 /**
  * Memperbarui status tombol aksi bulk berdasarkan item yang dipilih.
  */
-function updateBulkActions() {
+window.updateBulkActions = function() {
     const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
     const bulkEditBtn = document.getElementById('bulkEditBtn');
     const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
@@ -957,7 +961,7 @@ function updateBulkActions() {
  * @param {number} itemId - ID barang.
  * @param {string} itemType - 'incoming' atau 'outgoing'.
  */
-window.viewItemDetails = function(itemId, itemType = 'incoming') {
+window.viewItemDetails = async function(itemId, itemType = 'incoming') { // Added async
     let itemsData = [];
     if (itemType === 'incoming') {
         itemsData = @json($incomingItems ?? []);
@@ -985,9 +989,12 @@ window.viewItemDetails = function(itemId, itemType = 'incoming') {
                                     <tr><td><strong>Nama Barang:</strong></td><td>${item.nama_barang}</td></tr>
                                     <tr><td><strong>Kategori:</strong></td><td><span class="badge bg-secondary">${item.kategori_barang}</span></td></tr>
                                     <tr><td><strong>Jumlah:</strong></td><td><span class="fw-bold">${item.jumlah_barang}</span> unit</td></tr>
-                                    <tr><td><strong>Status:</strong></td><td><span class="badge ${getStatusBadgeClass(item.status_barang)}">${item.status_barang}</span></td></tr>
                                     <tr><td><strong>Tanggal Masuk:</strong></td><td>${new Date(item.tanggal_masuk_barang).toLocaleDateString('id-ID', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</td></tr>
                                     <tr><td><strong>Lokasi Rak:</strong></td><td>${item.lokasi_rak_barang ? '<span class="badge bg-info">' + item.lokasi_rak_barang + '</span>' : '<span class="badge bg-secondary">Belum ditempatkan</span>'}</td></tr>
+                                    <tr><td><strong>Nama Pengecer:</strong></td><td>${item.nama_pengecer ?? '-'}</td></tr>
+                                    <tr><td><strong>Metode Bayar:</strong></td><td>${item.metode_bayar ?? '-'}</td></tr>
+                                    <tr><td><strong>Pembayaran Transaksi:</strong></td><td>Rp${window.number_format(item.pembayaran_transaksi, 2, ',', '.')}</td></tr>
+                                    <tr><td><strong>Nota Transaksi:</strong></td><td>${item.nota_transaksi ?? '-'}</td></tr>
                                 </table>
                             </div>
                         </div>
@@ -999,16 +1006,16 @@ window.viewItemDetails = function(itemId, itemType = 'incoming') {
                             </div>
                             <div class="card-body">
                                 <div class="d-grid gap-2">
-                                    <button class="btn btn-warning btn-sm" onclick="editIncomingItem(${item.id})">
+                                    <button class="btn btn-warning btn-sm" onclick="window.editIncomingItem(${item.id})">
                                         <i class="fas fa-edit"></i> Edit Barang
                                     </button>
-                                    <button class="btn btn-info btn-sm" onclick="showRackSelector('crud_lokasi_rak', ${item.id})">
+                                    <button class="btn btn-info btn-sm" onclick="window.showRackSelector('crud_lokasi_rak', ${item.id})">
                                         <i class="fas fa-arrows-alt"></i> Pindah Lokasi
                                     </button>
-                                    <button class="btn btn-primary btn-sm" onclick="duplicateItem(${item.id})">
+                                    <button class="btn btn-primary btn-sm" onclick="window.duplicateItem(${item.id})">
                                         <i class="fas fa-copy"></i> Duplikat Barang
                                     </button>
-                                    <button class="btn btn-success btn-sm" onclick="generateQR(${item.id})">
+                                    <button class="btn btn-success btn-sm" onclick="window.generateQR(${item.id})">
                                         <i class="fas fa-qrcode"></i> QR Code
                                     </button>
                                 </div>
@@ -1050,8 +1057,11 @@ window.viewItemDetails = function(itemId, itemType = 'incoming') {
                                     <tr><td><strong>Kategori:</strong></td><td><span class="badge bg-secondary">${item.kategori_barang}</span></td></tr>
                                     <tr><td><strong>Jumlah:</strong></td><td><span class="fw-bold text-danger">${item.jumlah_barang}</span> unit</td></tr>
                                     <tr><td><strong>Tanggal Keluar:</strong></td><td>${new Date(item.tanggal_keluar_barang).toLocaleDateString('id-ID', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</td></tr>
-                                    <tr><td><strong>Tujuan:</strong></td><td><span class="fw-bold">${item.tujuan_distribusi || 'Tidak diketahui'}</span></td></tr>
                                     <tr><td><strong>Lokasi Rak Asal:</strong></td><td>${item.lokasi_rak_barang ? '<span class="badge bg-info">' + item.lokasi_rak_barang + '</span>' : '<span class="badge bg-secondary">-</span>'}</td></tr>
+                                    <tr><td><strong>Nama Pengecer:</strong></td><td>${item.nama_pengecer ?? '-'}</td></tr>
+                                    <tr><td><strong>Metode Bayar:</strong></td><td>${item.metode_bayar ?? '-'}</td></tr>
+                                    <tr><td><strong>Pembayaran Transaksi:</strong></td><td>Rp${window.number_format(item.pembayaran_transaksi, 2, ',', '.')}</td></tr>
+                                    <tr><td><strong>Nota Transaksi:</strong></td><td>${item.nota_transaksi ?? '-'}</td></tr>
                                 </table>
                             </div>
                         </div>
@@ -1063,13 +1073,13 @@ window.viewItemDetails = function(itemId, itemType = 'incoming') {
                             </div>
                             <div class="card-body">
                                 <div class="d-grid gap-2">
-                                    <button class="btn btn-primary btn-sm" onclick="printDeliveryNote(${item.id})">
+                                    <button class="btn btn-primary btn-sm" onclick="window.printDeliveryNote(${item.id})">
                                         <i class="fas fa-print"></i> Cetak Surat Jalan
                                     </button>
-                                    <button class="btn btn-success btn-sm" onclick="trackDelivery(${item.id})">
+                                    <button class="btn btn-success btn-sm" onclick="window.trackDelivery(${item.id})">
                                         <i class="fas fa-truck"></i> Lacak Pengiriman
                                     </button>
-                                    <button class="btn btn-info btn-sm" onclick="updateDeliveryStatus(${item.id})">
+                                    <button class="btn btn-info btn-sm" onclick="window.updateDeliveryStatus(${item.id})">
                                         <i class="fas fa-edit"></i> Update Status
                                     </button>
                                 </div>
@@ -1106,7 +1116,7 @@ window.viewItemDetails = function(itemId, itemType = 'incoming') {
         const modal = new bootstrap.Modal(document.getElementById('itemDetailModal'));
         modal.show();
     } else {
-        showAlert('error', 'Data barang tidak ditemukan.');
+        window.showAlert('error', 'Data barang tidak ditemukan.');
     }
 }
 
@@ -1114,54 +1124,59 @@ window.viewItemDetails = function(itemId, itemType = 'incoming') {
  * Menampilkan modal form CRUD untuk menambah barang masuk baru.
  */
 window.addNewIncomingItem = function() {
-    renderItemCrudForm('incoming', 'add');
-}
-
-/**
- * Menampilkan modal form CRUD untuk menambah barang keluar baru.
- */
-window.addNewOutgoingItem = function() {
-    renderItemCrudForm('outgoing', 'add');
+    window.renderItemCrudForm('incoming', 'add');
 }
 
 /**
  * Menampilkan modal form CRUD untuk mengedit barang masuk.
  * @param {number} itemId - ID barang masuk yang akan diedit.
  */
-window.editIncomingItem = function(itemId) {
-    fetch(`/staff/incoming-items/${itemId}`)
-        .then(response => response.json())
-        .then(result => {
-            if (result.success) {
-                renderItemCrudForm('incoming', 'edit', result.data);
-            } else {
-                showAlert('error', result.message || 'Gagal memuat data barang.');
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching incoming item for edit:', error);
-            showAlert('error', 'Terjadi kesalahan saat memuat data barang.');
-        });
+window.editIncomingItem = async function(itemId) { // Added async
+    try {
+        const response = await fetch(`/staff/incoming-items/${itemId}`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server response for editIncomingItem was not OK:', errorText);
+            window.showAlert('error', `Gagal memuat data barang untuk diedit. Status: ${response.status}. Detail di konsol.`);
+            return;
+        }
+        const result = await response.json();
+
+        if (result.success) {
+            window.renderItemCrudForm('incoming', 'edit', result.data);
+        } else {
+            window.showAlert('error', result.message || 'Gagal memuat data barang.');
+        }
+    } catch (error) {
+        console.error('Error fetching incoming item for edit:', error);
+        window.showAlert('error', 'Terjadi kesalahan saat memuat data barang.');
+    }
 }
 
 /**
  * Menampilkan modal form CRUD untuk mengedit barang keluar.
  * @param {number} itemId - ID barang keluar yang akan diedit.
  */
-window.editOutgoingItem = function(itemId) {
-    fetch(`/staff/outgoing-items/${itemId}`)
-        .then(response => response.json())
-        .then(result => {
-            if (result.success) {
-                renderItemCrudForm('outgoing', 'edit', result.data);
-            } else {
-                showAlert('error', result.message || 'Gagal memuat data barang keluar.');
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching outgoing item for edit:', error);
-            showAlert('error', 'Terjadi kesalahan saat memuat data barang keluar.');
-        });
+window.editOutgoingItem = async function(itemId) { // Added async
+    try {
+        const response = await fetch(`/staff/outgoing-items/${itemId}`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server response for editOutgoingItem was not OK:', errorText);
+            window.showAlert('error', `Gagal memuat data barang keluar untuk diedit. Status: ${response.status}. Detail di konsol.`);
+            return;
+        }
+        const result = await response.json();
+
+        if (result.success) {
+            window.renderItemCrudForm('outgoing', 'edit', result.data);
+        } else {
+            window.showAlert('error', result.message || 'Gagal memuat data barang keluar.');
+        }
+    } catch (error) {
+        console.error('Error fetching outgoing item for edit:', error);
+        window.showAlert('error', 'Terjadi kesalahan saat memuat data barang keluar.');
+    }
 }
 
 /**
@@ -1179,7 +1194,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
     const submitBtn = document.getElementById('itemCrudSubmitBtn');
 
     // Set the form's onsubmit handler to the generic handler
-    itemCrudForm.onsubmit = (event) => handleItemCrudSubmit(event, itemType, mode);
+    itemCrudForm.onsubmit = (event) => window.handleItemCrudSubmit(event, itemType, mode);
 
     let formHtml = '';
     itemCrudForm.reset(); // Reset form fields
@@ -1228,11 +1243,39 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <label for="crud_lokasi_rak" class="form-label">Lokasi Rak</label>
                     <div class="input-group">
                         <input type="text" class="form-control" id="crud_lokasi_rak" name="lokasi_rak_barang" pattern="R[1-8]-[1-4]-[1-6]" placeholder="R1-1-1 (opsional)">
-                        <button type="button" class="btn btn-outline-secondary" onclick="showRackSelector('crud_lokasi_rak')">
+                        <button type="button" class="btn btn-outline-secondary" onclick="window.showRackSelector('crud_lokasi_rak')">
                             <i class="fas fa-map"></i> Pilih
                         </button>
                     </div>
                     <small class="form-text text-muted">Format: R[1-8]-[1-4]-[1-6]</small>
+                </div>
+                <div class="mb-3">
+                    <label for="crud_nama_pengecer" class="form-label">Nama Pengecer</label>
+                    <input type="text" class="form-control" id="crud_nama_pengecer" name="nama_pengecer" placeholder="Nama Pengecer (opsional)">
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="crud_metode_bayar" class="form-label">Metode Bayar</label>
+                            <select class="form-select" id="crud_metode_bayar" name="metode_bayar">
+                                <option value="">Pilih Metode</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Transfer Bank">Transfer Bank</option>
+                                <option value="Kartu Kredit">Kartu Kredit</option>
+                                <option value="Debit">Debit</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="crud_pembayaran_transaksi" class="form-label">Pembayaran Transaksi</label>
+                            <input type="number" step="0.01" class="form-control" id="crud_pembayaran_transaksi" name="pembayaran_transaksi" placeholder="0.00">
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="crud_nota_transaksi" class="form-label">Nota Transaksi</label>
+                    <input type="text" class="form-control" id="crud_nota_transaksi" name="nota_transaksi" placeholder="Nomor Nota (opsional)">
                 </div>
             `;
         } else { // outgoing - add mode (e.g., from "Pindah ke Barang Keluar" or "Proses Barang Keluar")
@@ -1253,7 +1296,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
             formHtml = `
                 <div class="mb-3">
                     <label for="crud_nama_barang" class="form-label">Nama Barang *</label>
-                    <select class="form-select" id="crud_nama_barang" name="nama_barang" required onchange="updateOutgoingFormFields(this)">
+                    <select class="form-select" id="crud_nama_barang" name="nama_barang" required onchange="window.updateOutgoingFormFields(this)">
                         <option value="">Pilih dari stok tersedia</option>
                         @if(isset($incomingItems))
                             @foreach($incomingItems->where('jumlah_barang', '>', 0) as $incItem)
@@ -1288,12 +1331,36 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label for="crud_tujuan_distribusi" class="form-label">Tujuan Distribusi *</label>
-                    <input type="text" class="form-control" id="crud_tujuan_distribusi" name="tujuan_distribusi" required placeholder="Nama toko/pelanggan">
-                </div>
-                <div class="mb-3">
                     <label for="crud_lokasi_asal" class="form-label">Lokasi Rak Asal</label>
                     <input type="text" class="form-control" id="crud_lokasi_asal" name="lokasi_rak_barang" readonly placeholder="Otomatis dari stok" value="${defaultLocation}">
+                </div>
+                <div class="mb-3">
+                    <label for="crud_nama_pengecer_outgoing" class="form-label">Nama Pengecer *</label>
+                    <input type="text" class="form-control" id="crud_nama_pengecer_outgoing" name="nama_pengecer" required placeholder="Nama Pengecer">
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="crud_metode_bayar_outgoing" class="form-label">Metode Bayar</label>
+                            <select class="form-select" id="crud_metode_bayar_outgoing" name="metode_bayar">
+                                <option value="">Pilih Metode</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Transfer Bank">Transfer Bank</option>
+                                <option value="Kartu Kredit">Kartu Kredit</option>
+                                <option value="Debit">Debit</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="crud_pembayaran_transaksi_outgoing" class="form-label">Pembayaran Transaksi</label>
+                            <input type="number" step="0.01" class="form-control" id="crud_pembayaran_transaksi_outgoing" name="pembayaran_transaksi" placeholder="0.00">
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="crud_nota_transaksi_outgoing" class="form-label">Nota Transaksi</label>
+                    <input type="text" class="form-control" id="crud_nota_transaksi_outgoing" name="nota_transaksi" placeholder="Nomor Nota (opsional)">
                 </div>
             `;
         }
@@ -1314,6 +1381,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                 <div class="mb-3">
                     <label for="crud_kategori_barang" class="form-label">Kategori Barang *</label>
                     <select class="form-select" id="crud_kategori_barang" name="kategori_barang" required>
+                        <option value="">Pilih Kategori</option>
                         <option value="Makanan" ${itemData.kategori_barang === 'Makanan' ? 'selected' : ''}>Makanan</option>
                         <option value="Minuman" ${itemData.kategori_barang === 'Minuman' ? 'selected' : ''}>Minuman</option>
                         <option value="Elektronik" ${itemData.kategori_barang === 'Elektronik' ? 'selected' : ''}>Elektronik</option>
@@ -1340,11 +1408,39 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <label for="crud_lokasi_rak" class="form-label">Lokasi Rak</label>
                     <div class="input-group">
                         <input type="text" class="form-control" id="crud_lokasi_rak" name="lokasi_rak_barang" value="${itemData.lokasi_rak_barang || ''}" pattern="R[1-8]-[1-4]-[1-6]" placeholder="R1-1-1 (opsional)">
-                        <button type="button" class="btn btn-outline-secondary" onclick="showRackSelector('crud_lokasi_rak')">
+                        <button type="button" class="btn btn-outline-secondary" onclick="window.showRackSelector('crud_lokasi_rak')">
                             <i class="fas fa-map"></i> Pilih
                         </button>
                     </div>
                     <small class="form-text text-muted">Format: R[1-8]-[1-4]-[1-6]</small>
+                </div>
+                <div class="mb-3">
+                    <label for="crud_nama_pengecer" class="form-label">Nama Pengecer</label>
+                    <input type="text" class="form-control" id="crud_nama_pengecer" name="nama_pengecer" value="${itemData.nama_pengecer || ''}" placeholder="Nama Pengecer (opsional)">
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="crud_metode_bayar" class="form-label">Metode Bayar</label>
+                            <select class="form-select" id="crud_metode_bayar" name="metode_bayar">
+                                <option value="">Pilih Metode</option>
+                                <option value="Cash" ${itemData.metode_bayar === 'Cash' ? 'selected' : ''}>Cash</option>
+                                <option value="Transfer Bank" ${itemData.metode_bayar === 'Transfer Bank' ? 'selected' : ''}>Transfer Bank</option>
+                                <option value="Kartu Kredit" ${itemData.metode_bayar === 'Kartu Kredit' ? 'selected' : ''}>Kartu Kredit</option>
+                                <option value="Debit" ${itemData.metode_bayar === 'Debit' ? 'selected' : ''}>Debit</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="crud_pembayaran_transaksi" class="form-label">Pembayaran Transaksi</label>
+                            <input type="number" step="0.01" class="form-control" id="crud_pembayaran_transaksi" name="pembayaran_transaksi" value="${itemData.pembayaran_transaksi || 0.00}">
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="crud_nota_transaksi" class="form-label">Nota Transaksi</label>
+                    <input type="text" class="form-control" id="crud_nota_transaksi" name="nota_transaksi" value="${itemData.nota_transaksi || ''}" placeholder="Nomor Nota (opsional)">
                 </div>
             `;
         } else { // outgoing - edit mode
@@ -1377,12 +1473,36 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label for="crud_tujuan_distribusi" class="form-label">Tujuan Distribusi *</label>
-                    <input type="text" class="form-control" id="crud_tujuan_distribusi" name="tujuan_distribusi" value="${itemData.tujuan_distribusi}" required>
-                </div>
-                <div class="mb-3">
                     <label for="crud_lokasi_asal" class="form-label">Lokasi Rak Asal</label>
                     <input type="text" class="form-control" id="crud_lokasi_asal" name="lokasi_rak_barang" value="${itemData.lokasi_rak_barang || ''}" pattern="R[1-8]-[1-4]-[1-6]" placeholder="R1-1-1 (opsional)">
+                </div>
+                <div class="mb-3">
+                    <label for="crud_nama_pengecer_outgoing" class="form-label">Nama Pengecer *</label>
+                    <input type="text" class="form-control" id="crud_nama_pengecer_outgoing" name="nama_pengecer" value="${itemData.nama_pengecer || ''}" required placeholder="Nama Pengecer">
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="crud_metode_bayar_outgoing" class="form-label">Metode Bayar</label>
+                            <select class="form-select" id="crud_metode_bayar_outgoing" name="metode_bayar">
+                                <option value="">Pilih Metode</option>
+                                <option value="Cash" ${itemData.metode_bayar === 'Cash' ? 'selected' : ''}>Cash</option>
+                                <option value="Transfer Bank" ${itemData.metode_bayar === 'Transfer Bank' ? 'selected' : ''}>Transfer Bank</option>
+                                <option value="Kartu Kredit" ${itemData.metode_bayar === 'Kartu Kredit' ? 'selected' : ''}>Kartu Kredit</option>
+                                <option value="Debit" ${itemData.metode_bayar === 'Debit' ? 'selected' : ''}>Debit</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="crud_pembayaran_transaksi_outgoing" class="form-label">Pembayaran Transaksi</label>
+                            <input type="number" step="0.01" class="form-control" id="crud_pembayaran_transaksi_outgoing" name="pembayaran_transaksi" value="${itemData.pembayaran_transaksi || 0.00}">
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="crud_nota_transaksi_outgoing" class="form-label">Nota Transaksi</label>
+                    <input type="text" class="form-control" id="crud_nota_transaksi_outgoing" name="nota_transaksi" value="${itemData.nota_transaksi || ''}" placeholder="Nomor Nota (opsional)">
                 </div>
             `;
         }
@@ -1414,7 +1534,7 @@ window.handleItemCrudSubmit = async function(event, itemType, mode) {
     event.preventDefault();
     const form = event.target;
     const formData = new FormData(form);
-    const itemId = document.getElementById('crudItemId') ? document.getElementById('crudItemId').value : null; // Add null check
+    const itemId = document.getElementById('crudItemId') ? document.getElementById('crudItemId').value : null;
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     const submitBtn = document.getElementById('itemCrudSubmitBtn');
     const originalBtnHtml = submitBtn.innerHTML;
@@ -1438,7 +1558,7 @@ window.handleItemCrudSubmit = async function(event, itemType, mode) {
             const availableStock = parseInt(selectedOption ? selectedOption.dataset.available : '0');
 
             if (requestedQuantity > availableStock) {
-                showAlert('error', `Jumlah yang diminta (${requestedQuantity}) melebihi stok yang tersedia (${availableStock}).`);
+                window.showAlert('error', `Jumlah yang diminta (${requestedQuantity}) melebihi stok yang tersedia (${availableStock}).`);
                 return;
             }
             url = '{{ route("staff.outgoing_items.store") }}';
@@ -1447,6 +1567,10 @@ window.handleItemCrudSubmit = async function(event, itemType, mode) {
             formData.append('_method', 'PUT'); // Spoof PUT method
         }
     }
+
+    // --- DEBUGGING: Log FormData sebelum dikirim ---
+    console.log('Data yang akan dikirim:', Object.fromEntries(formData.entries()));
+    // --- AKHIR DEBUGGING ---
 
     // Show loading state
     submitBtn.disabled = true;
@@ -1462,14 +1586,34 @@ window.handleItemCrudSubmit = async function(event, itemType, mode) {
             body: formData
         });
 
+        // Enhanced error handling for fetch responses
+        if (!response.ok) {
+            let errorText = `HTTP error! status: ${response.status}`;
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    errorText = errorData.message || JSON.stringify(errorData);
+                } else {
+                    errorText = await response.text(); // Get raw text (likely HTML error page)
+                }
+            } catch (parseError) {
+                console.error('Error parsing response for non-OK status:', parseError);
+                errorText += ` (Failed to parse response: ${parseError.message})`;
+            }
+            console.error('Server response was not OK:', errorText);
+            window.showAlert('error', `Terjadi kesalahan server: ${errorText.substring(0, 150)}... (Lihat konsol untuk detail)`);
+            return; // Stop execution
+        }
+
         const data = await response.json();
 
         if (data.success) {
-            showAlert('success', data.message);
+            window.showAlert('success', data.message);
             const itemCrudModalElement = document.getElementById('itemCrudModal');
             if (itemCrudModalElement) {
                 const itemCrudModal = bootstrap.Modal.getInstance(itemCrudModalElement);
-                if (itemCrudModal) itemCrudModal.hide(); // Add null check for instance
+                if (itemCrudModal) itemCrudModal.hide();
             }
             location.reload(); // Reload page to reflect changes
         } else {
@@ -1479,11 +1623,11 @@ window.handleItemCrudSubmit = async function(event, itemType, mode) {
                     errorMessage += `\n- ${data.errors[key][0]}`;
                 }
             }
-            showAlert('error', errorMessage);
+            window.showAlert('error', errorMessage);
         }
     } catch (error) {
         console.error('Fetch Error:', error);
-        showAlert('error', 'Terjadi kesalahan jaringan atau server: ' + error.message);
+        window.showAlert('error', 'Terjadi kesalahan jaringan atau server: ' + error.message);
     } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalBtnHtml;
@@ -1494,10 +1638,10 @@ window.handleItemCrudSubmit = async function(event, itemType, mode) {
  * Menangani penghapusan barang masuk.
  * @param {number} itemId - ID barang masuk yang akan dihapus.
  */
-window.deleteIncomingItem = function(itemId) {
-    showCustomConfirm('Apakah Anda yakin ingin menghapus barang masuk ini? Tindakan ini tidak dapat dibatalkan.', async () => {
+window.deleteIncomingItem = async function(itemId) { // Added async
+    window.showCustomConfirm('Apakah Anda yakin ingin menghapus barang masuk ini? Tindakan ini tidak dapat dibatalkan.', async () => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        showAlert('info', 'Menghapus barang masuk...');
+        window.showAlert('info', 'Menghapus barang masuk...');
 
         try {
             const response = await fetch(`/staff/incoming-items/${itemId}`, {
@@ -1508,17 +1652,37 @@ window.deleteIncomingItem = function(itemId) {
                 }
             });
 
+            // Enhanced error handling for fetch responses
+            if (!response.ok) {
+                let errorText = `HTTP error! status: ${response.status}`;
+                try {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const errorData = await response.json();
+                        errorText = errorData.message || JSON.stringify(errorData);
+                    } else {
+                        errorText = await response.text();
+                    }
+                } catch (parseError) {
+                    console.error('Error parsing response for non-OK status:', parseError);
+                    errorText += ` (Failed to parse response: ${parseError.message})`;
+                }
+                console.error('Server response was not OK:', errorText);
+                window.showAlert('error', `Gagal menghapus barang masuk. Status: ${response.status}. Detail di konsol.`);
+                return;
+            }
+
             const data = await response.json();
 
             if (data.success) {
-                showAlert('success', data.message);
+                window.showAlert('success', data.message);
                 location.reload();
             } else {
-                showAlert('error', data.message || 'Gagal menghapus barang masuk.');
+                window.showAlert('error', data.message || 'Gagal menghapus barang masuk.');
             }
         } catch (error) {
             console.error('Delete Error:', error);
-            showAlert('error', 'Terjadi kesalahan jaringan saat menghapus barang masuk.');
+            window.showAlert('error', 'Terjadi kesalahan jaringan saat menghapus barang masuk.');
         }
     });
 }
@@ -1527,10 +1691,10 @@ window.deleteIncomingItem = function(itemId) {
  * Menangani penghapusan barang keluar.
  * @param {number} itemId - ID barang keluar yang akan dihapus.
  */
-window.deleteOutgoingItem = function(itemId) {
-    showCustomConfirm('Apakah Anda yakin ingin menghapus barang keluar ini? Tindakan ini tidak dapat dibatalkan.', async () => {
+window.deleteOutgoingItem = async function(itemId) { // Added async
+    window.showCustomConfirm('Apakah Anda yakin ingin menghapus barang keluar ini? Tindakan ini tidak dapat dibatalkan.', async () => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        showAlert('info', 'Menghapus barang keluar...');
+        window.showAlert('info', 'Menghapus barang keluar...');
 
         try {
             const response = await fetch(`/staff/outgoing-items/${itemId}`, {
@@ -1541,17 +1705,37 @@ window.deleteOutgoingItem = function(itemId) {
                 }
             });
 
+            // Enhanced error handling for fetch responses
+            if (!response.ok) {
+                let errorText = `HTTP error! status: ${response.status}`;
+                try {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const errorData = await response.json();
+                        errorText = errorData.message || JSON.stringify(errorData);
+                    } else {
+                        errorText = await response.text();
+                    }
+                } catch (parseError) {
+                    console.error('Error parsing response for non-OK status:', parseError);
+                    errorText += ` (Failed to parse response: ${parseError.message})`;
+                }
+                console.error('Server response was not OK:', errorText);
+                window.showAlert('error', `Gagal menghapus barang keluar. Status: ${response.status}. Detail di konsol.`);
+                return;
+            }
+
             const data = await response.json();
 
             if (data.success) {
-                showAlert('success', data.message);
+                window.showAlert('success', data.message);
                 location.reload();
             } else {
-                showAlert('error', data.message || 'Gagal menghapus barang keluar.');
+                window.showAlert('error', data.message || 'Gagal menghapus barang keluar.');
             }
         } catch (error) {
             console.error('Delete Error:', error);
-            showAlert('error', 'Terjadi kesalahan jaringan saat menghapus barang keluar.');
+            window.showAlert('error', 'Terjadi kesalahan jaringan saat menghapus barang keluar.');
         }
     });
 }
@@ -1581,7 +1765,7 @@ window.updateOutgoingFormFields = function(selectElement) {
 window.showRackSelector = function(targetInputId, itemId = null) {
     window.currentTargetInput = targetInputId;
     window.currentItemIdForRack = itemId; // Store current item ID if moving an existing item
-    generateWarehouseSelector();
+    window.generateWarehouseSelector();
     const modal = new bootstrap.Modal(document.getElementById('rackSelectorModal'));
     modal.show();
 }
@@ -1593,12 +1777,32 @@ window.generateWarehouseSelector = async function() {
     const warehouseSelector = document.getElementById('warehouseSelector');
     if (!warehouseSelector) return;
     
-    showAlert('info', 'Memuat data lokasi gudang...');
+    window.showAlert('info', 'Memuat data lokasi gudang...');
 
     try {
         const response = await fetch('{{ route("staff.locations.available") }}', {
             headers: { 'Accept': 'application/json' }
         });
+        // Enhanced error handling for fetch responses
+        if (!response.ok) {
+            let errorText = `HTTP error! status: ${response.status}`;
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    errorText = errorData.message || JSON.stringify(errorData);
+                } else {
+                    errorText = await response.text();
+                }
+            } catch (parseError) {
+                console.error('Error parsing response for non-OK status:', parseError);
+                errorText += ` (Failed to parse response: ${parseError.message})`;
+            }
+            console.error('Server response for generateWarehouseSelector was not OK:', errorText);
+            window.showAlert('error', `Gagal memuat data lokasi gudang. Status: ${response.status}. Detail di konsol.`);
+            return;
+        }
+
         const result = await response.json();
 
         if (result.success) {
@@ -1633,7 +1837,7 @@ window.generateWarehouseSelector = async function() {
                         
                         html += `
                             <div class="${cellClass}" data-position="${position}" 
-                                 onclick="selectRackPosition('${position}', ${isOccupied && !isCurrentItemLocation})">
+                                 onclick="window.selectRackPosition('${position}', ${isOccupied && !isCurrentItemLocation})">
                                 ${cellContent}
                             </div>
                         `;
@@ -1644,13 +1848,13 @@ window.generateWarehouseSelector = async function() {
                 html += '</div></div>';
             }
             warehouseSelector.innerHTML = html;
-            showAlert('success', 'Data lokasi gudang berhasil dimuat.');
+            window.showAlert('success', 'Data lokasi gudang berhasil dimuat.');
         } else {
-            showAlert('error', result.message || 'Gagal memuat data lokasi gudang.');
+            window.showAlert('error', result.message || 'Gagal memuat data lokasi gudang.');
         }
     } catch (error) {
         console.error('Error fetching available locations:', error);
-        showAlert('error', 'Terjadi kesalahan jaringan saat memuat lokasi gudang.');
+        window.showAlert('error', 'Terjadi kesalahan jaringan saat memuat lokasi gudang.');
     }
 }
 
@@ -1661,7 +1865,7 @@ window.generateWarehouseSelector = async function() {
  */
 window.selectRackPosition = function(position, isOccupied) {
     if (isOccupied) {
-        showAlert('warning', 'Lokasi ini sudah ditempati barang lain.');
+        window.showAlert('warning', 'Lokasi ini sudah ditempati barang lain.');
         return;
     }
     
@@ -1706,26 +1910,35 @@ window.confirmRackSelection = async function() {
                 const newLocation = window.selectedRackPosition;
                 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 
-                showAlert('info', `Memperbarui lokasi barang #${itemId} ke ${newLocation}...`);
+                window.showAlert('info', `Memperbarui lokasi barang #${itemId} ke ${newLocation}...`);
 
-                // Fetch current item data to send a complete update request
                 try {
                     const itemResponse = await fetch(`/staff/incoming-items/${itemId}`);
-                    const itemResult = await itemResponse.json();
-
-                    if (!itemResult.success) {
-                        showAlert('error', itemResult.message || 'Gagal memuat data barang untuk diperbarui lokasinya.');
+                    if (!itemResponse.ok) {
+                        const errorText = await itemResponse.text();
+                        console.error('Server response for updateItemLocationToClickedRack (fetch existing) was not OK:', errorText);
+                        window.showAlert('error', `Gagal memuat data barang untuk diperbarui lokasinya. Status: ${itemResponse.status}. Detail di konsol.`);
                         return;
                     }
-                    const existingItemData = itemResult.data;
+                    const existingItemData = await itemResponse.json();
 
+                    if (!existingItemData.success) {
+                        window.showAlert('error', existingItemData.message || 'Gagal memuat data barang untuk diperbarui lokasinya.');
+                        return;
+                    }
+                    
                     const formData = new FormData();
                     formData.append('_method', 'PUT');
-                    formData.append('nama_barang', existingItemData.nama_barang);
-                    formData.append('kategori_barang', existingItemData.kategori_barang);
-                    formData.append('jumlah_barang', existingItemData.jumlah_barang);
-                    formData.append('tanggal_masuk_barang', existingItemData.tanggal_masuk_barang);
+                    formData.append('nama_barang', existingItemData.data.nama_barang);
+                    formData.append('kategori_barang', existingItemData.data.kategori_barang);
+                    formData.append('jumlah_barang', existingItemData.data.jumlah_barang);
+                    formData.append('tanggal_masuk_barang', existingItemData.data.tanggal_masuk_barang);
                     formData.append('lokasi_rak_barang', newLocation); // Update only location
+                    formData.append('nama_pengecer', existingItemData.data.nama_pengecer || '');
+                    formData.append('metode_bayar', existingItemData.data.metode_bayar || '');
+                    formData.append('pembayaran_transaksi', existingItemData.data.pembayaran_transaksi || 0.00);
+                    formData.append('nota_transaksi', existingItemData.data.nota_transaksi || '');
+
 
                     const response = await fetch(`/staff/incoming-items/${itemId}`, {
                         method: 'POST', // Laravel will interpret PUT via _method
@@ -1736,28 +1949,47 @@ window.confirmRackSelection = async function() {
                         body: formData
                     });
 
+                    // Enhanced error handling for fetch responses
+                    if (!response.ok) {
+                        let errorText = `HTTP error! status: ${response.status}`;
+                        try {
+                            const contentType = response.headers.get('content-type');
+                            if (contentType && contentType.includes('application/json')) {
+                                const errorData = await response.json();
+                                errorText = errorData.message || JSON.stringify(errorData);
+                            } else {
+                                errorText = await response.text();
+                            }
+                        } catch (parseError) {
+                            console.error('Error parsing response for non-OK status:', parseError);
+                            errorText += ` (Failed to parse response: ${parseError.message})`;
+                        }
+                        console.error('Server response for updateItemLocationToClickedRack (update) was not OK:', errorText);
+                        window.showAlert('error', `Gagal memperbarui lokasi barang. Status: ${response.status}. Detail di konsol.`);
+                        return;
+                    }
+
                     const data = await response.json();
 
                     if (data.success) {
-                        showAlert('success', data.message);
+                        window.showAlert('success', data.message);
                         location.reload(); // Reload untuk merefleksikan perubahan
                     } else {
-                        showAlert('error', data.message || 'Gagal memperbarui lokasi barang.');
+                        window.showAlert('error', data.message || 'Gagal memperbarui lokasi barang.');
                     }
                 } catch (error) {
                     console.error('Error updating item location:', error);
-                    showAlert('error', 'Terjadi kesalahan jaringan saat memperbarui lokasi barang.');
+                    window.showAlert('error', 'Terjadi kesalahan jaringan saat memperbarui lokasi barang.');
                 }
             }
         }
         
         // Close modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('rackSelectorModal'));
-        if (modal) modal.hide(); // Add null check
+        if (modal) modal.hide();
         
         // Reset selections
         window.selectedRackPosition = null;
-        window.currentTargetInput = null;
         window.currentItemIdForRack = null;
     }
 }
@@ -1770,7 +2002,7 @@ window.showRackLocation = function(rackPosition) {
     @if(Route::has('staff.item.management'))
         window.location.href = `{{ route('staff.item.management') }}?highlight=${rackPosition}`;
     @else
-        showAlert('info', `Lokasi barang: ${rackPosition}. Halaman pengelolaan gudang tidak tersedia.`);
+        window.showAlert('info', `Lokasi barang: ${rackPosition}. Halaman pengelolaan gudang tidak tersedia.`);
     @endif
 }
 
@@ -1779,17 +2011,22 @@ window.showRackLocation = function(rackPosition) {
  * @param {number} itemId - ID barang masuk.
  */
 window.quickAssignLocation = function(itemId) {
-    showCustomConfirm('Apakah Anda ingin menetapkan lokasi rak secara otomatis untuk barang ini?', async () => {
+    window.showCustomConfirm('Apakah Anda ingin menetapkan lokasi rak secara otomatis untuk barang ini?', async () => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        showAlert('info', 'Menetapkan lokasi otomatis...');
+        window.showAlert('info', 'Menetapkan lokasi otomatis...');
 
         try {
-            // Fetch current item data to send a complete update request
             const itemResponse = await fetch(`/staff/incoming-items/${itemId}`);
+            if (!itemResponse.ok) {
+                const errorText = await itemResponse.text();
+                console.error('Server response for quickAssignLocation (fetch existing) was not OK:', errorText);
+                window.showAlert('error', `Gagal memuat data barang untuk penetapan lokasi otomatis. Status: ${itemResponse.status}. Detail di konsol.`);
+                return;
+            }
             const itemResult = await itemResponse.json();
 
             if (!itemResult.success) {
-                showAlert('error', itemResult.message || 'Gagal memuat data barang untuk penetapan lokasi otomatis.');
+                window.showAlert('error', itemResult.message || 'Gagal memuat data barang untuk penetapan lokasi otomatis.');
                 return;
             }
             const existingItemData = itemResult.data;
@@ -1808,17 +2045,37 @@ window.quickAssignLocation = function(itemId) {
                 })
             });
 
+            // Enhanced error handling for fetch responses
+            if (!response.ok) {
+                let errorText = `HTTP error! status: ${response.status}`;
+                try {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const errorData = await response.json();
+                        errorText = errorData.message || JSON.stringify(errorData);
+                    } else {
+                        errorText = await response.text();
+                    }
+                } catch (parseError) {
+                    console.error('Error parsing response for non-OK status:', parseError);
+                    errorText += ` (Failed to parse response: ${parseError.message})`;
+                }
+                console.error('Server response for auto_assign_locations was not OK:', errorText);
+                window.showAlert('error', `Gagal menetapkan lokasi otomatis. Status: ${response.status}. Detail di konsol.`);
+                return;
+            }
+
             const data = await response.json();
 
             if (data.success) {
-                showAlert('success', data.message);
+                window.showAlert('success', data.message);
                 location.reload();
             } else {
-                showAlert('error', data.message || 'Gagal menetapkan lokasi otomatis.');
+                window.showAlert('error', data.message || 'Gagal menetapkan lokasi otomatis.');
             }
         } catch (error) {
             console.error('Quick assign error:', error);
-            showAlert('error', 'Terjadi kesalahan jaringan saat menetapkan lokasi.');
+            window.showAlert('error', 'Terjadi kesalahan jaringan saat menetapkan lokasi.');
         }
     });
 }
@@ -1828,10 +2085,15 @@ window.quickAssignLocation = function(itemId) {
  * @param {number} itemId - ID barang masuk.
  */
 window.moveToOutgoing = function(itemId) {
-    showCustomConfirm('Apakah Anda yakin ingin memindahkan barang ini ke daftar barang keluar? Ini akan mengurangi stok barang masuk dan menambahkannya ke barang keluar.', async () => {
-        // Fetch incoming item details to pre-fill the outgoing form
+    window.showCustomConfirm('Apakah Anda yakin ingin memindahkan barang ini ke daftar barang keluar? Ini akan mengurangi stok barang masuk dan menambahkannya ke barang keluar.', async () => {
         try {
             const response = await fetch(`/staff/incoming-items/${itemId}`);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Server response for moveToOutgoing (fetch incoming) was not OK:', errorText);
+                window.showAlert('error', `Gagal memuat data barang untuk dipindahkan. Status: ${response.status}. Detail di konsol.`);
+                return;
+            }
             const result = await response.json();
 
             if (result.success) {
@@ -1839,11 +2101,11 @@ window.moveToOutgoing = function(itemId) {
                 // Switch to add-items tab
                 const addTabButton = document.getElementById('add-items-tab');
                 if (addTabButton) {
-                    addTabButton.click(); // Activate the "Tambah Barang" tab
+                    addTabButton.click();
                 }
                 
                 // Render the outgoing form in 'add' mode with incoming item data
-                renderItemCrudForm('outgoing', 'add', itemData);
+                window.renderItemCrudForm('outgoing', 'add', itemData);
                 // Pre-select the item in the dropdown
                 const crudNamaBarangSelect = document.getElementById('crud_nama_barang');
                 if (crudNamaBarangSelect) {
@@ -1856,13 +2118,13 @@ window.moveToOutgoing = function(itemId) {
                         }
                     }
                 }
-                showAlert('info', `Silakan lengkapi detail untuk memproses barang keluar "${itemData.nama_barang}".`);
+                window.showAlert('info', `Silakan lengkapi detail untuk memproses barang keluar "${itemData.nama_barang}".`);
             } else {
-                showAlert('error', result.message || 'Gagal memuat data barang untuk dipindahkan.');
+                window.showAlert('error', result.message || 'Gagal memuat data barang untuk dipindahkan.');
             }
         } catch (error) {
             console.error('Error fetching item for move to outgoing:', error);
-            showAlert('error', 'Terjadi kesalahan saat memuat data barang.');
+            window.showAlert('error', 'Terjadi kesalahan saat memuat data barang.');
         }
     });
 }
@@ -1875,18 +2137,18 @@ window.bulkEditLocation = function() {
     const itemIds = Array.from(checkedBoxes).map(cb => cb.value);
     
     if (itemIds.length === 0) {
-        showAlert('warning', 'Pilih minimal satu item untuk diedit.');
+        window.showAlert('warning', 'Pilih minimal satu item untuk diedit.');
         return;
     }
     
-    showCustomConfirm(`Apakah Anda yakin ingin mengedit lokasi ${itemIds.length} item yang terpilih?`, () => {
+    window.showCustomConfirm(`Apakah Anda yakin ingin mengedit lokasi ${itemIds.length} item yang terpilih?`, () => {
         const newLocation = prompt('Masukkan lokasi rak baru (Format: R[1-8]-[1-4]-[1-6]):');
         if (newLocation) {
             const pattern = /^R[1-8]-[1-4]-[1-6]$/;
             if (pattern.test(newLocation)) {
-                sendBulkAction(itemIds, 'update_location', { location: newLocation });
+                window.sendBulkAction(itemIds, 'update_location', { location: newLocation });
             } else {
-                showAlert('error', 'Format lokasi tidak valid! Gunakan format: R[1-8]-[1-4]-[1-6]');
+                window.showAlert('error', 'Format lokasi tidak valid! Gunakan format: R[1-8]-[1-4]-[1-6]');
             }
         }
     });
@@ -1897,12 +2159,12 @@ window.bulkDelete = function() {
     const itemIds = Array.from(checkedBoxes).map(cb => cb.value);
     
     if (itemIds.length === 0) {
-        showAlert('warning', 'Pilih minimal satu item untuk dihapus.');
+        window.showAlert('warning', 'Pilih minimal satu item untuk dihapus.');
         return;
     }
     
-    showCustomConfirm(`Apakah Anda yakin ingin menghapus ${itemIds.length} item yang terpilih? Tindakan ini tidak dapat dibatalkan.`, () => {
-        sendBulkAction(itemIds, 'delete');
+    window.showCustomConfirm(`Apakah Anda yakin ingin menghapus ${itemIds.length} item yang terpilih? Tindakan ini tidak dapat dibatalkan.`, () => {
+        window.sendBulkAction(itemIds, 'delete');
     });
 }
 
@@ -1914,7 +2176,7 @@ window.bulkDelete = function() {
  */
 window.sendBulkAction = async function(itemIds, action, payload = {}) {
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    showAlert('info', `Memproses aksi bulk (${action})...`);
+    window.showAlert('info', `Memproses aksi bulk (${action})...`);
 
     try {
         const response = await fetch('{{ route("staff.items.bulk_update") }}', {
@@ -1931,10 +2193,30 @@ window.sendBulkAction = async function(itemIds, action, payload = {}) {
             })
         });
 
+        // Enhanced error handling for fetch responses
+        if (!response.ok) {
+            let errorText = `HTTP error! status: ${response.status}`;
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    errorText = errorData.message || JSON.stringify(errorData);
+                } else {
+                    errorText = await response.text();
+                }
+            } catch (parseError) {
+                console.error('Error parsing response for non-OK status:', parseError);
+                errorText += ` (Failed to parse response: ${parseError.message})`;
+            }
+            console.error('Server response for bulk_update was not OK:', errorText);
+            window.showAlert('error', `Gagal melakukan aksi bulk. Status: ${response.status}. Detail di konsol.`);
+            return;
+        }
+
         const data = await response.json();
 
         if (data.success) {
-            showAlert('success', data.message);
+            window.showAlert('success', data.message);
             location.reload();
         } else {
             let errorMessage = data.message || 'Gagal melakukan aksi bulk.';
@@ -1943,32 +2225,32 @@ window.sendBulkAction = async function(itemIds, action, payload = {}) {
                     errorMessage += `\n- ${data.errors[key][0]}`;
                 }
             }
-            showAlert('error', errorMessage);
+            window.showAlert('error', errorMessage);
         }
     } catch (error) {
         console.error('Bulk action error:', error);
-        showAlert('error', 'Terjadi kesalahan jaringan saat melakukan aksi bulk.');
+        window.showAlert('error', 'Terjadi kesalahan jaringan saat melakukan aksi bulk.');
     }
 }
 
 // Placeholder functions for other actions
 window.printDeliveryNote = function(itemId) {
-    showAlert('info', 'Menyiapkan surat jalan untuk dicetak...');
+    window.showAlert('info', 'Menyiapkan surat jalan untuk dicetak...');
     // Implement actual print logic or API call here
     setTimeout(() => {
-        showAlert('success', 'Surat jalan berhasil dicetak!');
+        window.showAlert('success', 'Surat jalan berhasil dicetak!');
     }, 1500);
 }
 
 window.trackDelivery = function(itemId) {
-    showAlert('info', 'Fitur pelacakan pengiriman akan segera hadir!');
+    window.showAlert('info', 'Fitur pelacakan pengiriman akan segera hadir!');
 }
 
 window.updateDeliveryStatus = function(itemId) {
-    showCustomConfirm('Apakah Anda ingin memperbarui status pengiriman ini?', () => {
+    window.showCustomConfirm('Apakah Anda ingin memperbarui status pengiriman ini?', () => {
         const newStatus = prompt('Masukkan status baru (Pending, Dalam Perjalanan, Selesai):');
         if (newStatus) {
-            showAlert('success', `Status pengiriman berhasil diubah menjadi: ${newStatus}`);
+            window.showAlert('success', `Status pengiriman berhasil diubah menjadi: ${newStatus}`);
             // Implement AJAX call to update outgoing item status
             // location.reload();
         }
@@ -1977,18 +2259,18 @@ window.updateDeliveryStatus = function(itemId) {
 
 window.exportData = function(format) {
     const activeTab = document.querySelector('.nav-link.active').textContent.trim();
-    showAlert('info', `Mengexport data ${activeTab} ke format ${format.toUpperCase()}...`);
+    window.showAlert('info', `Mengexport data ${activeTab} ke format ${format.toUpperCase()}...`);
     
     // Implement actual export logic or redirect to export route
     // Example: window.location.href = `{{ route('staff.items.export_csv') }}?type=incoming&format=${format}`;
     
     setTimeout(() => {
-        showAlert('success', `Data berhasil diexport ke ${format.toUpperCase()}!`);
+        window.showAlert('success', `Data berhasil diexport ke ${format.toUpperCase()}!`);
     }, 2000);
 }
 
 window.refreshData = function() {
-    showAlert('info', 'Memuat ulang data...');
+    window.showAlert('info', 'Memuat ulang data...');
     setTimeout(() => {
         location.reload();
     }, 1000);
@@ -2002,7 +2284,7 @@ window.importFromCSV = function() {
 window.processCSVImport = async function() {
     const csvFile = document.getElementById('csvFile');
     if (!csvFile.files[0]) {
-        showAlert('error', 'Pilih file CSV terlebih dahulu.');
+        window.showAlert('error', 'Pilih file CSV terlebih dahulu.');
         return;
     }
     
@@ -2018,7 +2300,7 @@ window.processCSVImport = async function() {
     formData.append('type', importType);
     formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
 
-    showAlert('info', 'Memproses import data...');
+    window.showAlert('info', 'Memproses import data...');
     
     try {
         const response = await fetch('{{ route("staff.items.import_csv") }}', {
@@ -2028,30 +2310,51 @@ window.processCSVImport = async function() {
                 'Accept': 'application/json'
             }
         });
+        // Enhanced error handling for fetch responses
+        if (!response.ok) {
+            let errorText = `HTTP error! status: ${response.status}`;
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    errorText = errorData.message || JSON.stringify(errorData);
+                } else {
+                    errorText = await response.text();
+                }
+            } catch (parseError) {
+                console.error('Error parsing response for non-OK status:', parseError);
+                errorText += ` (Failed to parse response: ${parseError.message})`;
+            }
+            console.error('Server response for import_csv was not OK:', errorText);
+            window.showAlert('error', `Gagal mengimport data. Status: ${response.status}. Detail di konsol.`);
+            return;
+        }
+
         const data = await response.json();
 
         if (data.success) {
             const modal = bootstrap.Modal.getInstance(document.getElementById('importCSVModal'));
-            if (modal) modal.hide(); // Add null check
-            showAlert('success', data.message + (data.errors.length > 0 ? ` Beberapa kesalahan terjadi: ${data.errors.join(', ')}` : ''));
+            if (modal) modal.hide();
+            window.showAlert('success', data.message + (data.errors.length > 0 ? ` Beberapa kesalahan terjadi: ${data.errors.join(', ')}` : ''));
             location.reload();
         } else {
             let errorMessage = data.message || 'Gagal mengimport data.';
             if (data.errors) {
                 errorMessage += `\n- ${data.errors.join('\n- ')}`;
             }
-            showAlert('error', errorMessage);
+            window.showAlert('error', errorMessage);
         }
     } catch (error) {
         console.error('Import CSV Error:', error);
-        showAlert('error', 'Terjadi kesalahan jaringan saat mengimport CSV.');
+        window.showAlert('error', 'Terjadi kesalahan jaringan saat mengimport CSV.');
     }
 }
 
 window.downloadCSVTemplate = function() {
-    const csvContent = "nama_barang,kategori_barang,jumlah_barang,tanggal_masuk_barang,lokasi_rak_barang\n" +
-                      "Contoh Barang,Makanan,100,2024-01-01,R1-1-1\n" +
-                      "Contoh Barang 2,Minuman,50,2024-01-01,R1-1-2";
+    // Updated template to reflect new columns
+    const csvContent = "nama_barang,kategori_barang,jumlah_barang,tanggal_masuk_barang,lokasi_rak_barang,nama_pengecer,metode_bayar,pembayaran_transaksi,nota_transaksi\n" +
+                      "Contoh Barang,Makanan,100,2024-01-01,R1-1-1,Toko ABC,Cash,150000.00,INV-001\n" +
+                      "Contoh Barang 2,Minuman,50,2024-01-01,R1-1-2,Supplier XYZ,Transfer Bank,75000.00,INV-002";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -2060,34 +2363,67 @@ window.downloadCSVTemplate = function() {
     a.download = 'template_barang_masuk.csv';
     a.click();
     window.URL.revokeObjectURL(url);
-    showAlert('info', 'Template CSV berhasil diunduh.');
+    window.showAlert('info', 'Template CSV berhasil diunduh.');
 }
 
 window.generateBarcode = function() {
-    showAlert('info', 'Fitur generate barcode akan segera hadir!');
+    window.showAlert('info', 'Fitur generate barcode akan segera hadir!');
 }
 
 window.stockOpname = function() {
-    showAlert('info', 'Fitur stock opname akan segera hadir!');
+    window.showAlert('info', 'Fitur stock opname akan segera hadir!');
 }
 
 window.viewWarehouse = function() {
     @if(Route::has('staff.warehouse_monitor'))
         window.open('{{ route("staff.warehouse_monitor") }}', '_blank');
     @else
-        showAlert('info', 'Halaman monitor gudang tidak tersedia.');
+        window.showAlert('info', 'Halaman monitor gudang tidak tersedia.');
     @endif
 }
 
 // Helper functions
-window.getStatusBadgeClass = function(status) {
+// Removed getStatusBadgeClass as status_barang column is removed
+/* window.getStatusBadgeClass = function(status) {
     switch(status) {
         case 'Banyak': return 'bg-success';
         case 'Sedikit': return 'bg-warning';
         case 'Habis': return 'bg-danger';
         default: return 'bg-secondary';
     }
+} */
+
+/**
+ * Helper function to format numbers as currency.
+ * @param {number} amount - The number to format.
+ * @param {number} decimals - Number of decimal places.
+ * @param {string} decPoint - Decimal point character.
+ * @param {string} thousandsSep - Thousands separator character.
+ * @returns {string} Formatted number.
+ */
+window.number_format = function(amount, decimals, decPoint, thousandsSep) {
+    amount = (amount + '').replace(/[^0-9+\-Ee.]/g, '');
+    var n = !isFinite(+amount) ? 0 : +amount,
+        prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
+        sep = (typeof thousandsSep === 'undefined') ? '.' : thousandsSep,
+        dec = (typeof decPoint === 'undefined') ? ',' : decPoint,
+        s = '',
+        toFixedFix = function(n, prec) {
+            var k = Math.pow(10, prec);
+            return '' + Math.round(n * k) / k;
+        };
+
+    s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
+    if (s[0].length > 3) {
+        s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep);
+    }
+    if ((s[1] || '').length < prec) {
+        s[1] = s[1] || '';
+        s[1] += new Array(prec - s[1].length + 1).join('0');
+    }
+    return s.join(dec);
 }
+
 
 /**
  * Menampilkan pesan alert kustom.
@@ -2172,10 +2508,10 @@ window.printItemDetails = function() {
     window.print();
 }
 
-window.duplicateItem = function(itemId) {
-    showCustomConfirm('Apakah Anda yakin ingin menduplikasi barang ini?', async () => {
+window.duplicateItem = async function(itemId) { // Added async
+    window.showCustomConfirm('Apakah Anda yakin ingin menduplikasi barang ini?', async () => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        showAlert('info', 'Menduplikasi barang...');
+        window.showAlert('info', 'Menduplikasi barang...');
 
         try {
             const response = await fetch(`/staff/items/${itemId}/duplicate`, {
@@ -2185,26 +2521,46 @@ window.duplicateItem = function(itemId) {
                     'Accept': 'application/json'
                 }
             });
+            // Enhanced error handling for fetch responses
+            if (!response.ok) {
+                let errorText = `HTTP error! status: ${response.status}`;
+                try {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const errorData = await response.json();
+                        errorText = errorData.message || JSON.stringify(errorData);
+                    } else {
+                        errorText = await response.text();
+                    }
+                } catch (parseError) {
+                    console.error('Error parsing response for non-OK status:', parseError);
+                    errorText += ` (Failed to parse response: ${parseError.message})`;
+                }
+                console.error('Server response for duplicateItem was not OK:', errorText);
+                window.showAlert('error', `Gagal menduplikasi barang. Status: ${response.status}. Detail di konsol.`);
+                return;
+            }
+
             const data = await response.json();
 
             if (data.success) {
-                showAlert('success', data.message);
+                window.showAlert('success', data.message);
                 location.reload();
             } else {
-                showAlert('error', data.message || 'Gagal menduplikasi barang.');
+                window.showAlert('error', data.message || 'Gagal menduplikasi barang.');
             }
         } catch (error) {
             console.error('Duplicate item error:', error);
-            showAlert('error', 'Terjadi kesalahan jaringan saat menduplikasi barang.');
+            window.showAlert('error', 'Terjadi kesalahan jaringan saat menduplikasi barang.');
         }
     });
 }
 
 window.generateQR = function(itemId) {
-    showAlert('info', 'Generating QR Code...');
+    window.showAlert('info', 'Generating QR Code...');
     // Implement actual QR code generation logic or API call here
     setTimeout(() => {
-        showAlert('success', 'QR Code berhasil dibuat!');
+        window.showAlert('success', 'QR Code berhasil dibuat!');
     }, 1500);
 }
 
@@ -2214,21 +2570,21 @@ window.moveItem = function(itemId) {
     // If you call this from viewItemDetails, ensure the itemCrudModal is not open
     // or handle the context properly. For simplicity, we assume this is for
     // assigning a location to an item that doesn't have one, or changing it.
-    showRackSelector('crud_lokasi_rak', itemId); // Pass item ID to rack selector
+    window.showRackSelector('crud_lokasi_rak', itemId); // Pass item ID to rack selector
 }
 
 
 // Pastikan kode ini berjalan setelah DOM sepenuhnya dimuat
 document.addEventListener('DOMContentLoaded', function() {
     // Inisialisasi halaman
-    initializePage();
+    window.initializePage();
     
     // Set default dates for forms
-    const incomingTanggalMasuk = document.getElementById('incoming_tanggal_masuk');
+    const incomingTanggalMasuk = document.getElementById('crud_tanggal_masuk');
     if (incomingTanggalMasuk) {
         incomingTanggalMasuk.value = new Date().toISOString().split('T')[0];
     }
-    const outgoingTanggalKeluar = document.getElementById('outgoing_tanggal_keluar');
+    const outgoingTanggalKeluar = document.getElementById('crud_tanggal_keluar');
     if (outgoingTanggalKeluar) {
         outgoingTanggalKeluar.value = new Date().toISOString().split('T')[0];
     }
