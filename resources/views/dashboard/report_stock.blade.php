@@ -120,6 +120,7 @@
                                 <div class="col-md-4">
                                     <select class="form-select">
                                         <option selected>Semua Item</option>
+                                        {{-- Anda bisa mengisi opsi ini secara dinamis dari database jika diperlukan --}}
                                         <option value="1">Item 1</option>
                                         <option value="2">Item 2</option>
                                     </select>
@@ -127,8 +128,11 @@
                                 <div class="col-md-4">
                                     <select class="form-select">
                                         <option selected>Pilih Kategori Barang</option>
-                                        <option value="1">Kategori A</option>
-                                        <option value="2">Kategori B</option>
+                                        @if(isset($incomingItems))
+                                            @foreach($incomingItems->pluck('kategori_barang')->unique()->filter() as $category)
+                                                <option value="{{ $category }}">{{ $category }}</option>
+                                            @endforeach
+                                        @endif
                                     </select>
                                 </div>
                                 <div class="col-md-4 text-end">
@@ -150,7 +154,10 @@
                                             <th>Tanggal Masuk</th>
                                             <th>Jumlah</th>
                                             <th>Lokasi Rak</th>
-                                            <th>Status</th>
+                                            <th>Nama Pengecer</th>
+                                            <th>Metode Bayar</th>
+                                            <th>Pembayaran Transaksi</th>
+                                            <th>Nota Transaksi</th>
                                             <th>Aksi</th>
                                         </tr>
                                     </thead>
@@ -162,24 +169,22 @@
                                                 <td>{{ $item->kategori_barang }}</td>
                                                 <td>{{ $item->tanggal_masuk_barang->format('d M Y') }}</td>
                                                 <td>{{ $item->jumlah_barang }}</td>
-                                                <td>{{ $item->lokasi_rak_barang }}</td>
+                                                <td>{{ $item->lokasi_rak_barang ?? '-' }}</td>
+                                                <td>{{ $item->nama_pengecer ?? '-' }}</td>
+                                                <td>{{ $item->metode_bayar ?? '-' }}</td>
+                                                <td>Rp{{ number_format($item->pembayaran_transaksi, 2, ',', '.') }}</td>
+                                                <td>{{ $item->nota_transaksi ?? '-' }}</td>
                                                 <td>
-                                                    @if ($item->status_barang == 'Banyak')
-                                                        <span class="badge bg-success">{{ $item->status_barang }}</span>
-                                                    @elseif ($item->status_barang == 'Sedikit')
-                                                        <span class="badge bg-warning">{{ $item->status_barang }}</span>
-                                                    @else
-                                                        <span class="badge bg-danger">{{ $item->status_barang }}</span>
+                                                    <button class="btn btn-sm btn-info me-1" onclick="viewItemDetails({{ $item->id }})"><i class="fas fa-eye"></i> Lihat Detail</button>
+                                                    {{-- Tombol lokasi rak (jika perlu ditampilkan di laporan) --}}
+                                                    @if($item->lokasi_rak_barang)
+                                                        <button class="btn btn-sm btn-primary" onclick="showLocation('{{ $item->lokasi_rak_barang }}')"><i class="fas fa-search-plus"></i></button>
                                                     @endif
-                                                </td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i> Lihat Detail</button>
-                                                    <button class="btn btn-sm btn-primary"><i class="fas fa-search-plus"></i></button>
                                                 </td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="8" class="text-center">Tidak ada data barang masuk.</td>
+                                                <td colspan="11" class="text-center">Tidak ada data barang masuk.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -197,7 +202,7 @@
                             <div class="mt-3 text-start">
                                 <button class="btn btn-danger me-2"><i class="fas fa-file-pdf"></i> Cetak PDF</button>
                                 <button class="btn btn-success me-2"><i class="fas fa-file-excel"></i> Cetak Excel</button>
-                                <button class="btn btn-info"><i class="fas fa-warehouse"></i> Lihat Kondisi Distribusi Barang Gudang</button>
+                                <button class="btn btn-info" onclick="window.open('{{ route("staff.warehouse_monitor") }}', '_blank')"><i class="fas fa-warehouse"></i> Lihat Kondisi Distribusi Barang Gudang</button>
                             </div>
                         </div>
                         <div class="tab-pane fade" id="outgoing-stock" role="tabpanel" aria-labelledby="outgoing-tab">
@@ -206,6 +211,7 @@
                                 <div class="col-md-4">
                                     <select class="form-select">
                                         <option selected>Semua Item</option>
+                                        {{-- Anda bisa mengisi opsi ini secara dinamis dari database jika diperlukan --}}
                                         <option value="1">Item 1</option>
                                         <option value="2">Item 2</option>
                                     </select>
@@ -213,8 +219,11 @@
                                 <div class="col-md-4">
                                     <select class="form-select">
                                         <option selected>Pilih Kategori Barang</option>
-                                        <option value="1">Kategori A</option>
-                                        <option value="2">Kategori B</option>
+                                        @if(isset($outgoingItems))
+                                            @foreach($outgoingItems->pluck('kategori_barang')->unique()->filter() as $category)
+                                                <option value="{{ $category }}">{{ $category }}</option>
+                                            @endforeach
+                                        @endif
                                     </select>
                                 </div>
                                 <div class="col-md-4 text-end">
@@ -237,6 +246,10 @@
                                             <th>Jumlah</th>
                                             <th>Tujuan Distribusi</th>
                                             <th>Lokasi Rak</th>
+                                            <th>Nama Pengecer</th>
+                                            <th>Metode Bayar</th>
+                                            <th>Pembayaran Transaksi</th>
+                                            <th>Nota Transaksi</th>
                                             <th>Aksi</th>
                                         </tr>
                                     </thead>
@@ -248,16 +261,20 @@
                                                 <td>{{ $item->kategori_barang }}</td>
                                                 <td>{{ $item->tanggal_keluar_barang->format('d M Y') }}</td>
                                                 <td>{{ $item->jumlah_barang }}</td>
-                                                <td>{{ $item->tujuan_distribusi }}</td>
-                                                <td>{{ $item->lokasi_rak_barang }}</td>
+                                                <td>{{ $item->tujuan_distribusi ?? 'Tidak Diketahui' }}</td>
+                                                <td>{{ $item->lokasi_rak_barang ?? '-' }}</td>
+                                                <td>{{ $item->nama_pengecer ?? '-' }}</td>
+                                                <td>{{ $item->metode_bayar ?? '-' }}</td>
+                                                <td>Rp{{ number_format($item->pembayaran_transaksi, 2, ',', '.') }}</td>
+                                                <td>{{ $item->nota_transaksi ?? '-' }}</td>
                                                 <td>
-                                                    <button class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i> Lihat Detail</button>
-                                                    <button class="btn btn-sm btn-primary"><i class="fas fa-search-plus"></i></button>
+                                                    <button class="btn btn-sm btn-info me-1" onclick="viewOutgoingDetails({{ $item->id }})"><i class="fas fa-eye"></i> Lihat Detail</button>
+                                                    <button class="btn btn-sm btn-primary"><i class="fas fa-print"></i></button>
                                                 </td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="8" class="text-center">Tidak ada data barang keluar.</td>
+                                                <td colspan="11" class="text-center">Tidak ada data barang keluar.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -284,7 +301,7 @@
             {{-- Card Tren Pembelian Barang (Grafik) --}}
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center" id="chartCardHeader">
-                    <h5 class="mb-0">Tren Pembelian Barang</h5> {{-- Judul awal --}}
+                    <h5 class="mb-0">Tren Pembelian & Penjualan Barang</h5> {{-- Judul awal --}}
                     <div class="d-flex align-items-center">
                         <span class="me-2">Periode : {{ $chartPeriod }}</span> {{-- Tampilkan periode dari controller --}}
                         <button class="btn btn-sm btn-outline-secondary me-2"><i class="fas fa-calendar-alt"></i> Detail Kalender</button>
@@ -298,14 +315,28 @@
                     </div>
                     <div class="mt-3 text-end">
                         <small class="text-muted">
-                            <i class="fas fa-square" style="color: #3498db;"></i> Produk
-                            <i class="fas fa-square ms-3" style="color: #27ae60;"></i> Jumlah Terbeli
-                            <i class="fas fa-square ms-3" style="color: #f39c12;"></i> Hari
+                            <i class="fas fa-square" style="color: #3498db;"></i> Pembelian
+                            <i class="fas fa-square ms-3" style="color: #27ae60;"></i> Penjualan
                         </small>
                     </div>
                 </div>
             </div>
 
+        </div>
+    </div>
+</div>
+
+{{-- Modal untuk Detail Item --}}
+<div class="modal fade" id="itemDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detail Barang</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="itemDetailContent">
+                <!-- Content will be loaded here -->
+            </div>
         </div>
     </div>
 </div>
@@ -409,43 +440,43 @@
         let salesChart; // Deklarasikan variabel chart di scope yang lebih luas
 
         // Fungsi untuk merender/update grafik
-        function renderChart(type) {
+        function renderChart() {
             // Hapus chart yang sudah ada jika ada
             if (salesChart) {
                 salesChart.destroy();
             }
 
-            let dataToDisplay;
-            let chartTitleText;
-            let backgroundColor;
+            const datasets = [];
 
-            if (type === 'purchase') {
-                dataToDisplay = purchaseTrendData;
-                chartTitleText = 'Tren Pembelian Barang';
-                backgroundColor = '#3498db'; // Warna untuk pembelian (biru)
-            } else { // type === 'sales'
-                dataToDisplay = salesTrendData;
-                chartTitleText = 'Tren Penjualan Barang';
-                backgroundColor = '#27ae60'; // Warna untuk penjualan (hijau)
-            }
+            // Dataset untuk Pembelian (Incoming)
+            datasets.push({
+                label: 'Pembelian',
+                data: purchaseTrendData,
+                backgroundColor: '#3498db', // Biru untuk pembelian
+                borderColor: '#3498db',
+                borderWidth: 1,
+            });
 
-            // Update judul card
+            // Dataset untuk Penjualan (Outgoing)
+            datasets.push({
+                label: 'Penjualan',
+                data: salesTrendData,
+                backgroundColor: '#27ae60', // Hijau untuk penjualan
+                borderColor: '#27ae60',
+                borderWidth: 1,
+            });
+
+            const chartTitleText = 'Tren Pembelian & Penjualan Barang'; // Judul gabungan
             document.querySelector('#chartCardHeader h5').textContent = chartTitleText;
 
 
             const chartData = {
                 labels: chartLabels,
-                datasets: [{
-                    label: chartTitleText, // Label dataset mengikuti judul chart
-                    data: dataToDisplay,
-                    backgroundColor: backgroundColor,
-                    borderColor: backgroundColor,
-                    borderWidth: 1
-                }]
+                datasets: datasets // Gunakan kedua dataset
             };
 
             const salesConfig = {
-                type: 'bar',
+                type: 'bar', // Tipe grafik utama
                 data: chartData,
                 options: {
                     responsive: true,
@@ -455,7 +486,7 @@
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: 'Jumlah' // Label sumbu Y yang lebih umum
+                                text: 'Jumlah Unit' // Label sumbu Y yang lebih umum
                             }
                         },
                         x: {
@@ -467,7 +498,11 @@
                     },
                     plugins: {
                         legend: {
-                            display: false // Sembunyikan legend default Chart.js karena kita punya legend kustom
+                            display: true, // Tampilkan legend karena ada 2 dataset
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                            }
                         },
                         tooltip: {
                             callbacks: {
@@ -475,7 +510,7 @@
                                     return 'Hari: ' + context[0].label;
                                 },
                                 label: function(context) {
-                                    return chartTitleText + ': ' + context.raw;
+                                    return context.dataset.label + ': ' + context.raw + ' unit';
                                 }
                             }
                         }
@@ -489,32 +524,107 @@
             }
         }
 
-        // Event listener untuk tab
-        const incomingTab = document.getElementById('incoming-tab');
-        const outgoingTab = document.getElementById('outgoing-tab');
+        // Render grafik awal saat halaman dimuat
+        renderChart();
 
-        if (incomingTab) {
-            incomingTab.addEventListener('shown.bs.tab', function (event) {
-                renderChart('purchase'); // Render grafik pembelian saat tab barang masuk aktif
-            });
+
+        // Helper function to format numbers as currency.
+        // Duplikasi dari partials/items_content.blade.php agar berfungsi di sini juga.
+        window.number_format = function(amount, decimals, decPoint, thousandsSep) {
+            amount = (amount + '').replace(/[^0-9+\-Ee.]/g, '');
+            var n = !isFinite(+amount) ? 0 : +amount,
+                prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
+                sep = (typeof thousandsSep === 'undefined') ? '.' : thousandsSep,
+                dec = (typeof decPoint === 'undefined') ? ',' : decPoint,
+                s = '',
+                toFixedFix = function(n, prec) {
+                    var k = Math.pow(10, prec);
+                    return '' + Math.round(n * k) / k;
+                };
+
+            s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
+            if (s[0].length > 3) {
+                s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep);
+            }
+            if ((s[1] || '').length < prec) {
+                s[1] = s[1] || '';
+                s[1] += new Array(prec - s[1].length + 1).join('0');
+            }
+            return s.join(dec);
         }
 
-        if (outgoingTab) {
-            outgoingTab.addEventListener('shown.bs.tab', function (event) {
-                renderChart('sales'); // Render grafik penjualan saat tab barang keluar aktif
-            });
+        // Fungsi untuk melihat detail item masuk
+        window.viewItemDetails = function(itemId) {
+            const incomingItems = @json($incomingItems);
+            const item = incomingItems.find(i => i.id == itemId);
+            
+            if (item) {
+                const modalContent = document.getElementById('itemDetailContent');
+                modalContent.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h6 class="text-primary">Informasi Barang Masuk</h6>
+                            <table class="table table-borderless">
+                                <tr><td width="30%"><strong>ID Barang:</strong></td><td>#${item.id}</td></tr>
+                                <tr><td><strong>Nama Barang:</strong></td><td>${item.nama_barang}</td></tr>
+                                <tr><td><strong>Kategori:</strong></td><td>${item.kategori_barang}</td></tr>
+                                <tr><td><strong>Jumlah:</strong></td><td>${item.jumlah_barang} unit</td></tr>
+                                <tr><td><strong>Tanggal Masuk:</strong></td><td>${new Date(item.tanggal_masuk_barang).toLocaleDateString('id-ID')}</td></tr>
+                                <tr><td><strong>Lokasi Rak:</strong></td><td>${item.lokasi_rak_barang || 'Belum ditempatkan'}</td></tr>
+                                <tr><td><strong>Nama Pengecer:</strong></td><td>${item.nama_pengecer ?? '-'}</td></tr>
+                                <tr><td><strong>Metode Bayar:</strong></td><td>${item.metode_bayar ?? '-'}</td></tr>
+                                <tr><td><strong>Pembayaran Transaksi:</strong></td><td>Rp${window.number_format(item.pembayaran_transaksi, 2, ',', '.')}</td></tr>
+                                <tr><td><strong>Nota Transaksi:</strong></td><td>${item.nota_transaksi ?? '-'}</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                
+                const modal = new bootstrap.Modal(document.getElementById('itemDetailModal'));
+                modal.show();
+            }
         }
 
-        // Render grafik awal saat halaman dimuat (default: pembelian)
-        // Periksa tab mana yang aktif secara default saat halaman dimuat
-        if (incomingTab && incomingTab.classList.contains('active')) {
-            renderChart('purchase');
-        } else if (outgoingTab && outgoingTab.classList.contains('active')) {
-            renderChart('sales');
-        } else {
-            // Fallback jika tidak ada tab yang aktif secara default, render pembelian
-            renderChart('purchase');
+        // Fungsi untuk melihat detail item keluar
+        window.viewOutgoingDetails = function(itemId) {
+            const outgoingItems = @json($outgoingItems);
+            const item = outgoingItems.find(i => i.id == itemId);
+            
+            if (item) {
+                const modalContent = document.getElementById('itemDetailContent');
+                modalContent.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h6 class="text-primary">Informasi Barang Keluar</h6>
+                            <table class="table table-borderless">
+                                <tr><td width="30%"><strong>ID Barang:</strong></td><td>#${item.id}</td></tr>
+                                <tr><td><strong>Nama Barang:</strong></td><td>${item.nama_barang}</td></tr>
+                                <tr><td><strong>Kategori:</strong></td><td>${item.kategori_barang}</td></tr>
+                                <tr><td><strong>Jumlah:</strong></td><td>${item.jumlah_barang} unit</td></tr>
+                                <tr><td><strong>Tanggal Keluar:</strong></td><td>${new Date(item.tanggal_keluar_barang).toLocaleDateString('id-ID')}</td></tr>
+                                <tr><td><strong>Tujuan Distribusi:</strong></td><td>${item.tujuan_distribusi ?? 'Tidak Diketahui'}</td></tr>
+                                <tr><td><strong>Lokasi Rak Asal:</strong></td><td>${item.lokasi_rak_barang ?? '-'}</td></tr>
+                                <tr><td><strong>Nama Pengecer:</strong></td><td>${item.nama_pengecer ?? '-'}</td></tr>
+                                <tr><td><strong>Metode Bayar:</strong></td><td>${item.metode_bayar ?? '-'}</td></tr>
+                                <tr><td><strong>Pembayaran Transaksi:</strong></td><td>Rp${window.number_format(item.pembayaran_transaksi, 2, ',', '.')}</td></tr>
+                                <tr><td><strong>Nota Transaksi:</strong></td><td>${item.nota_transaksi ?? '-'}</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                
+                const modal = new bootstrap.Modal(document.getElementById('itemDetailModal'));
+                modal.show();
+            }
         }
+
+        // Dummy function for showLocation (can be linked to actual warehouse monitor if available)
+        window.showLocation = function(location) {
+            alert('Lokasi Rak: ' + location + '. Fitur peta gudang akan segera hadir!');
+            // You might want to redirect to the warehouse monitor page with this location as a parameter
+            // window.location.href = `{{ route('staff.warehouse_monitor') }}?highlight=${location}`;
+        }
+
     });
 </script>
 @endsection

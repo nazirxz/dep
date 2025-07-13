@@ -67,10 +67,14 @@ class HomeController extends Controller
         $outgoingItems = OutgoingItem::orderBy('tanggal_keluar_barang', 'desc')->get();
 
         // --- Data untuk Grafik Tren Penjualan/Pembelian ---
-        $startDate = Carbon::parse('2025-06-16')->startOfDay();
-        $endDate = Carbon::parse('2025-06-22')->endOfDay();
+        // Anda dapat menyesuaikan rentang tanggal ini sesuai kebutuhan
+        $startDate = Carbon::now()->subDays(6)->startOfDay(); // 7 hari terakhir
+        $endDate = Carbon::now()->endOfDay();
 
-        $daysOfWeek = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+        $daysOfWeek = [];
+        for ($i = 0; $i < 7; $i++) {
+            $daysOfWeek[] = $startDate->copy()->addDays($i)->isoFormat('dddd'); // Nama hari dalam bahasa Indonesia
+        }
 
         $purchaseData = array_fill(0, 7, 0);
         $salesData = array_fill(0, 7, 0);
@@ -78,7 +82,7 @@ class HomeController extends Controller
         $incomingItemsForChart = IncomingItem::whereBetween('tanggal_masuk_barang', [$startDate, $endDate])
                                             ->get();
         foreach ($incomingItemsForChart as $item) {
-            $dayOfWeek = $item->tanggal_masuk_barang->dayOfWeekIso;
+            $dayOfWeek = $item->tanggal_masuk_barang->dayOfWeekIso; // 1 (Senin) sampai 7 (Minggu)
             $purchaseData[$dayOfWeek - 1] += $item->jumlah_barang;
         }
 
