@@ -18,8 +18,8 @@ return new class extends Migration
             }
 
             // Tambahkan kolom baru setelah 'tanggal_masuk_barang'
-            $table->string('nama_pengecer')->nullable()->after('tanggal_masuk_barang');
-            $table->string('metode_bayar')->nullable()->after('nama_pengecer');
+            $table->string('nama_produsen')->nullable()->after('tanggal_masuk_barang');
+            $table->string('metode_bayar')->nullable()->after('nama_produsen');
             $table->decimal('pembayaran_transaksi', 15, 2)->nullable()->after('metode_bayar'); // Menggunakan decimal untuk pembayaran
             $table->string('nota_transaksi')->nullable()->after('pembayaran_transaksi');
         });
@@ -32,7 +32,7 @@ return new class extends Migration
     {
         Schema::table('incoming_items', function (Blueprint $table) {
             // Hapus kolom baru jika migrasi di-rollback
-            $table->dropColumn(['nama_pengecer', 'metode_bayar', 'pembayaran_transaksi', 'nota_transaksi']);
+            $table->dropColumn(['nama_produsen', 'metode_bayar', 'pembayaran_transaksi', 'nota_transaksi']);
 
             // Tambahkan kembali kolom 'status_barang' jika Anda ingin mengembalikannya
             // Ini penting jika Anda perlu mengembalikan database ke keadaan sebelumnya

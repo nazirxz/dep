@@ -154,7 +154,7 @@
                                             <th>Tanggal Masuk</th>
                                             <th>Jumlah</th>
                                             <th>Lokasi Rak</th>
-                                            <th>Nama Pengecer</th>
+                                            <th>Nama Produsen</th>
                                             <th>Metode Bayar</th>
                                             <th>Pembayaran Transaksi</th>
                                             <th>Nota Transaksi</th>
@@ -171,7 +171,7 @@
                                                 <td>{{ $item->tanggal_masuk_barang->format('d M Y') }}</td>
                                                 <td>{{ $item->jumlah_barang }}</td>
                                                 <td>{{ $item->lokasi_rak_barang ?? '-' }}</td>
-                                                <td>{{ $item->nama_pengecer ?? '-' }}</td>
+                                                <td>{{ $item->nama_produsen ?? '-' }}</td>
                                                 <td>{{ $item->metode_bayar ?? '-' }}</td>
                                                 <td>Rp{{ number_format($item->pembayaran_transaksi, 2, ',', '.') }}</td>
                                                 <td>{{ $item->nota_transaksi ?? '-' }}</td>
@@ -264,7 +264,7 @@
                                             <th>Jumlah</th>
                                             <th>Tujuan Distribusi</th>
                                             <th>Lokasi Rak</th>
-                                            <th>Nama Pengecer</th>
+                                            <th>Nama Produsen</th>
                                             <th>Metode Bayar</th>
                                             <th>Pembayaran Transaksi</th>
                                             <th>Nota Transaksi</th>
@@ -281,7 +281,7 @@
                                                 <td>{{ $item->jumlah_barang }}</td>
                                                 <td>{{ $item->tujuan_distribusi ?? 'Tidak Diketahui' }}</td>
                                                 <td>{{ $item->lokasi_rak_barang ?? '-' }}</td>
-                                                <td>{{ $item->nama_pengecer ?? '-' }}</td>
+                                                <td>{{ $item->nama_produsen ?? '-' }}</td>
                                                 <td>{{ $item->metode_bayar ?? '-' }}</td>
                                                 <td>Rp{{ number_format($item->pembayaran_transaksi, 2, ',', '.') }}</td>
                                                 <td>{{ $item->nota_transaksi ?? '-' }}</td>
@@ -589,7 +589,7 @@
                                 <tr><td><strong>Jumlah:</strong></td><td>${item.jumlah_barang} unit</td></tr>
                                 <tr><td><strong>Tanggal Masuk:</strong></td><td>${new Date(item.tanggal_masuk_barang).toLocaleDateString('id-ID')}</td></tr>
                                 <tr><td><strong>Lokasi Rak:</strong></td><td>${item.lokasi_rak_barang || 'Belum ditempatkan'}</td></tr>
-                                <tr><td><strong>Nama Pengecer:</strong></td><td>${item.nama_pengecer ?? '-'}</td></tr>
+                                <tr><td><strong>Nama Produsen:</strong></td><td>${item.nama_produsen ?? '-'}</td></tr>
                                 <tr><td><strong>Metode Bayar:</strong></td><td>${item.metode_bayar ?? '-'}</td></tr>
                                 <tr><td><strong>Pembayaran Transaksi:</strong></td><td>Rp${window.number_format(item.pembayaran_transaksi, 2, ',', '.')}</td></tr>
                                 <tr><td><strong>Nota Transaksi:</strong></td><td>${item.nota_transaksi ?? '-'}</td></tr>
@@ -622,7 +622,7 @@
                                 <tr><td><strong>Tanggal Keluar:</strong></td><td>${new Date(item.tanggal_keluar_barang).toLocaleDateString('id-ID')}</td></tr>
                                 <tr><td><strong>Tujuan Distribusi:</strong></td><td>${item.tujuan_distribusi ?? 'Tidak Diketahui'}</td></tr>
                                 <tr><td><strong>Lokasi Rak Asal:</strong></td><td>${item.lokasi_rak_barang ?? '-'}</td></tr>
-                                <tr><td><strong>Nama Pengecer:</strong></td><td>${item.nama_pengecer ?? '-'}</td></tr>
+                                <tr><td><strong>Nama Produsen:</strong></td><td>${item.nama_produsen ?? '-'}</td></tr>
                                 <tr><td><strong>Metode Bayar:</strong></td><td>${item.metode_bayar ?? '-'}</td></tr>
                                 <tr><td><strong>Pembayaran Transaksi:</strong></td><td>Rp${window.number_format(item.pembayaran_transaksi, 2, ',', '.')}</td></tr>
                                 <tr><td><strong>Nota Transaksi:</strong></td><td>${item.nota_transaksi ?? '-'}</td></tr>

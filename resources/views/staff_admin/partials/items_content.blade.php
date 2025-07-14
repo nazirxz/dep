@@ -133,7 +133,7 @@
                                 <th>Jumlah</th>
                                 <th>Tanggal Masuk</th>
                                 <th>Lokasi Rak</th>
-                                <th>Nama Pengecer</th>
+                                <th>Nama Produsen</th>
                                 <th>Metode Bayar</th>
                                 <th>Pembayaran Transaksi</th>
                                 <th>Nota Transaksi</th>
@@ -186,7 +186,7 @@
                                                 </button>
                                             @endif
                                         </td>
-                                        <td>{{ $item->nama_pengecer ?? '-' }}</td>
+                                        <td>{{ $item->nama_produsen ?? '-' }}</td>
                                         <td>{{ $item->metode_bayar ?? '-' }}</td>
                                         <td>Rp{{ number_format($item->pembayaran_transaksi, 2, ',', '.') }}</td>
                                         <td>{{ $item->nota_transaksi ?? '-' }}</td>
@@ -327,7 +327,7 @@
                                 <th>Jumlah</th>
                                 <th>Tanggal Keluar</th>
                                 <th>Lokasi Rak Asal</th>
-                                <th>Nama Pengecer</th>
+                                <th>Nama Produsen</th>
                                 <th>Metode Bayar</th>
                                 <th>Pembayaran Transaksi</th>
                                 <th>Nota Transaksi</th>
@@ -367,7 +367,7 @@
                                                 <span class="badge bg-secondary">-</span>
                                             @endif
                                         </td>
-                                        <td>{{ $item->nama_pengecer ?? '-' }}</td>
+                                        <td>{{ $item->nama_produsen ?? '-' }}</td>
                                         <td>{{ $item->metode_bayar ?? '-' }}</td>
                                         <td>Rp{{ number_format($item->pembayaran_transaksi, 2, ',', '.') }}</td>
                                         <td>{{ $item->nota_transaksi ?? '-' }}</td>
@@ -601,7 +601,7 @@
                         <label for="csvFile" class="form-label">File CSV</label>
                         <input type="file" class="form-control" id="csvFile" name="csv_file" accept=".csv" required>
                         <small class="form-text text-muted">
-                            Format: nama_barang, kategori_barang, jumlah_barang, tanggal_masuk_barang, lokasi_rak_barang, nama_pengecer, metode_bayar, pembayaran_transaksi, nota_transaksi
+                            Format: nama_barang, kategori_barang, jumlah_barang, tanggal_masuk_barang, lokasi_rak_barang, nama_produsen, metode_bayar, pembayaran_transaksi, nota_transaksi
                         </small>
                     </div>
                     <div class="mb-3">
@@ -991,7 +991,7 @@ window.viewItemDetails = async function(itemId, itemType = 'incoming') { // Adde
                                     <tr><td><strong>Jumlah:</strong></td><td><span class="fw-bold">${item.jumlah_barang}</span> unit</td></tr>
                                     <tr><td><strong>Tanggal Masuk:</strong></td><td>${new Date(item.tanggal_masuk_barang).toLocaleDateString('id-ID', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</td></tr>
                                     <tr><td><strong>Lokasi Rak:</strong></td><td>${item.lokasi_rak_barang ? '<span class="badge bg-info">' + item.lokasi_rak_barang + '</span>' : '<span class="badge bg-secondary">Belum ditempatkan</span>'}</td></tr>
-                                    <tr><td><strong>Nama Pengecer:</strong></td><td>${item.nama_pengecer ?? '-'}</td></tr>
+                                    <tr><td><strong>Nama Produsen:</strong></td><td>${item.nama_produsen ?? '-'}</td></tr>
                                     <tr><td><strong>Metode Bayar:</strong></td><td>${item.metode_bayar ?? '-'}</td></tr>
                                     <tr><td><strong>Pembayaran Transaksi:</strong></td><td>Rp${window.number_format(item.pembayaran_transaksi, 2, ',', '.')}</td></tr>
                                     <tr><td><strong>Nota Transaksi:</strong></td><td>${item.nota_transaksi ?? '-'}</td></tr>
@@ -1058,7 +1058,7 @@ window.viewItemDetails = async function(itemId, itemType = 'incoming') { // Adde
                                     <tr><td><strong>Jumlah:</strong></td><td><span class="fw-bold text-danger">${item.jumlah_barang}</span> unit</td></tr>
                                     <tr><td><strong>Tanggal Keluar:</strong></td><td>${new Date(item.tanggal_keluar_barang).toLocaleDateString('id-ID', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</td></tr>
                                     <tr><td><strong>Lokasi Rak Asal:</strong></td><td>${item.lokasi_rak_barang ? '<span class="badge bg-info">' + item.lokasi_rak_barang + '</span>' : '<span class="badge bg-secondary">-</span>'}</td></tr>
-                                    <tr><td><strong>Nama Pengecer:</strong></td><td>${item.nama_pengecer ?? '-'}</td></tr>
+                                    <tr><td><strong>Nama Produsen:</strong></td><td>${item.nama_produsen ?? '-'}</td></tr>
                                     <tr><td><strong>Metode Bayar:</strong></td><td>${item.metode_bayar ?? '-'}</td></tr>
                                     <tr><td><strong>Pembayaran Transaksi:</strong></td><td>Rp${window.number_format(item.pembayaran_transaksi, 2, ',', '.')}</td></tr>
                                     <tr><td><strong>Nota Transaksi:</strong></td><td>${item.nota_transaksi ?? '-'}</td></tr>
@@ -1250,8 +1250,8 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <small class="form-text text-muted">Format: R[1-8]-[1-4]-[1-6]</small>
                 </div>
                 <div class="mb-3">
-                    <label for="crud_nama_pengecer" class="form-label">Nama Pengecer</label>
-                    <input type="text" class="form-control" id="crud_nama_pengecer" name="nama_pengecer" placeholder="Nama Pengecer (opsional)">
+                    <label for="crud_nama_produsen" class="form-label">Nama Produsen</label>
+                    <input type="text" class="form-control" id="crud_nama_produsen" name="nama_produsen" placeholder="Nama Produsen (opsional)">
                 </div>
                 <div class="row">
                     <div class="col-md-6">
@@ -1335,8 +1335,8 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <input type="text" class="form-control" id="crud_lokasi_asal" name="lokasi_rak_barang" readonly placeholder="Otomatis dari stok" value="${defaultLocation}">
                 </div>
                 <div class="mb-3">
-                    <label for="crud_nama_pengecer_outgoing" class="form-label">Nama Pengecer *</label>
-                    <input type="text" class="form-control" id="crud_nama_pengecer_outgoing" name="nama_pengecer" required placeholder="Nama Pengecer">
+                    <label for="crud_nama_produsen_outgoing" class="form-label">Nama Produsen *</label>
+                    <input type="text" class="form-control" id="crud_nama_produsen_outgoing" name="nama_produsen" required placeholder="Nama Produsen">
                 </div>
                 <div class="row">
                     <div class="col-md-6">
@@ -1415,8 +1415,8 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <small class="form-text text-muted">Format: R[1-8]-[1-4]-[1-6]</small>
                 </div>
                 <div class="mb-3">
-                    <label for="crud_nama_pengecer" class="form-label">Nama Pengecer</label>
-                    <input type="text" class="form-control" id="crud_nama_pengecer" name="nama_pengecer" value="${itemData.nama_pengecer || ''}" placeholder="Nama Pengecer (opsional)">
+                    <label for="crud_nama_produsen" class="form-label">Nama Produsen</label>
+                    <input type="text" class="form-control" id="crud_nama_produsen" name="nama_produsen" value="${itemData.nama_produsen || ''}" placeholder="Nama Produsen (opsional)">
                 </div>
                 <div class="row">
                     <div class="col-md-6">
@@ -1477,8 +1477,8 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <input type="text" class="form-control" id="crud_lokasi_asal" name="lokasi_rak_barang" value="${itemData.lokasi_rak_barang || ''}" pattern="R[1-8]-[1-4]-[1-6]" placeholder="R1-1-1 (opsional)">
                 </div>
                 <div class="mb-3">
-                    <label for="crud_nama_pengecer_outgoing" class="form-label">Nama Pengecer *</label>
-                    <input type="text" class="form-control" id="crud_nama_pengecer_outgoing" name="nama_pengecer" value="${itemData.nama_pengecer || ''}" required placeholder="Nama Pengecer">
+                    <label for="crud_nama_produsen_outgoing" class="form-label">Nama Produsen *</label>
+                    <input type="text" class="form-control" id="crud_nama_produsen_outgoing" name="nama_produsen" value="${itemData.nama_produsen || ''}" required placeholder="Nama Produsen">
                 </div>
                 <div class="row">
                     <div class="col-md-6">
@@ -1934,7 +1934,7 @@ window.confirmRackSelection = async function() {
                     formData.append('jumlah_barang', existingItemData.data.jumlah_barang);
                     formData.append('tanggal_masuk_barang', existingItemData.data.tanggal_masuk_barang);
                     formData.append('lokasi_rak_barang', newLocation); // Update only location
-                    formData.append('nama_pengecer', existingItemData.data.nama_pengecer || '');
+                    formData.append('nama_produsen', existingItemData.data.nama_produsen || '');
                     formData.append('metode_bayar', existingItemData.data.metode_bayar || '');
                     formData.append('pembayaran_transaksi', existingItemData.data.pembayaran_transaksi || 0.00);
                     formData.append('nota_transaksi', existingItemData.data.nota_transaksi || '');
@@ -2352,7 +2352,7 @@ window.processCSVImport = async function() {
 
 window.downloadCSVTemplate = function() {
     // Updated template to reflect new columns
-    const csvContent = "nama_barang,kategori_barang,jumlah_barang,tanggal_masuk_barang,lokasi_rak_barang,nama_pengecer,metode_bayar,pembayaran_transaksi,nota_transaksi\n" +
+    const csvContent = "nama_barang,kategori_barang,jumlah_barang,tanggal_masuk_barang,lokasi_rak_barang,nama_produsen,metode_bayar,pembayaran_transaksi,nota_transaksi\n" +
                       "Contoh Barang,Makanan,100,2024-01-01,R1-1-1,Toko ABC,Cash,150000.00,INV-001\n" +
                       "Contoh Barang 2,Minuman,50,2024-01-01,R1-1-2,Supplier XYZ,Transfer Bank,75000.00,INV-002";
     

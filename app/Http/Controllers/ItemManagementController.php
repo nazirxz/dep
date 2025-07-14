@@ -57,7 +57,7 @@ class ItemManagementController extends Controller
             'jumlah_barang' => 'required|integer|min:1',
             'tanggal_masuk_barang' => 'required|date',
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
-            'nama_pengecer' => 'nullable|string|max:255',
+            'nama_produsen' => 'nullable|string|max:255',
             'metode_bayar' => 'nullable|string|max:50',
             'pembayaran_transaksi' => 'nullable|numeric|min:0',
             'nota_transaksi' => 'nullable|string|max:255',
@@ -123,7 +123,7 @@ class ItemManagementController extends Controller
                 'jumlah_barang' => $request->jumlah_barang,
                 'tanggal_masuk_barang' => $request->tanggal_masuk_barang,
                 'lokasi_rak_barang' => $request->lokasi_rak_barang,
-                'nama_pengecer' => $request->nama_pengecer,
+                'nama_produsen' => $request->nama_produsen,
                 'metode_bayar' => $request->metode_bayar,
                 'pembayaran_transaksi' => $request->pembayaran_transaksi,
                 'nota_transaksi' => $request->nota_transaksi,
@@ -160,7 +160,7 @@ class ItemManagementController extends Controller
             'tanggal_keluar_barang' => 'required|date',
             'tujuan_distribusi' => 'required|string|max:255',
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/', // Opsional, tapi penting untuk penarikan spesifik
-            'nama_pengecer' => 'nullable|string|max:255', // Kolom baru
+            'nama_produsen' => 'nullable|string|max:255', // Kolom baru
             'metode_bayar' => 'nullable|string|max:50', // Kolom baru
             'pembayaran_transaksi' => 'nullable|numeric|min:0', // Kolom baru
             'nota_transaksi' => 'nullable|string|max:255', // Kolom baru
@@ -224,7 +224,7 @@ class ItemManagementController extends Controller
                 'tanggal_keluar_barang' => $request->tanggal_keluar_barang,
                 'tujuan_distribusi' => $request->tujuan_distribusi,
                 'lokasi_rak_barang' => $request->lokasi_rak_barang, // Simpan lokasi rak dari mana barang keluar
-                'nama_pengecer' => $request->nama_pengecer, // Kolom baru
+                'nama_produsen' => $request->nama_produsen, // Kolom baru
                 'metode_bayar' => $request->metode_bayar, // Kolom baru
                 'pembayaran_transaksi' => $request->pembayaran_transaksi, // Kolom baru
                 'nota_transaksi' => $request->nota_transaksi, // Kolom baru
@@ -277,7 +277,7 @@ class ItemManagementController extends Controller
             'jumlah_barang' => 'required|integer|min:0',
             'tanggal_masuk_barang' => 'required|date',
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
-            'nama_pengecer' => 'nullable|string|max:255',
+            'nama_produsen' => 'nullable|string|max:255',
             'metode_bayar' => 'nullable|string|max:50',
             'pembayaran_transaksi' => 'nullable|numeric|min:0',
             'nota_transaksi' => 'nullable|string|max:255',
@@ -328,7 +328,7 @@ class ItemManagementController extends Controller
                 'jumlah_barang' => $request->jumlah_barang,
                 'tanggal_masuk_barang' => $request->tanggal_masuk_barang,
                 'lokasi_rak_barang' => $newLocation, // Gunakan newLocation yang sudah disesuaikan
-                'nama_pengecer' => $request->nama_pengecer,
+                'nama_produsen' => $request->nama_produsen,
                 'metode_bayar' => $request->metode_bayar,
                 'pembayaran_transaksi' => $request->pembayaran_transaksi,
                 'nota_transaksi' => $request->nota_transaksi,
@@ -366,7 +366,7 @@ class ItemManagementController extends Controller
             'tanggal_keluar_barang' => 'required|date',
             'tujuan_distribusi' => 'required|string|max:255',
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
-            'nama_pengecer' => 'nullable|string|max:255', // Kolom baru
+            'nama_produsen' => 'nullable|string|max:255', // Kolom baru
             'metode_bayar' => 'nullable|string|max:50', // Kolom baru
             'pembayaran_transaksi' => 'nullable|numeric|min:0', // Kolom baru
             'nota_transaksi' => 'nullable|string|max:255', // Kolom baru
@@ -392,7 +392,7 @@ class ItemManagementController extends Controller
                 'tanggal_keluar_barang' => $request->tanggal_keluar_barang,
                 'tujuan_distribusi' => $request->tujuan_distribusi,
                 'lokasi_rak_barang' => $request->lokasi_rak_barang,
-                'nama_pengecer' => $request->nama_pengecer, // Kolom baru
+                'nama_produsen' => $request->nama_produsen, // Kolom baru
                 'metode_bayar' => $request->metode_bayar, // Kolom baru
                 'pembayaran_transaksi' => $request->pembayaran_transaksi, // Kolom baru
                 'nota_transaksi' => $request->nota_transaksi, // Kolom baru
@@ -565,7 +565,7 @@ class ItemManagementController extends Controller
                 $items = IncomingItem::where('nama_barang', 'like', '%' . $query . '%')
                                    ->orWhere('kategori_barang', 'like', '%' . $query . '%')
                                    ->orWhere('lokasi_rak_barang', 'like', '%' . $query . '%')
-                                   ->orWhere('nama_pengecer', 'like', '%' . $query . '%') // Kolom baru
+                                   ->orWhere('nama_produsen', 'like', '%' . $query . '%') // Kolom baru
                                    ->orWhere('nota_transaksi', 'like', '%' . $query . '%') // Kolom baru
                                    ->orderBy('tanggal_masuk_barang', 'desc')
                                    ->get();
@@ -573,7 +573,7 @@ class ItemManagementController extends Controller
                 $items = OutgoingItem::where('nama_barang', 'like', '%' . $query . '%')
                                    ->orWhere('kategori_barang', 'like', '%' . $query . '%')
                                    ->orWhere('tujuan_distribusi', 'like', '%' . $query . '%')
-                                   ->orWhere('nama_pengecer', 'like', '%' . $query . '%') // Kolom baru
+                                   ->orWhere('nama_produsen', 'like', '%' . $query . '%') // Kolom baru
                                    ->orWhere('nota_transaksi', 'like', '%' . $query . '%') // Kolom baru
                                    ->orderBy('tanggal_keluar_barang', 'desc')
                                    ->get();
@@ -812,7 +812,7 @@ class ItemManagementController extends Controller
                 $callback = function() use ($items) {
                     $file = fopen('php://output', 'w');
                     // Header CSV baru
-                    fputcsv($file, ['ID', 'Nama Barang', 'Kategori', 'Jumlah', 'Tanggal Masuk', 'Lokasi Rak', 'Nama Pengecer', 'Metode Bayar', 'Pembayaran Transaksi', 'Nota Transaksi']);
+                    fputcsv($file, ['ID', 'Nama Barang', 'Kategori', 'Jumlah', 'Tanggal Masuk', 'Lokasi Rak', 'Nama Produsen', 'Metode Bayar', 'Pembayaran Transaksi', 'Nota Transaksi']);
                     foreach ($items as $item) {
                         fputcsv($file, [
                             $item->id,
@@ -821,7 +821,7 @@ class ItemManagementController extends Controller
                             $item->jumlah_barang,
                             $item->tanggal_masuk_barang,
                             $item->lokasi_rak_barang,
-                            $item->nama_pengecer,
+                            $item->nama_produsen,
                             $item->metode_bayar,
                             $item->pembayaran_transaksi,
                             $item->nota_transaksi,
@@ -834,7 +834,7 @@ class ItemManagementController extends Controller
                 $callback = function() use ($items) {
                     $file = fopen('php://output', 'w');
                     // Header CSV baru
-                    fputcsv($file, ['ID', 'Nama Barang', 'Kategori', 'Jumlah', 'Tanggal Keluar', 'Tujuan Distribusi', 'Lokasi Rak', 'Nama Pengecer', 'Metode Bayar', 'Pembayaran Transaksi', 'Nota Transaksi']);
+                    fputcsv($file, ['ID', 'Nama Barang', 'Kategori', 'Jumlah', 'Tanggal Keluar', 'Tujuan Distribusi', 'Lokasi Rak', 'Nama Produsen', 'Metode Bayar', 'Pembayaran Transaksi', 'Nota Transaksi']);
                     foreach ($items as $item) {
                         fputcsv($file, [
                             $item->id,
@@ -844,7 +844,7 @@ class ItemManagementController extends Controller
                             $item->tanggal_keluar_barang,
                             $item->tujuan_distribusi,
                             $item->lokasi_rak_barang,
-                            $item->nama_pengecer,
+                            $item->nama_produsen,
                             $item->metode_bayar,
                             $item->pembayaran_transaksi,
                             $item->nota_transaksi,
@@ -951,7 +951,7 @@ class ItemManagementController extends Controller
                 'jumlah_barang' => $originalItem->jumlah_barang,
                 'tanggal_masuk_barang' => now(),
                 'lokasi_rak_barang' => null, // Setel ke null agar penempatan otomatis bisa menempatkannya
-                'nama_pengecer' => $originalItem->nama_pengecer, // Kolom baru
+                'nama_produsen' => $originalItem->nama_produsen, // Kolom baru
                 'metode_bayar' => $originalItem->metode_bayar, // Kolom baru
                 'pembayaran_transaksi' => $originalItem->pembayaran_transaksi, // Kolom baru
                 'nota_transaksi' => $originalItem->nota_transaksi, // Kolom baru
@@ -1059,7 +1059,7 @@ class ItemManagementController extends Controller
                 'date' => $incomingItem->tanggal_masuk_barang,
                 'quantity' => $incomingItem->jumlah_barang,
                 'location' => $incomingItem->lokasi_rak_barang,
-                'nama_pengecer' => $incomingItem->nama_pengecer,
+                'nama_produsen' => $incomingItem->nama_produsen,
                 'metode_bayar' => $incomingItem->metode_bayar,
                 'pembayaran_transaksi' => $incomingItem->pembayaran_transaksi,
                 'nota_transaksi' => $incomingItem->nota_transaksi,
@@ -1074,11 +1074,11 @@ class ItemManagementController extends Controller
                     'quantity' => $outgoing->jumlah_barang,
                     'destination' => $outgoing->tujuan_distribusi,
                     'location' => $outgoing->lokasi_rak_barang,
-                    'nama_pengecer' => $outgoing->nama_pengecer,
+                    'nama_produsen' => $outgoing->nama_produsen,
                     'metode_bayar' => $outgoing->metode_bayar,
                     'pembayaran_transaksi' => $outgoing->pembayaran_transaksi,
                     'nota_transaksi' => $outgoing->nota_transaksi,
-                    'description' => 'Barang keluar ke ' . ($outgoing->tujuan_distribusi ?? $outgoing->nama_pengecer)
+                    'description' => 'Barang keluar ke ' . ($outgoing->tujuan_distribusi ?? $outgoing->nama_produsen)
                 ];
             }
 
@@ -1285,14 +1285,14 @@ class ItemManagementController extends Controller
         $data = array_values($record);
         
         // Sesuaikan indeks data dengan kolom CSV yang baru
-        // Format CSV: nama_barang,kategori_barang,jumlah_barang,tanggal_masuk_barang,lokasi_rak_barang,nama_pengecer,metode_bayar,pembayaran_transaksi,nota_transaksi
+        // Format CSV: nama_barang,kategori_barang,jumlah_barang,tanggal_masuk_barang,lokasi_rak_barang,nama_produsen,metode_bayar,pembayaran_transaksi,nota_transaksi
         $csvData = [
             'nama_barang' => $data[0] ?? '',
             'kategori_barang' => $data[1] ?? '',
             'jumlah_barang' => $data[2] ?? 0,
             'tanggal_masuk_barang' => $data[3] ?? '',
             'lokasi_rak_barang' => $data[4] ?? null,
-            'nama_pengecer' => $data[5] ?? null,
+            'nama_produsen' => $data[5] ?? null,
             'metode_bayar' => $data[6] ?? null,
             'pembayaran_transaksi' => $data[7] ?? 0,
             'nota_transaksi' => $data[8] ?? null,
@@ -1305,7 +1305,7 @@ class ItemManagementController extends Controller
             'jumlah_barang' => 'required|integer|min:1',
             'tanggal_masuk_barang' => 'required|date',
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
-            'nama_pengecer' => 'nullable|string|max:255',
+            'nama_produsen' => 'nullable|string|max:255',
             'metode_bayar' => 'nullable|string|max:50',
             'pembayaran_transaksi' => 'nullable|numeric|min:0',
             'nota_transaksi' => 'nullable|string|max:255',
@@ -1347,7 +1347,7 @@ class ItemManagementController extends Controller
             'jumlah_barang' => $csvData['jumlah_barang'],
             'tanggal_masuk_barang' => $csvData['tanggal_masuk_barang'],
             'lokasi_rak_barang' => $csvData['lokasi_rak_barang'],
-            'nama_pengecer' => $csvData['nama_pengecer'],
+            'nama_produsen' => $csvData['nama_produsen'],
             'metode_bayar' => $csvData['metode_bayar'],
             'pembayaran_transaksi' => $csvData['pembayaran_transaksi'],
             'nota_transaksi' => $csvData['nota_transaksi'],
@@ -1365,7 +1365,7 @@ class ItemManagementController extends Controller
         $data = array_values($record);
         
         // Sesuaikan indeks data dengan kolom CSV yang baru
-        // Format CSV: nama_barang,kategori_barang,jumlah_barang,tanggal_keluar_barang,tujuan_distribusi,lokasi_rak_barang,nama_pengecer,metode_bayar,pembayaran_transaksi,nota_transaksi
+        // Format CSV: nama_barang,kategori_barang,jumlah_barang,tanggal_keluar_barang,tujuan_distribusi,lokasi_rak_barang,nama_produsen,metode_bayar,pembayaran_transaksi,nota_transaksi
         $csvData = [
             'nama_barang' => $data[0] ?? '',
             'kategori_barang' => $data[1] ?? '',
@@ -1373,7 +1373,7 @@ class ItemManagementController extends Controller
             'tanggal_keluar_barang' => $data[3] ?? '',
             'tujuan_distribusi' => $data[4] ?? '',
             'lokasi_rak_barang' => $data[5] ?? null,
-            'nama_pengecer' => $data[6] ?? null,
+            'nama_produsen' => $data[6] ?? null,
             'metode_bayar' => $data[7] ?? null,
             'pembayaran_transaksi' => $data[8] ?? 0,
             'nota_transaksi' => $data[9] ?? null,
@@ -1387,7 +1387,7 @@ class ItemManagementController extends Controller
             'tanggal_keluar_barang' => 'required|date',
             'tujuan_distribusi' => 'required|string|max:255',
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
-            'nama_pengecer' => 'nullable|string|max:255',
+            'nama_produsen' => 'nullable|string|max:255',
             'metode_bayar' => 'nullable|string|max:50',
             'pembayaran_transaksi' => 'nullable|numeric|min:0',
             'nota_transaksi' => 'nullable|string|max:255',
@@ -1425,7 +1425,7 @@ class ItemManagementController extends Controller
                 'tanggal_keluar_barang' => $csvData['tanggal_keluar_barang'],
                 'tujuan_distribusi' => $csvData['tujuan_distribusi'],
                 'lokasi_rak_barang' => $csvData['lokasi_rak_barang'],
-                'nama_pengecer' => $csvData['nama_pengecer'],
+                'nama_produsen' => $csvData['nama_produsen'],
                 'metode_bayar' => $csvData['metode_bayar'],
                 'pembayaran_transaksi' => $csvData['pembayaran_transaksi'],
                 'nota_transaksi' => $csvData['nota_transaksi'],

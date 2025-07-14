@@ -177,7 +177,7 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>No.</th>
-                                            <th>Nama Pengecer</th>
+                                            <th>Nama Produsen</th>
                                             <th>Tanggal Keluar Barang</th>
                                             <th>Daftar Barang</th>
                                             <th>Jumlah Barang</th>
@@ -753,7 +753,7 @@
                 const rows = outgoingTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
 
                 for (let i = 0; i < rows.length; i++) {
-                    const nameCell = rows[i].getElementsByTagName('td')[1]; // Nama Pengecer
+                    const nameCell = rows[i].getElementsByTagName('td')[1]; // Nama Produsen
                     const itemCell = rows[i].getElementsByTagName('td')[3]; // Daftar Barang
                     if (nameCell && itemCell) {
                         const nameValue = nameCell.textContent || nameCell.innerText;

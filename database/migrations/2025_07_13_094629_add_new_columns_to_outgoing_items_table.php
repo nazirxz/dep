@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::table('outgoing_items', function (Blueprint $table) {
             // Tambahkan kolom baru setelah 'tujuan_distribusi'
-            $table->string('nama_pengecer')->nullable()->after('tujuan_distribusi');
-            $table->string('metode_bayar')->nullable()->after('nama_pengecer');
+            $table->string('nama_produsen')->nullable()->after('tujuan_distribusi');
+            $table->string('metode_bayar')->nullable()->after('nama_produsen');
             $table->decimal('pembayaran_transaksi', 15, 2)->nullable()->after('metode_bayar'); // Menggunakan decimal untuk pembayaran
             $table->string('nota_transaksi')->nullable()->after('pembayaran_transaksi');
         });
@@ -27,7 +27,7 @@ return new class extends Migration
     {
         Schema::table('outgoing_items', function (Blueprint $table) {
             // Hapus kolom baru jika migrasi di-rollback
-            $table->dropColumn(['nama_pengecer', 'metode_bayar', 'pembayaran_transaksi', 'nota_transaksi']);
+            $table->dropColumn(['nama_produsen', 'metode_bayar', 'pembayaran_transaksi', 'nota_transaksi']);
         });
     }
 };

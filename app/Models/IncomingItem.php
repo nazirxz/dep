@@ -28,7 +28,7 @@ class IncomingItem extends Model
         'tanggal_masuk_barang',
         'jumlah_barang',
         'lokasi_rak_barang',
-        'nama_pengecer', // Kolom baru
+        'nama_produsen', // Kolom baru
         'metode_bayar', // Kolom baru
         'pembayaran_transaksi', // Kolom baru
         'nota_transaksi', // Kolom baru

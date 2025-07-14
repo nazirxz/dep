@@ -61,7 +61,7 @@ class OutgoingItemSeeder extends Seeder
                 'jumlah_barang' => $quantityToMove,
                 'tujuan_distribusi' => $faker->randomElement(['Toko A', 'Toko B', 'Pelanggan Online', 'Distributor XYZ', 'Cabang Pusat']),
                 'lokasi_rak_barang' => $incomingItem->lokasi_rak_barang,
-                'nama_pengecer' => $namaPengecer, // Data baru
+                'nama_produsen' => $namaPengecer, // Data baru
                 'metode_bayar' => $metodeBayar, // Data baru
                 'pembayaran_transaksi' => $pembayaranTransaksi, // Data baru
                 'nota_transaksi' => $notaTransaksi, // Data baru

@@ -29,7 +29,7 @@ class OutgoingItem extends Model
         'jumlah_barang',
         'tujuan_distribusi',
         'lokasi_rak_barang',
-        'nama_pengecer', // Kolom baru
+        'nama_produsen', // Kolom baru
         'metode_bayar', // Kolom baru
         'pembayaran_transaksi', // Kolom baru
         'nota_transaksi', // Kolom baru
