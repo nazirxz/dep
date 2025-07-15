@@ -33,7 +33,7 @@
     </div>
 @endif
 
-{{-- Card Data Barang --}}
+{{-- Card Data Barang (Tabbed Interface) --}}
 <div class="card shadow-sm mb-4">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <ul class="nav nav-tabs card-header-tabs" id="itemTabs" role="tablist">
@@ -52,12 +52,7 @@
                     <i class="fas fa-plus"></i> Tambah Barang
                 </button>
             </li>
-            {{-- TAB BARU: Verifikasi Barang Masuk --}}
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="verify-items-tab" data-bs-toggle="tab" data-bs-target="#verify-items" type="button" role="tab">
-                    <i class="fas fa-clipboard-check"></i> Verifikasi Barang Masuk
-                </button>
-            </li>
+            {{-- TAB Verifikasi Barang Masuk dihapus dari navigasi tab karena formnya sudah dipindahkan ke dalam tab Barang Masuk --}}
         </ul>
         <div class="d-flex align-items-center gap-2">
             <button class="btn btn-outline-primary btn-sm" onclick="window.exportData('pdf')">
@@ -75,6 +70,75 @@
         <div class="tab-content" id="itemTabsContent">
             {{-- Tab Barang Masuk --}}
             <div class="tab-pane fade show active" id="incoming-items" role="tabpanel">
+                {{-- Form Verifikasi Barang Masuk (dipindahkan ke dalam tab Barang Masuk) --}}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="fas fa-clipboard-check"></i> Verifikasi Barang Masuk</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="verificationForm">
+                            @csrf {{-- Tambahkan CSRF token untuk form ini --}}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="verify_nama_produsen" class="form-label">Nama Produsen</label>
+                                        <input type="text" class="form-control" id="verify_nama_produsen" name="nama_produsen" placeholder="Masukkan Nama Produsen">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="verify_nama_barang" class="form-label">Nama Barang</label>
+                                        <input type="text" class="form-control" id="verify_nama_barang" name="nama_barang" placeholder="Masukkan Nama Barang" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="verify_jumlah_barang" class="form-label">Jumlah Barang</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="verify_jumlah_barang" name="jumlah_barang" min="1" step="1" placeholder="0" required>
+                                            <select class="form-select" id="verify_satuan_barang" name="satuan_barang" required>
+                                                <option value="">Pilih Satuan Barang</option>
+                                                <option value="Unit">Unit</option>
+                                                <option value="Pcs">Pcs</option>
+                                                <option value="Dus">Dus</option>
+                                                <option value="Kg">Kg</option>
+                                                <option value="Liter">Liter</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Kondisi Fisik Barang</label>
+                                        <div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="kondisi_barang" id="kondisi_tidak_rusak" value="Baik" checked>
+                                                <label class="form-check-label" for="kondisi_tidak_rusak">Tidak Rusak</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="kondisi_barang" id="kondisi_rusak" value="Rusak Ringan">
+                                                <label class="form-check-label" for="kondisi_rusak">Rusak Ringan</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="kondisi_barang" id="kondisi_tidak_sesuai" value="Tidak Sesuai">
+                                                <label class="form-check-label" for="kondisi_tidak_sesuai">Tidak Sesuai</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="kondisi_barang" id="kondisi_kadaluarsa" value="Kadaluarsa">
+                                                <label class="form-check-label" for="kondisi_kadaluarsa">Kadaluarsa</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <button type="button" class="btn btn-outline-info w-100 mb-2" onclick="window.ajukanPergantianBarang()">
+                                            Ajukan Pergantian Barang
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary">Lanjut --></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 {{-- Filter dan Pencarian --}}
                 <div class="row mb-3">
                     <div class="col-md-3">
@@ -503,98 +567,6 @@
                     </div>
                 </div>
             </div>
-
-            {{-- TAB BARU: Verifikasi Barang Masuk Content --}}
-            <div class="tab-pane fade" id="verify-items" role="tabpanel">
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <input type="text" class="form-control" placeholder="Cari barang untuk diverifikasi..." id="searchVerificationInput">
-                    </div>
-                    <div class="col-md-3">
-                        <input type="date" class="form-control" id="dateVerificationFilter" placeholder="Filter Tanggal">
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select" id="conditionVerificationFilter">
-                            <option value="">Filter Kondisi</option>
-                            <option value="Semua">Semua</option>
-                            <option value="Baik">Baik</option>
-                            <option value="Rusak Ringan">Rusak Ringan</option>
-                            <option value="Rusak Parah">Rusak Parah</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-primary w-100" onclick="window.fetchPendingVerificationItems()">
-                            <i class="fas fa-sync-alt"></i> Refresh
-                        </button>
-                    </div>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table table-hover" id="verificationTable">
-                        <thead class="table-light">
-                            <tr>
-                                <th>No.</th>
-                                <th>Nama Barang</th>
-                                <th>Kategori</th>
-                                <th>Jumlah</th>
-                                <th>Tanggal Diterima</th>
-                                <th>Nama Produsen</th>
-                                <th>Kondisi</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="verificationTableBody">
-                            {{-- Data will be loaded here by JavaScript --}}
-                            <tr>
-                                <td colspan="8" class="text-center py-4">
-                                    <i class="fas fa-spinner fa-spin fa-3x text-muted mb-3"></i>
-                                    <p class="text-muted">Memuat data verifikasi...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                    <small class="text-muted" id="verificationSummary">
-                        Menampilkan 0 item dari total 0 item
-                    </small>
-                    <div>
-                        <button class="btn btn-sm btn-outline-secondary" disabled>Sebelumnya</button>
-                        <button class="btn btn-sm btn-outline-secondary" disabled>Berikutnya</button>
-                    </div>
-                </div>
-
-                <div class="row mt-4">
-                    <div class="col-md-4">
-                        <div class="card text-center border-0 bg-light">
-                            <div class="card-body">
-                                <i class="fas fa-hourglass-half fa-2x text-warning mb-2"></i>
-                                <h4 class="text-warning" id="pendingVerificationCount">0</h4>
-                                <small class="text-muted">Item Menunggu Verifikasi</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card text-center border-0 bg-light">
-                            <div class="card-body">
-                                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
-                                <h4 class="text-success" id="verifiedGoodCount">0</h4>
-                                <small class="text-muted">Item Baik Diverifikasi</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card text-center border-0 bg-light">
-                            <div class="card-body">
-                                <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
-                                <h4 class="text-danger" id="verifiedDamagedCount">0</h4>
-                                <small class="text-muted">Item Rusak Diverifikasi</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -885,6 +857,7 @@
 {{-- ATAU GUNAKAN @push('scripts') DI LAYOUT UTAMA DAN @push('scripts') DI SINI --}}
 {{-- JANGAN BIARKAN BLOK SCRIPT INI DI DALAM PARTIAL INI SECARA LANGSUNG --}}
 {{-- Karena ini menyebabkan masalah scope dan urutan pemuatan script --}}
+@push('scripts')
 <script>
 // Fungsi-fungsi yang akan dipanggil dari HTML (onclick) harus berada di lingkup global
 // atau diakses melalui window.namaFungsi. Untuk kemudahan, kita akan membuatnya global.
@@ -902,8 +875,8 @@ window.initializePage = function() {
     // Setup outgoing item selector
     window.setupOutgoingItemSelector();
 
-    // Fetch initial data for verification tab
-    window.fetchPendingVerificationItems();
+    // No longer fetching for a separate verification table
+    // window.fetchPendingVerificationItems();
 }
 
 /**
@@ -991,58 +964,16 @@ window.setupFilters = function() {
     if (destinationFilter) destinationFilter.addEventListener('change', filterOutgoingTable);
     if (dateOutgoingFilter) dateOutgoingFilter.addEventListener('change', filterOutgoingTable);
 
-    // Verification items filters (NEW)
-    const searchVerificationInput = document.getElementById('searchVerificationInput');
-    const dateVerificationFilter = document.getElementById('dateVerificationFilter');
-    const conditionVerificationFilter = document.getElementById('conditionVerificationFilter');
+    // No longer need filters for a separate verification table
+    // const searchVerificationInput = document.getElementById('searchVerificationInput');
+    // const dateVerificationFilter = document.getElementById('dateVerificationFilter');
+    // const conditionVerificationFilter = document.getElementById('conditionVerificationFilter');
 
-    function filterVerificationTable() {
-        const searchText = searchVerificationInput ? searchVerificationInput.value.toLowerCase() : '';
-        const selectedDate = dateVerificationFilter ? dateVerificationFilter.value : '';
-        const selectedCondition = conditionVerificationFilter ? conditionVerificationFilter.value : '';
-        
-        const rows = document.querySelectorAll('#verificationTableBody tr');
+    // function filterVerificationTable() { /* ... */ }
 
-        let pendingCount = 0;
-        let goodCount = 0;
-        let damagedCount = 0;
-
-        rows.forEach(row => {
-            if (row.cells.length < 2) return; // Skip empty rows
-
-            const nameCell = row.cells[1]; // Nama Barang
-            const dateReceived = row.dataset.dateReceived || '';
-            const condition = row.dataset.condition || '';
-
-            if (nameCell) {
-                const nameText = nameCell.textContent.toLowerCase();
-                const matchesSearch = nameText.includes(searchText);
-                const matchesDate = !selectedDate || dateReceived === selectedDate;
-                const matchesCondition = !selectedCondition || selectedCondition === 'Semua' || condition === selectedCondition;
-
-                if (matchesSearch && matchesDate && matchesCondition) {
-                    row.style.display = '';
-                    if (condition === 'Baik') {
-                        goodCount++;
-                    } else if (condition === 'Rusak Ringan' || condition === 'Rusak Parah') {
-                        damagedCount++;
-                    } else {
-                        pendingCount++; // Items not yet verified
-                    }
-                } else {
-                    row.style.display = 'none';
-                }
-            }
-        });
-        document.getElementById('pendingVerificationCount').textContent = pendingCount;
-        document.getElementById('verifiedGoodCount').textContent = goodCount;
-        document.getElementById('verifiedDamagedCount').textContent = damagedCount;
-        document.getElementById('verificationSummary').textContent = `Menampilkan ${pendingCount + goodCount + damagedCount} item dari total ${window.pendingVerificationItems.length} item`;
-    }
-
-    if (searchVerificationInput) searchVerificationInput.addEventListener('keyup', filterVerificationTable);
-    if (dateVerificationFilter) dateVerificationFilter.addEventListener('change', filterVerificationTable);
-    if (conditionVerificationFilter) conditionVerificationFilter.addEventListener('change', filterVerificationTable);
+    // if (searchVerificationInput) searchVerificationInput.addEventListener('keyup', filterVerificationTable);
+    // if (dateVerificationFilter) dateVerificationFilter.addEventListener('change', filterVerificationTable);
+    // if (conditionVerificationFilter) conditionVerificationFilter.addEventListener('change', filterVerificationTable);
 
     // Event listener for tab change to trigger filter on the active tab
     const itemTabs = document.getElementById('itemTabs');
@@ -1053,9 +984,11 @@ window.setupFilters = function() {
                 filterIncomingTable();
             } else if (activeTabId === 'outgoing-items-tab') {
                 filterOutgoingTable();
-            } else if (activeTabId === 'verify-items-tab') {
-                filterVerificationTable(); // Trigger filter when verification tab is shown
             }
+            // No longer a separate verification tab to filter
+            // else if (activeTabId === 'verify-items-tab') {
+            //     filterVerificationTable();
+            // }
         });
     }
 }
@@ -1302,7 +1235,8 @@ window.editIncomingItem = async function(itemId) { // Added async
         } else {
             window.showAlert('error', result.message || 'Gagal memuat data barang.');
         }
-    } catch (error) {
+    }
+    catch (error) {
         console.error('Error fetching incoming item for edit:', error);
         window.showAlert('error', 'Terjadi kesalahan saat memuat data barang.');
     }
@@ -1328,7 +1262,8 @@ window.editOutgoingItem = async function(itemId) { // Added async
         } else {
             window.showAlert('error', result.message || 'Gagal memuat data barang keluar.');
         }
-    } catch (error) {
+    }
+    catch (error) {
         console.error('Error fetching outgoing item for edit:', error);
         window.showAlert('error', 'Terjadi kesalahan saat memuat data barang keluar.');
     }
@@ -1598,68 +1533,6 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <input type="text" class="form-control" id="crud_nota_transaksi" name="nota_transaksi" value="${itemData.nota_transaksi || ''}" placeholder="Nomor Nota (opsional)">
                 </div>
             `;
-        } else { // outgoing - edit mode
-            modalLabel.textContent = `Edit Barang Keluar (ID: #${itemData.id})`;
-            submitBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
-            submitBtn.classList.remove('btn-primary', 'btn-danger');
-            submitBtn.classList.add('btn-warning');
-
-            formHtml = `
-                <div class="mb-3">
-                    <label for="crud_nama_barang" class="form-label">Nama Barang *</label>
-                    <input type="text" class="form-control" id="crud_nama_barang" name="nama_barang" value="${itemData.nama_barang}" required>
-                </div>
-                <div class="mb-3">
-                    <label for="crud_kategori_barang" class="form-label">Kategori Barang *</label>
-                    <input type="text" class="form-control" id="crud_kategori_barang" name="kategori_barang" value="${itemData.kategori_barang}" required>
-                </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="crud_jumlah_barang" class="form-label">Jumlah Keluar *</label>
-                            <input type="number" class="form-control" id="crud_jumlah_barang" name="jumlah_barang" value="${itemData.jumlah_barang}" required min="1">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="crud_tanggal_keluar" class="form-label">Tanggal Keluar *</label>
-                            <input type="date" class="form-control" id="crud_tanggal_keluar" name="tanggal_keluar_barang" value="${new Date(itemData.tanggal_keluar_barang).toISOString().split('T')[0]}" required>
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label for="crud_lokasi_asal" class="form-label">Lokasi Rak Asal</label>
-                    <input type="text" class="form-control" id="crud_lokasi_asal" name="lokasi_rak_barang" value="${itemData.lokasi_rak_barang || ''}" pattern="R[1-8]-[1-4]-[1-6]" placeholder="R1-1-1 (opsional)">
-                </div>
-                <div class="mb-3">
-                    <label for="crud_nama_produsen_outgoing" class="form-label">Nama Produsen *</label>
-                    <input type="text" class="form-control" id="crud_nama_produsen_outgoing" name="nama_produsen" value="${itemData.nama_produsen || ''}" required placeholder="Nama Produsen">
-                </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="crud_metode_bayar_outgoing" class="form-label">Metode Bayar</label>
-                            <select class="form-select" id="crud_metode_bayar_outgoing" name="metode_bayar">
-                                <option value="">Pilih Metode</option>
-                                <option value="Cash" ${itemData.metode_bayar === 'Cash' ? 'selected' : ''}>Cash</option>
-                                <option value="Transfer Bank" ${itemData.metode_bayar === 'Transfer Bank' ? 'selected' : ''}>Transfer Bank</option>
-                                <option value="Kartu Kredit" ${itemData.metode_bayar === 'Kartu Kredit' ? 'selected' : ''}>Kartu Kredit</option>
-                                <option value="Debit" ${itemData.metode_bayar === 'Debit' ? 'selected' : ''}>Debit</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="crud_pembayaran_transaksi_outgoing" class="form-label">Pembayaran Transaksi</label>
-                            <input type="number" step="0.01" class="form-control" id="crud_pembayaran_transaksi_outgoing" name="pembayaran_transaksi" value="${itemData.pembayaran_transaksi || 0.00}">
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label for="crud_nota_transaksi_outgoing" class="form-label">Nota Transaksi</label>
-                    <input type="text" class="form-control" id="crud_nota_transaksi_outgoing" name="nota_transaksi" value="${itemData.nota_transaksi || ''}" placeholder="Nomor Nota (opsional)">
-                </div>
-            `;
         }
     }
 
@@ -1752,7 +1625,8 @@ window.handleItemCrudSubmit = async function(event, itemType, mode) {
                 } else {
                     errorText = await response.text(); // Get raw text (likely HTML error page)
                 }
-            } catch (parseError) {
+            }
+            catch (parseError) {
                 console.error('Error parsing response for non-OK status:', parseError);
                 errorText += ` (Failed to parse response: ${parseError.message})`;
             }
@@ -1818,7 +1692,8 @@ window.deleteIncomingItem = async function(itemId) { // Added async
                     } else {
                         errorText = await response.text();
                     }
-                } catch (parseError) {
+                }
+                catch (parseError) {
                     console.error('Error parsing response for non-OK status:', parseError);
                     errorText += ` (Failed to parse response: ${parseError.message})`;
                 }
@@ -1871,7 +1746,8 @@ window.deleteOutgoingItem = async function(itemId) { // Added async
                     } else {
                         errorText = await response.text();
                     }
-                } catch (parseError) {
+                }
+                catch (parseError) {
                     console.error('Error parsing response for non-OK status:', parseError);
                     errorText += ` (Failed to parse response: ${parseError.message})`;
                 }
@@ -1949,7 +1825,8 @@ window.generateWarehouseSelector = async function() {
                 } else {
                     errorText = await response.text();
                 }
-            } catch (parseError) {
+            }
+            catch (parseError) {
                 console.error('Error parsing response for non-OK status:', parseError);
                 errorText += ` (Failed to parse response: ${parseError.message})`;
             }
@@ -2115,7 +1992,8 @@ window.confirmRackSelection = async function() {
                             } else {
                                 errorText = await response.text();
                             }
-                        } catch (parseError) {
+                        }
+                        catch (parseError) {
                             console.error('Error parsing response for non-OK status:', parseError);
                             errorText += ` (Failed to parse response: ${parseError.message})`;
                         }
@@ -2211,7 +2089,8 @@ window.quickAssignLocation = function(itemId) {
                     } else {
                         errorText = await response.text();
                     }
-                } catch (parseError) {
+                }
+                catch (parseError) {
                     console.error('Error parsing response for non-OK status:', parseError);
                     errorText += ` (Failed to parse response: ${parseError.message})`;
                 }
@@ -2359,7 +2238,8 @@ window.sendBulkAction = async function(itemIds, action, payload = {}) {
                 } else {
                     errorText = await response.text();
                 }
-            } catch (parseError) {
+            }
+            catch (parseError) {
                 console.error('Error parsing response for non-OK status:', parseError);
                 errorText += ` (Failed to parse response: ${parseError.message})`;
             }
@@ -2476,7 +2356,8 @@ window.processCSVImport = async function() {
                 } else {
                     errorText = await response.text();
                 }
-            } catch (parseError) {
+            }
+            catch (parseError) {
                 console.error('Error parsing response for non-OK status:', parseError);
                 errorText += ` (Failed to parse response: ${parseError.message})`;
             }
@@ -2676,7 +2557,8 @@ window.duplicateItem = async function(itemId) { // Added async
                     } else {
                         errorText = await response.text();
                     }
-                } catch (parseError) {
+                }
+                catch (parseError) {
                     console.error('Error parsing response for non-OK status:', parseError);
                     errorText += ` (Failed to parse response: ${parseError.message})`;
                 }
@@ -2713,277 +2595,127 @@ window.moveItem = function(itemId) {
     // Note: The input field 'crud_lokasi_rak' is part of the itemCrudModal.
     // If you call this from viewItemDetails, ensure the itemCrudModal is not open
     // or handle the context properly. For simplicity, we assume this is for
-    // assigning a location to an item that doesn't have one, or changing it.
+    // assigning a location to an item that's not in the main table.
     window.showRackSelector('crud_lokasi_rak', itemId); // Pass item ID to rack selector
 }
 
 // ====================================================================================
-// NEW FUNCTIONS FOR VERIFICATION TAB
+// NEW FUNCTIONS FOR VERIFICATION TAB (MODIFIED FOR NEW LAYOUT)
 // ====================================================================================
 
-// Global variable to store pending items (mock data for now)
-window.pendingVerificationItems = [];
-
 /**
- * Fetches and displays items pending verification.
- * In a real application, this would make an AJAX call to a backend endpoint.
+ * Handles the submission of the verification form.
+ * This function now sends data directly to the backend for processing.
  */
-window.fetchPendingVerificationItems = async function() {
-    const verificationTableBody = document.getElementById('verificationTableBody');
-    if (!verificationTableBody) return;
+window.handleVerificationFormSubmit = async function(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
 
-    verificationTableBody.innerHTML = `
-        <tr>
-            <td colspan="8" class="text-center py-4">
-                <i class="fas fa-spinner fa-spin fa-3x text-muted mb-3"></i>
-                <p class="text-muted">Memuat data verifikasi...</p>
-            </td>
-        </tr>
-    `;
-    window.showAlert('info', 'Memuat data barang untuk verifikasi...');
+    const namaProdusen = formData.get('nama_produsen');
+    const namaBarang = formData.get('nama_barang');
+    const jumlahBarang = parseInt(formData.get('jumlah_barang'));
+    const satuanBarang = formData.get('satuan_barang');
+    const kondisiBarang = formData.get('kondisi_barang');
 
-    try {
-        // Simulating API call with mock data
-        const response = await fetch('/staff/items/pending-verification'); // New route
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Server response for pending-verification was not OK:', errorText);
-            window.showAlert('error', `Gagal memuat data verifikasi. Status: ${response.status}. Detail di konsol.`);
-            verificationTableBody.innerHTML = `
-                <tr>
-                    <td colspan="8" class="text-center py-4">
-                        <i class="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
-                        <p class="text-danger">Gagal memuat data verifikasi.</p>
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-        const result = await response.json();
-
-        if (result.success) {
-            window.pendingVerificationItems = result.data; // Store fetched data globally
-            window.renderVerificationTable(window.pendingVerificationItems);
-            window.showAlert('success', 'Data barang untuk verifikasi berhasil dimuat.');
-            // Trigger filters to update counts
-            window.setupFilters(); 
-        } else {
-            window.showAlert('error', result.message || 'Gagal memuat data barang untuk verifikasi.');
-            verificationTableBody.innerHTML = `
-                <tr>
-                    <td colspan="8" class="text-center py-4">
-                        <i class="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
-                        <p class="text-danger">${result.message || 'Tidak dapat memuat data verifikasi.'}</p>
-                    </td>
-                </tr>
-            `;
-        }
-    } catch (error) {
-        console.error('Error fetching pending verification items:', error);
-        window.showAlert('error', 'Terjadi kesalahan jaringan saat memuat data verifikasi.');
-        verificationTableBody.innerHTML = `
-            <tr>
-                <td colspan="8" class="text-center py-4">
-                    <i class="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
-                    <p class="text-danger">Terjadi kesalahan jaringan.</p>
-                </td>
-            </tr>
-        `;
-    }
-};
-
-/**
- * Renders the pending verification items table.
- * @param {Array<object>} items - Array of items to display.
- */
-window.renderVerificationTable = function(items) {
-    const verificationTableBody = document.getElementById('verificationTableBody');
-    if (!verificationTableBody) return;
-
-    let html = '';
-    if (items.length > 0) {
-        items.forEach((item, index) => {
-            const dateReceived = new Date(item.tanggal_diterima).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'});
-            const conditionBadgeClass = window.getConditionBadgeClass(item.kondisi);
-            html += `
-                <tr data-id="${item.id}" data-date-received="${new Date(item.tanggal_diterima).toISOString().split('T')[0]}" data-condition="${item.kondisi}">
-                    <td>${index + 1}</td>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <div class="item-icon me-2">
-                                <i class="fas fa-box text-info"></i>
-                            </div>
-                            <div>
-                                <strong>${item.nama_barang}</strong>
-                                <small class="text-muted d-block">ID Sementara: #${item.id}</small>
-                            </div>
-                        </div>
-                    </td>
-                    <td><span class="badge bg-secondary">${item.kategori_barang}</span></td>
-                    <td><span class="fw-bold">${item.jumlah_barang}</span> unit</td>
-                    <td>${dateReceived}</td>
-                    <td>${item.nama_produsen ?? '-'}</td>
-                    <td><span class="badge ${conditionBadgeClass}">${item.kondisi}</span></td>
-                    <td>
-                        <div class="btn-group" role="group">
-                            <button class="btn btn-sm btn-success" onclick="window.verifyItem(${item.id}, 'Baik')" title="Verifikasi Baik">
-                                <i class="fas fa-check"></i> Baik
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="window.verifyItem(${item.id}, 'Rusak')" title="Tandai Rusak">
-                                <i class="fas fa-times"></i> Rusak
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
-    } else {
-        html = `
-            <tr>
-                <td colspan="8" class="text-center py-4">
-                    <i class="fas fa-check-double fa-3x text-success mb-3"></i>
-                    <p class="text-muted">Tidak ada barang yang perlu diverifikasi saat ini.</p>
-                </td>
-            </tr>
-        `;
-    }
-    verificationTableBody.innerHTML = html;
-    window.updateVerificationStats();
-};
-
-/**
- * Handles the verification process for an item.
- * @param {number} itemId - The ID of the item to verify (from the pending list).
- * @param {string} status - 'Baik' or 'Rusak'.
- */
-window.verifyItem = function(itemId, status) {
-    const itemToVerify = window.pendingVerificationItems.find(item => item.id === itemId);
-
-    if (!itemToVerify) {
-        window.showAlert('error', 'Item untuk verifikasi tidak ditemukan.');
+    // Basic validation
+    if (!namaBarang || isNaN(jumlahBarang) || jumlahBarang <= 0 || !satuanBarang || !kondisiBarang) {
+        window.showAlert('error', 'Nama Barang, Jumlah Barang (harus angka positif), Satuan Barang, dan Kondisi Fisik Barang harus diisi.');
         return;
     }
 
-    let confirmMessage = '';
-    let isDamaged = false;
-    if (status === 'Baik') {
-        confirmMessage = `Apakah Anda yakin ingin memverifikasi barang "${itemToVerify.nama_barang}" sebagai BAIK? Ini akan menambahkannya ke stok barang masuk.`;
-    } else { // status === 'Rusak'
-        confirmMessage = `Apakah Anda yakin ingin menandai barang "${itemToVerify.nama_barang}" sebagai RUSAK? Ini tidak akan menambahkannya ke stok barang masuk.`;
-        isDamaged = true;
-    }
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalBtnHtml = submitBtn.innerHTML;
 
-    window.showCustomConfirm(confirmMessage, async () => {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        window.showAlert('info', `Memproses verifikasi barang "${itemToVerify.nama_barang}"...`);
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="loading-spinner"></div> Memproses...';
 
-        try {
-            const response = await fetch('{{ route("staff.items.verify") }}', { // New route
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    id: itemToVerify.id, // ID dari mock data / temporary ID
-                    nama_barang: itemToVerify.nama_barang,
-                    kategori_barang: itemToVerify.kategori_barang,
-                    jumlah_barang: itemToVerify.jumlah_barang,
-                    tanggal_masuk_barang: itemToVerify.tanggal_diterima, // Use tanggal_diterima as tanggal_masuk_barang
-                    nama_produsen: itemToVerify.nama_produsen,
-                    metode_bayar: itemToVerify.metode_bayar,
-                    pembayaran_transaksi: itemToVerify.pembayaran_transaksi,
-                    nota_transaksi: itemToVerify.nota_transaksi,
-                    is_damaged: isDamaged,
-                    // lokasi_rak_barang will be null initially or assigned later by quickAssignLocation
-                    // or through a separate edit if needed.
-                })
-            });
+    try {
+        // Prepare data for backend API call
+        const payload = {
+            nama_barang: namaBarang,
+            kategori_barang: 'Unknown', // Kategori tidak ada di form ini, bisa diisi default atau dipilih nanti
+            jumlah_barang: jumlahBarang,
+            tanggal_masuk_barang: new Date().toISOString().split('T')[0], // Tanggal hari ini
+            nama_produsen: namaProdusen,
+            metode_bayar: null, // Tidak ada di form ini
+            pembayaran_transaksi: null, // Tidak ada di form ini
+            nota_transaksi: null, // Tidak ada di form ini
+            is_damaged: (kondisiBarang !== 'Baik'), // True if damaged/mismatched/expired
+            kondisi_fisik: kondisiBarang // Send the specific condition
+        };
 
-            if (!response.ok) {
-                let errorText = `HTTP error! status: ${response.status}`;
-                try {
-                    const contentType = response.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        const errorData = await response.json();
-                        errorText = errorData.message || JSON.stringify(errorData);
-                    } else {
-                        errorText = await response.text();
-                    }
-                } catch (parseError) {
-                    console.error('Error parsing response for non-OK status:', parseError);
-                    errorText += ` (Failed to parse response: ${parseError.message})`;
-                }
-                console.error('Server response for verifyItem was not OK:', errorText);
-                window.showAlert('error', `Gagal memverifikasi barang. Status: ${response.status}. Detail di konsol.`);
-                return;
-            }
+        const response = await fetch('{{ route("staff.items.verify") }}', { // Route to process verification
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
 
-            const data = await response.json();
-
-            if (data.success) {
-                window.showAlert('success', data.message);
-                // Remove the item from the pending list and re-render
-                window.pendingVerificationItems = window.pendingVerificationItems.filter(item => item.id !== itemId);
-                window.renderVerificationTable(window.pendingVerificationItems);
-                // Reload incoming items tab if the item was successfully added
-                if (!isDamaged) {
-                    // This will reload the entire page and thus the incoming items tab
-                    location.reload(); 
+        if (!response.ok) {
+            let errorText = `HTTP error! status: ${response.status}`;
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    errorText = errorData.message || JSON.stringify(errorData);
                 } else {
-                    // Just update the verification table and stats
-                    window.updateVerificationStats();
+                    errorText = await response.text();
                 }
-            } else {
-                window.showAlert('error', data.message || 'Gagal memverifikasi barang.');
             }
-        } catch (error) {
-            console.error('Verification error:', error);
-            window.showAlert('error', 'Terjadi kesalahan jaringan saat memverifikasi barang.');
+            catch (parseError) {
+                console.error('Error parsing response for non-OK status:', parseError);
+                errorText += ` (Failed to parse response: ${parseError.message})`;
+            }
+            console.error('Server response for verification form submission was not OK:', errorText);
+            window.showAlert('error', `Gagal memproses verifikasi: ${errorText.substring(0, 150)}... (Lihat konsol untuk detail)`);
+            return;
         }
-    });
-};
 
-/**
- * Helper function to get badge class based on item condition.
- * @param {string} condition - The condition of the item.
- * @returns {string} Bootstrap badge class.
- */
-window.getConditionBadgeClass = function(condition) {
-    switch (condition) {
-        case 'Baik': return 'bg-success';
-        case 'Rusak Ringan': return 'bg-warning text-dark';
-        case 'Rusak Parah': return 'bg-danger';
-        default: return 'bg-info'; // For pending or unknown
+        const data = await response.json();
+
+        if (data.success) {
+            window.showAlert('success', data.message);
+            form.reset(); // Reset the form after successful submission
+            document.getElementById('kondisi_tidak_rusak').checked = true; // Set default radio button
+            location.reload(); // Reload the page to show updated incoming items
+        } else {
+            let errorMessage = data.message || 'Terjadi kesalahan saat memproses verifikasi.';
+            if (data.errors) {
+                for (const key in data.errors) {
+                    errorMessage += `\n- ${data.errors[key][0]}`;
+                }
+            }
+            window.showAlert('error', errorMessage);
+        }
+    } catch (error) {
+        console.error('Verification form submission error:', error);
+        window.showAlert('error', 'Terjadi kesalahan jaringan saat memproses verifikasi.');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
     }
 };
 
 /**
- * Updates the summary statistics for the verification tab.
+ * Placeholder for "Ajukan Pergantian Barang" action.
  */
-window.updateVerificationStats = function() {
-    const totalItems = window.pendingVerificationItems.length;
-    let pendingCount = 0;
-    let goodCount = 0;
-    let damagedCount = 0;
-
-    window.pendingVerificationItems.forEach(item => {
-        if (item.kondisi === 'Baik') {
-            goodCount++;
-        } else if (item.kondisi === 'Rusak Ringan' || item.kondisi === 'Rusak Parah') {
-            damagedCount++;
-        } else {
-            pendingCount++;
-        }
-    });
-
-    document.getElementById('pendingVerificationCount').textContent = pendingCount;
-    document.getElementById('verifiedGoodCount').textContent = goodCount;
-    document.getElementById('verifiedDamagedCount').textContent = damagedCount;
-    document.getElementById('verificationSummary').textContent = `Menampilkan ${totalItems} item dari total ${totalItems} item`;
+window.ajukanPergantianBarang = function() {
+    window.showAlert('info', 'Fitur "Ajukan Pergantian Barang" akan segera hadir!');
+    // Implement logic for "Ajukan Pergantian Barang" here
 };
 
+// Removed functions related to the old verification table
+// window.fetchPendingVerificationItems is no longer needed
+// window.renderVerificationTable is no longer needed
+// window.verifyItem is no longer needed
+// window.getConditionBadgeClass is no longer needed for a separate table, but keep for other uses if any
+// window.updateVerificationStats is no longer needed
 
 // Pastikan kode ini berjalan setelah DOM sepenuhnya dimuat
 document.addEventListener('DOMContentLoaded', function() {
@@ -3019,5 +2751,12 @@ document.addEventListener('DOMContentLoaded', function() {
             alert.style.transform = 'translateY(0)';
         }, 100);
     });
+
+    // Attach event listener for the new verification form
+    const verificationForm = document.getElementById('verificationForm');
+    if (verificationForm) {
+        verificationForm.addEventListener('submit', window.handleVerificationFormSubmit);
+    }
 });
 </script>
+@endpush
