@@ -52,6 +52,12 @@
                     <i class="fas fa-plus"></i> Tambah Barang
                 </button>
             </li>
+            {{-- TAB BARU: Verifikasi Barang Masuk --}}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="verify-items-tab" data-bs-toggle="tab" data-bs-target="#verify-items" type="button" role="tab">
+                    <i class="fas fa-clipboard-check"></i> Verifikasi Barang Masuk
+                </button>
+            </li>
         </ul>
         <div class="d-flex align-items-center gap-2">
             <button class="btn btn-outline-primary btn-sm" onclick="window.exportData('pdf')">
@@ -81,15 +87,6 @@
                             @endif
                         </select>
                     </div>
-                    {{-- Filter Status Barang dihapus karena kolom status_barang dihapus --}}
-                    {{-- <div class="col-md-3">
-                        <select class="form-select" id="statusFilter">
-                            <option value="">Pilih Status Barang</option>
-                            <option value="Banyak">Banyak</option>
-                            <option value="Sedikit">Sedikit</option>
-                            <option value="Habis">Habis</option>
-                        </select>
-                    </div> --}}
                     <div class="col-md-3">
                         <input type="date" class="form-control" id="dateIncomingFilter" placeholder="Filter Tanggal">
                     </div>
@@ -506,6 +503,98 @@
                     </div>
                 </div>
             </div>
+
+            {{-- TAB BARU: Verifikasi Barang Masuk Content --}}
+            <div class="tab-pane fade" id="verify-items" role="tabpanel">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" placeholder="Cari barang untuk diverifikasi..." id="searchVerificationInput">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" class="form-control" id="dateVerificationFilter" placeholder="Filter Tanggal">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="conditionVerificationFilter">
+                            <option value="">Filter Kondisi</option>
+                            <option value="Semua">Semua</option>
+                            <option value="Baik">Baik</option>
+                            <option value="Rusak Ringan">Rusak Ringan</option>
+                            <option value="Rusak Parah">Rusak Parah</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100" onclick="window.fetchPendingVerificationItems()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover" id="verificationTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>No.</th>
+                                <th>Nama Barang</th>
+                                <th>Kategori</th>
+                                <th>Jumlah</th>
+                                <th>Tanggal Diterima</th>
+                                <th>Nama Produsen</th>
+                                <th>Kondisi</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="verificationTableBody">
+                            {{-- Data will be loaded here by JavaScript --}}
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="fas fa-spinner fa-spin fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Memuat data verifikasi...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <small class="text-muted" id="verificationSummary">
+                        Menampilkan 0 item dari total 0 item
+                    </small>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary" disabled>Sebelumnya</button>
+                        <button class="btn btn-sm btn-outline-secondary" disabled>Berikutnya</button>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="card text-center border-0 bg-light">
+                            <div class="card-body">
+                                <i class="fas fa-hourglass-half fa-2x text-warning mb-2"></i>
+                                <h4 class="text-warning" id="pendingVerificationCount">0</h4>
+                                <small class="text-muted">Item Menunggu Verifikasi</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center border-0 bg-light">
+                            <div class="card-body">
+                                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                <h4 class="text-success" id="verifiedGoodCount">0</h4>
+                                <small class="text-muted">Item Baik Diverifikasi</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center border-0 bg-light">
+                            <div class="card-body">
+                                <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                                <h4 class="text-danger" id="verifiedDamagedCount">0</h4>
+                                <small class="text-muted">Item Rusak Diverifikasi</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -812,6 +901,9 @@ window.initializePage = function() {
     
     // Setup outgoing item selector
     window.setupOutgoingItemSelector();
+
+    // Fetch initial data for verification tab
+    window.fetchPendingVerificationItems();
 }
 
 /**
@@ -821,13 +913,11 @@ window.setupFilters = function() {
     // Incoming items filters
     const searchIncomingInput = document.getElementById('searchIncomingInput');
     const categoryFilter = document.getElementById('categoryFilter');
-    // const statusFilter = document.getElementById('statusFilter'); // Dihapus
     const dateIncomingFilter = document.getElementById('dateIncomingFilter');
 
     function filterIncomingTable() {
         const searchText = searchIncomingInput ? searchIncomingInput.value.toLowerCase() : '';
         const selectedCategory = categoryFilter ? categoryFilter.value : '';
-        // const selectedStatus = statusFilter ? statusFilter.value : ''; // Dihapus
         const selectedDate = dateIncomingFilter ? dateIncomingFilter.value : '';
         
         const rows = document.querySelectorAll('#incomingTable tbody tr');
@@ -837,17 +927,15 @@ window.setupFilters = function() {
             
             const nameCell = row.cells[2]; // Nama Barang column
             const category = row.dataset.category || '';
-            // const status = row.dataset.status || ''; // Dihapus
             const date = row.dataset.date || '';
 
             if (nameCell) {
                 const nameText = nameCell.textContent.toLowerCase();
                 const matchesSearch = nameText.includes(searchText);
                 const matchesCategory = !selectedCategory || category === selectedCategory;
-                // const matchesStatus = !selectedStatus || status === selectedStatus; // Dihapus
                 const matchesDate = !selectedDate || date === selectedDate;
 
-                if (matchesSearch && matchesCategory && matchesDate) { // Diperbarui
+                if (matchesSearch && matchesCategory && matchesDate) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
@@ -858,7 +946,6 @@ window.setupFilters = function() {
 
     if (searchIncomingInput) searchIncomingInput.addEventListener('keyup', filterIncomingTable);
     if (categoryFilter) categoryFilter.addEventListener('change', filterIncomingTable);
-    // if (statusFilter) statusFilter.addEventListener('change', filterIncomingTable); // Dihapus
     if (dateIncomingFilter) dateIncomingFilter.addEventListener('change', filterIncomingTable);
 
     // Outgoing items filters
@@ -903,6 +990,74 @@ window.setupFilters = function() {
     if (outgoingCategoryFilter) outgoingCategoryFilter.addEventListener('change', filterOutgoingTable);
     if (destinationFilter) destinationFilter.addEventListener('change', filterOutgoingTable);
     if (dateOutgoingFilter) dateOutgoingFilter.addEventListener('change', filterOutgoingTable);
+
+    // Verification items filters (NEW)
+    const searchVerificationInput = document.getElementById('searchVerificationInput');
+    const dateVerificationFilter = document.getElementById('dateVerificationFilter');
+    const conditionVerificationFilter = document.getElementById('conditionVerificationFilter');
+
+    function filterVerificationTable() {
+        const searchText = searchVerificationInput ? searchVerificationInput.value.toLowerCase() : '';
+        const selectedDate = dateVerificationFilter ? dateVerificationFilter.value : '';
+        const selectedCondition = conditionVerificationFilter ? conditionVerificationFilter.value : '';
+        
+        const rows = document.querySelectorAll('#verificationTableBody tr');
+
+        let pendingCount = 0;
+        let goodCount = 0;
+        let damagedCount = 0;
+
+        rows.forEach(row => {
+            if (row.cells.length < 2) return; // Skip empty rows
+
+            const nameCell = row.cells[1]; // Nama Barang
+            const dateReceived = row.dataset.dateReceived || '';
+            const condition = row.dataset.condition || '';
+
+            if (nameCell) {
+                const nameText = nameCell.textContent.toLowerCase();
+                const matchesSearch = nameText.includes(searchText);
+                const matchesDate = !selectedDate || dateReceived === selectedDate;
+                const matchesCondition = !selectedCondition || selectedCondition === 'Semua' || condition === selectedCondition;
+
+                if (matchesSearch && matchesDate && matchesCondition) {
+                    row.style.display = '';
+                    if (condition === 'Baik') {
+                        goodCount++;
+                    } else if (condition === 'Rusak Ringan' || condition === 'Rusak Parah') {
+                        damagedCount++;
+                    } else {
+                        pendingCount++; // Items not yet verified
+                    }
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
+        document.getElementById('pendingVerificationCount').textContent = pendingCount;
+        document.getElementById('verifiedGoodCount').textContent = goodCount;
+        document.getElementById('verifiedDamagedCount').textContent = damagedCount;
+        document.getElementById('verificationSummary').textContent = `Menampilkan ${pendingCount + goodCount + damagedCount} item dari total ${window.pendingVerificationItems.length} item`;
+    }
+
+    if (searchVerificationInput) searchVerificationInput.addEventListener('keyup', filterVerificationTable);
+    if (dateVerificationFilter) dateVerificationFilter.addEventListener('change', filterVerificationTable);
+    if (conditionVerificationFilter) conditionVerificationFilter.addEventListener('change', filterVerificationTable);
+
+    // Event listener for tab change to trigger filter on the active tab
+    const itemTabs = document.getElementById('itemTabs');
+    if (itemTabs) {
+        itemTabs.addEventListener('shown.bs.tab', function (event) {
+            const activeTabId = event.target.id;
+            if (activeTabId === 'incoming-items-tab') {
+                filterIncomingTable();
+            } else if (activeTabId === 'outgoing-items-tab') {
+                filterOutgoingTable();
+            } else if (activeTabId === 'verify-items-tab') {
+                filterVerificationTable(); // Trigger filter when verification tab is shown
+            }
+        });
+    }
 }
 
 /**
@@ -2382,17 +2537,6 @@ window.viewWarehouse = function() {
     @endif
 }
 
-// Helper functions
-// Removed getStatusBadgeClass as status_barang column is removed
-/* window.getStatusBadgeClass = function(status) {
-    switch(status) {
-        case 'Banyak': return 'bg-success';
-        case 'Sedikit': return 'bg-warning';
-        case 'Habis': return 'bg-danger';
-        default: return 'bg-secondary';
-    }
-} */
-
 /**
  * Helper function to format numbers as currency.
  * @param {number} amount - The number to format.
@@ -2572,6 +2716,273 @@ window.moveItem = function(itemId) {
     // assigning a location to an item that doesn't have one, or changing it.
     window.showRackSelector('crud_lokasi_rak', itemId); // Pass item ID to rack selector
 }
+
+// ====================================================================================
+// NEW FUNCTIONS FOR VERIFICATION TAB
+// ====================================================================================
+
+// Global variable to store pending items (mock data for now)
+window.pendingVerificationItems = [];
+
+/**
+ * Fetches and displays items pending verification.
+ * In a real application, this would make an AJAX call to a backend endpoint.
+ */
+window.fetchPendingVerificationItems = async function() {
+    const verificationTableBody = document.getElementById('verificationTableBody');
+    if (!verificationTableBody) return;
+
+    verificationTableBody.innerHTML = `
+        <tr>
+            <td colspan="8" class="text-center py-4">
+                <i class="fas fa-spinner fa-spin fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Memuat data verifikasi...</p>
+            </td>
+        </tr>
+    `;
+    window.showAlert('info', 'Memuat data barang untuk verifikasi...');
+
+    try {
+        // Simulating API call with mock data
+        const response = await fetch('/staff/items/pending-verification'); // New route
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server response for pending-verification was not OK:', errorText);
+            window.showAlert('error', `Gagal memuat data verifikasi. Status: ${response.status}. Detail di konsol.`);
+            verificationTableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-4">
+                        <i class="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
+                        <p class="text-danger">Gagal memuat data verifikasi.</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        const result = await response.json();
+
+        if (result.success) {
+            window.pendingVerificationItems = result.data; // Store fetched data globally
+            window.renderVerificationTable(window.pendingVerificationItems);
+            window.showAlert('success', 'Data barang untuk verifikasi berhasil dimuat.');
+            // Trigger filters to update counts
+            window.setupFilters(); 
+        } else {
+            window.showAlert('error', result.message || 'Gagal memuat data barang untuk verifikasi.');
+            verificationTableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-4">
+                        <i class="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
+                        <p class="text-danger">${result.message || 'Tidak dapat memuat data verifikasi.'}</p>
+                    </td>
+                </tr>
+            `;
+        }
+    } catch (error) {
+        console.error('Error fetching pending verification items:', error);
+        window.showAlert('error', 'Terjadi kesalahan jaringan saat memuat data verifikasi.');
+        verificationTableBody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center py-4">
+                    <i class="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
+                    <p class="text-danger">Terjadi kesalahan jaringan.</p>
+                </td>
+            </tr>
+        `;
+    }
+};
+
+/**
+ * Renders the pending verification items table.
+ * @param {Array<object>} items - Array of items to display.
+ */
+window.renderVerificationTable = function(items) {
+    const verificationTableBody = document.getElementById('verificationTableBody');
+    if (!verificationTableBody) return;
+
+    let html = '';
+    if (items.length > 0) {
+        items.forEach((item, index) => {
+            const dateReceived = new Date(item.tanggal_diterima).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'});
+            const conditionBadgeClass = window.getConditionBadgeClass(item.kondisi);
+            html += `
+                <tr data-id="${item.id}" data-date-received="${new Date(item.tanggal_diterima).toISOString().split('T')[0]}" data-condition="${item.kondisi}">
+                    <td>${index + 1}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="item-icon me-2">
+                                <i class="fas fa-box text-info"></i>
+                            </div>
+                            <div>
+                                <strong>${item.nama_barang}</strong>
+                                <small class="text-muted d-block">ID Sementara: #${item.id}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="badge bg-secondary">${item.kategori_barang}</span></td>
+                    <td><span class="fw-bold">${item.jumlah_barang}</span> unit</td>
+                    <td>${dateReceived}</td>
+                    <td>${item.nama_produsen ?? '-'}</td>
+                    <td><span class="badge ${conditionBadgeClass}">${item.kondisi}</span></td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-success" onclick="window.verifyItem(${item.id}, 'Baik')" title="Verifikasi Baik">
+                                <i class="fas fa-check"></i> Baik
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="window.verifyItem(${item.id}, 'Rusak')" title="Tandai Rusak">
+                                <i class="fas fa-times"></i> Rusak
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    } else {
+        html = `
+            <tr>
+                <td colspan="8" class="text-center py-4">
+                    <i class="fas fa-check-double fa-3x text-success mb-3"></i>
+                    <p class="text-muted">Tidak ada barang yang perlu diverifikasi saat ini.</p>
+                </td>
+            </tr>
+        `;
+    }
+    verificationTableBody.innerHTML = html;
+    window.updateVerificationStats();
+};
+
+/**
+ * Handles the verification process for an item.
+ * @param {number} itemId - The ID of the item to verify (from the pending list).
+ * @param {string} status - 'Baik' or 'Rusak'.
+ */
+window.verifyItem = function(itemId, status) {
+    const itemToVerify = window.pendingVerificationItems.find(item => item.id === itemId);
+
+    if (!itemToVerify) {
+        window.showAlert('error', 'Item untuk verifikasi tidak ditemukan.');
+        return;
+    }
+
+    let confirmMessage = '';
+    let isDamaged = false;
+    if (status === 'Baik') {
+        confirmMessage = `Apakah Anda yakin ingin memverifikasi barang "${itemToVerify.nama_barang}" sebagai BAIK? Ini akan menambahkannya ke stok barang masuk.`;
+    } else { // status === 'Rusak'
+        confirmMessage = `Apakah Anda yakin ingin menandai barang "${itemToVerify.nama_barang}" sebagai RUSAK? Ini tidak akan menambahkannya ke stok barang masuk.`;
+        isDamaged = true;
+    }
+
+    window.showCustomConfirm(confirmMessage, async () => {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        window.showAlert('info', `Memproses verifikasi barang "${itemToVerify.nama_barang}"...`);
+
+        try {
+            const response = await fetch('{{ route("staff.items.verify") }}', { // New route
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id: itemToVerify.id, // ID dari mock data / temporary ID
+                    nama_barang: itemToVerify.nama_barang,
+                    kategori_barang: itemToVerify.kategori_barang,
+                    jumlah_barang: itemToVerify.jumlah_barang,
+                    tanggal_masuk_barang: itemToVerify.tanggal_diterima, // Use tanggal_diterima as tanggal_masuk_barang
+                    nama_produsen: itemToVerify.nama_produsen,
+                    metode_bayar: itemToVerify.metode_bayar,
+                    pembayaran_transaksi: itemToVerify.pembayaran_transaksi,
+                    nota_transaksi: itemToVerify.nota_transaksi,
+                    is_damaged: isDamaged,
+                    // lokasi_rak_barang will be null initially or assigned later by quickAssignLocation
+                    // or through a separate edit if needed.
+                })
+            });
+
+            if (!response.ok) {
+                let errorText = `HTTP error! status: ${response.status}`;
+                try {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const errorData = await response.json();
+                        errorText = errorData.message || JSON.stringify(errorData);
+                    } else {
+                        errorText = await response.text();
+                    }
+                } catch (parseError) {
+                    console.error('Error parsing response for non-OK status:', parseError);
+                    errorText += ` (Failed to parse response: ${parseError.message})`;
+                }
+                console.error('Server response for verifyItem was not OK:', errorText);
+                window.showAlert('error', `Gagal memverifikasi barang. Status: ${response.status}. Detail di konsol.`);
+                return;
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                window.showAlert('success', data.message);
+                // Remove the item from the pending list and re-render
+                window.pendingVerificationItems = window.pendingVerificationItems.filter(item => item.id !== itemId);
+                window.renderVerificationTable(window.pendingVerificationItems);
+                // Reload incoming items tab if the item was successfully added
+                if (!isDamaged) {
+                    // This will reload the entire page and thus the incoming items tab
+                    location.reload(); 
+                } else {
+                    // Just update the verification table and stats
+                    window.updateVerificationStats();
+                }
+            } else {
+                window.showAlert('error', data.message || 'Gagal memverifikasi barang.');
+            }
+        } catch (error) {
+            console.error('Verification error:', error);
+            window.showAlert('error', 'Terjadi kesalahan jaringan saat memverifikasi barang.');
+        }
+    });
+};
+
+/**
+ * Helper function to get badge class based on item condition.
+ * @param {string} condition - The condition of the item.
+ * @returns {string} Bootstrap badge class.
+ */
+window.getConditionBadgeClass = function(condition) {
+    switch (condition) {
+        case 'Baik': return 'bg-success';
+        case 'Rusak Ringan': return 'bg-warning text-dark';
+        case 'Rusak Parah': return 'bg-danger';
+        default: return 'bg-info'; // For pending or unknown
+    }
+};
+
+/**
+ * Updates the summary statistics for the verification tab.
+ */
+window.updateVerificationStats = function() {
+    const totalItems = window.pendingVerificationItems.length;
+    let pendingCount = 0;
+    let goodCount = 0;
+    let damagedCount = 0;
+
+    window.pendingVerificationItems.forEach(item => {
+        if (item.kondisi === 'Baik') {
+            goodCount++;
+        } else if (item.kondisi === 'Rusak Ringan' || item.kondisi === 'Rusak Parah') {
+            damagedCount++;
+        } else {
+            pendingCount++;
+        }
+    });
+
+    document.getElementById('pendingVerificationCount').textContent = pendingCount;
+    document.getElementById('verifiedGoodCount').textContent = goodCount;
+    document.getElementById('verifiedDamagedCount').textContent = damagedCount;
+    document.getElementById('verificationSummary').textContent = `Menampilkan ${totalItems} item dari total ${totalItems} item`;
+};
 
 
 // Pastikan kode ini berjalan setelah DOM sepenuhnya dimuat

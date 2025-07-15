@@ -79,5 +79,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/staff/items/{id}/movement-history', [ItemManagementController::class, 'getItemMovementHistory'])->name('staff.items.movement_history');
         Route::post('/staff/items/bulk-update', [ItemManagementController::class, 'bulkUpdate'])->name('staff.items.bulk_update');
         Route::get('/staff/locations/available', [ItemManagementController::class, 'getAvailableLocations'])->name('staff.locations.available');
+        // Rute baru untuk verifikasi barang
+        Route::get('/staff/items/pending-verification', [ItemManagementController::class, 'getPendingVerificationItems'])->name('staff.items.pending-verification');
+        Route::post('/staff/items/verify', [ItemManagementController::class, 'processVerification'])->name('staff.items.verify');
     });
 });

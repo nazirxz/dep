@@ -1355,6 +1355,136 @@ class ItemManagementController extends Controller
         ]);
         \Log::info('importIncomingItem (private): New item created', ['nama_barang' => $csvData['nama_barang'], 'jumlah_barang' => $csvData['jumlah_barang']]);
     }
+     public function getPendingVerificationItems()
+    {
+        // Ini adalah contoh data mock.
+        // Dalam implementasi nyata, Anda akan mengambil data ini dari database
+        // yang mewakili barang yang baru tiba dan menunggu inspeksi/verifikasi.
+        // Misalnya, dari tabel 'temp_incoming_items' atau 'shipment_items'
+        // dengan status 'pending_verification'.
+        $mockPendingItems = [
+            [
+                'id' => 101,
+                'nama_barang' => 'Laptop Gaming',
+                'kategori_barang' => 'Elektronik',
+                'jumlah_barang' => 5,
+                'tanggal_diterima' => '2025-07-10',
+                'nama_produsen' => 'TechCorp',
+                'metode_bayar' => 'Transfer Bank',
+                'pembayaran_transaksi' => 75000000.00,
+                'nota_transaksi' => 'PNV-001',
+                'kondisi' => 'Menunggu Verifikasi' // Initial status
+            ],
+            [
+                'id' => 102,
+                'nama_barang' => 'Meja Kantor Ergonomis',
+                'kategori_barang' => 'Perabotan',
+                'jumlah_barang' => 10,
+                'tanggal_diterima' => '2025-07-11',
+                'nama_produsen' => 'FurniturePro',
+                'metode_bayar' => 'Cash',
+                'pembayaran_transaksi' => 12000000.00,
+                'nota_transaksi' => 'PNV-002',
+                'kondisi' => 'Menunggu Verifikasi'
+            ],
+            [
+                'id' => 103,
+                'nama_barang' => 'Keyboard Mekanik',
+                'kategori_barang' => 'Elektronik',
+                'jumlah_barang' => 20,
+                'tanggal_diterima' => '2025-07-12',
+                'nama_produsen' => 'KeyMaster',
+                'metode_bayar' => 'Kartu Kredit',
+                'pembayaran_transaksi' => 5000000.00,
+                'nota_transaksi' => 'PNV-003',
+                'kondisi' => 'Menunggu Verifikasi'
+            ],
+        ];
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data barang menunggu verifikasi berhasil diambil.',
+            'data' => $mockPendingItems
+        ]);
+    }
+
+    /**
+     * Memproses verifikasi barang masuk.
+     * Jika tidak rusak, akan di-insert ke tabel IncomingItem.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function processVerification(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|integer', // ID sementara dari item yang diverifikasi
+            'nama_barang' => 'required|string|max:255',
+            'kategori_barang' => 'required|string|max:255',
+            'jumlah_barang' => 'required|integer|min:1',
+            'tanggal_masuk_barang' => 'required|date',
+            'nama_produsen' => 'nullable|string|max:255',
+            'metode_bayar' => 'nullable|string|max:255',
+            'pembayaran_transaksi' => 'nullable|numeric|min:0',
+            'nota_transaksi' => 'nullable|string|max:255',
+            'is_damaged' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $isDamaged = $request->input('is_damaged');
+            $itemName = $request->input('nama_barang');
+
+            if (!$isDamaged) {
+                // Jika barang tidak rusak, masukkan ke tabel IncomingItem
+                IncomingItem::create([
+                    'nama_barang' => $itemName,
+                    'kategori_barang' => $request->input('kategori_barang'),
+                    'jumlah_barang' => $request->input('jumlah_barang'),
+                    'tanggal_masuk_barang' => $request->input('tanggal_masuk_barang'),
+                    'lokasi_rak_barang' => null, // Lokasi rak bisa diisi nanti atau melalui quick assign
+                    'nama_produsen' => $request->input('nama_produsen'),
+                    'metode_bayar' => $request->input('metode_bayar'),
+                    'pembayaran_transaksi' => $request->input('pembayaran_transaksi'),
+                    'nota_transaksi' => $request->input('nota_transaksi'),
+                ]);
+
+                // Dalam aplikasi nyata, Anda mungkin juga menghapus item dari tabel staging
+                // atau memperbarui statusnya menjadi 'verified' di tabel staging.
+                // Untuk mock data, kita hanya akan mengabaikannya setelah diproses.
+
+                DB::commit();
+                return response()->json([
+                    'success' => true,
+                    'message' => "Barang '{$itemName}' berhasil diverifikasi sebagai BAIK dan ditambahkan ke stok."
+                ]);
+            } else {
+                // Jika barang rusak, tidak dimasukkan ke IncomingItem.
+                // Dalam aplikasi nyata, Anda mungkin mencatatnya di tabel 'damaged_items'
+                // atau memperbarui statusnya menjadi 'damaged' di tabel staging.
+                DB::commit();
+                return response()->json([
+                    'success' => true,
+                    'message' => "Barang '{$itemName}' berhasil ditandai sebagai RUSAK. Tidak ditambahkan ke stok."
+                ]);
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memproses verifikasi barang: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 
     /**
      * Mengimpor barang keluar dari catatan CSV.
