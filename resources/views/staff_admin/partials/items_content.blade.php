@@ -55,12 +55,6 @@
             {{-- TAB Verifikasi Barang Masuk dihapus dari navigasi tab karena formnya sudah dipindahkan ke dalam tab Barang Masuk --}}
         </ul>
         <div class="d-flex align-items-center gap-2">
-            <button class="btn btn-outline-primary btn-sm" onclick="window.exportData('pdf')">
-                <i class="fas fa-file-pdf"></i> Export PDF
-            </button>
-            <button class="btn btn-outline-success btn-sm" onclick="window.exportData('excel')">
-                <i class="fas fa-file-excel"></i> Export Excel
-            </button>
             <button class="btn btn-primary btn-sm" onclick="window.refreshData()">
                 <i class="fas fa-sync-alt"></i> Refresh
             </button>
