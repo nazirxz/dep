@@ -51,8 +51,6 @@
             overflow-x: hidden; /* Mencegah scroll horizontal */
         }
         
-        {{-- Hapus gaya navbar yang tidak lagi digunakan --}}
-
         /* Alert Styles */
         .alert {
             border: none;
@@ -255,14 +253,10 @@
 </head>
 <body>
     <div id="app">
-        {{-- Navbar yang dihapus --}}
-
         <main>
             @yield('content')
         </main>
 
-        {{-- Footer akan tetap ada, namun posisinya mungkin perlu disesuaikan tergantung layout akhir --}}
-        {{-- Untuk saat ini, biarkan di sini, dan sesuaikan di manager_dashboard jika perlu --}}
         <footer class="text-center text-light">
             <div class="container">
                 <div class="row">
@@ -294,43 +288,6 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Auto dismiss alerts after 5 seconds
-            // Ini akan dipindahkan ke manager_dashboard.blade.php
-            // const alerts = document.querySelectorAll('.alert-dismissible');
-            // alerts.forEach(function(alert) {
-            //     setTimeout(function() {
-            //         const bsAlert = new bootstrap.Alert(alert);
-            //         bsAlert.close();
-            //     }, 5000);
-            // });
-
-            // Add smooth fade-in animation for alerts
-            // Ini akan dipindahkan ke manager_dashboard.blade.php
-            // alerts.forEach(function(alert) {
-            //     alert.style.opacity = '0';
-            //     alert.style.transform = 'translateY(-20px)';
-            //     setTimeout(function() {
-            //         alert.style.transition = 'all 0.5s ease';
-            //         alert.style.opacity = '1';
-            //         alert.style.transform = 'translateY(0)';
-            //     }, 100);
-            // });
-
-            // Remove enhanced navbar behavior as navbar is removed
-            // const navbar = document.querySelector('.navbar');
-            // let lastScrollTop = 0;
-            // window.addEventListener('scroll', function() {
-            //     let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            //     if (scrollTop > 100) {
-            //         navbar.style.backdropFilter = 'blur(10px)';
-            //         navbar.style.background = 'linear-gradient(135deg, rgba(52, 152, 219, 0.95) 0%, rgba(41, 128, 185, 0.95) 100%)';
-            //     } else {
-            //         navbar.style.backdropFilter = 'none';
-            //         navbar.style.background = 'linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%)';
-            //     }
-            //     lastScrollTop = scrollTop;
-            // });
-
             // Add loading state to logout form
             const logoutForms = document.querySelectorAll('form#logout-form');
             logoutForms.forEach(function(form) {
@@ -371,5 +328,7 @@
         `;
         document.head.appendChild(style);
     </script>
+    {{-- PENTING: Ini akan merender semua script yang didorong dari tampilan anak --}}
+    @stack('scripts')
 </body>
 </html>

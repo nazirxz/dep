@@ -546,16 +546,16 @@
                                             <i class="fas fa-file-csv"></i> Import dari CSV
                                         </button>
                                     </div>
-                                    <div class="col-md-3">
+                                    <!-- <div class="col-md-3">
                                         <button class="btn btn-outline-success w-100 mb-2" onclick="window.generateBarcode()">
                                             <i class="fas fa-barcode"></i> Generate Barcode
                                         </button>
-                                    </div>
-                                    <div class="col-md-3">
+                                    </div> -->
+                                    <!-- <div class="col-md-3">
                                         <button class="btn btn-outline-warning w-100 mb-2" onclick="window.stockOpname()">
                                             <i class="fas fa-clipboard-check"></i> Stock Opname
                                         </button>
-                                    </div>
+                                    </div> -->
                                     <div class="col-md-3">
                                         <button class="btn btn-outline-info w-100 mb-2" onclick="window.viewWarehouse()">
                                             <i class="fas fa-warehouse"></i> Lihat Gudang
@@ -1096,15 +1096,6 @@ window.viewItemDetails = async function(itemId, itemType = 'incoming') { // Adde
                                 <div class="d-grid gap-2">
                                     <button class="btn btn-warning btn-sm" onclick="window.editIncomingItem(${item.id})">
                                         <i class="fas fa-edit"></i> Edit Barang
-                                    </button>
-                                    <button class="btn btn-info btn-sm" onclick="window.showRackSelector('crud_lokasi_rak', ${item.id})">
-                                        <i class="fas fa-arrows-alt"></i> Pindah Lokasi
-                                    </button>
-                                    <button class="btn btn-primary btn-sm" onclick="window.duplicateItem(${item.id})">
-                                        <i class="fas fa-copy"></i> Duplikat Barang
-                                    </button>
-                                    <button class="btn btn-success btn-sm" onclick="window.generateQR(${item.id})">
-                                        <i class="fas fa-qrcode"></i> QR Code
                                     </button>
                                 </div>
                             </div>
