@@ -81,6 +81,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/staff/locations/available', [ItemManagementController::class, 'getAvailableLocations'])->name('staff.locations.available');
         // Rute baru untuk verifikasi barang
         Route::get('/staff/items/pending-verification', [ItemManagementController::class, 'getPendingVerificationItems'])->name('staff.items.pending-verification');
-        Route::post('/staff/items/verify', [ItemManagementController::class, 'processVerification'])->name('staff.items.verify');
+        Route::post('/staff/items/verify', [ItemManagementController::class, 'verify'])->name('staff.items.verify');
+
     });
 });

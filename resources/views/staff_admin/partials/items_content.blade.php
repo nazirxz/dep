@@ -846,11 +846,11 @@
     }
 }
 </style>
+@push('scripts')
+{{-- items_content.blade.php - Partial content untuk pengelolaan barang staff admin --}}
 
-{{-- PENTING: BLOK SCRIPT INI HARUS DIPINDAHKAN KE LAYOUT UTAMA (misal: layouts/app.blade.php) --}}
-{{-- ATAU GUNAKAN @push('scripts') DI LAYOUT UTAMA DAN @push('scripts') DI SINI --}}
-{{-- JANGAN BIARKAN BLOK SCRIPT INI DI DALAM PARTIAL INI SECARA LANGSUNG --}}
-{{-- Karena ini menyebabkan masalah scope dan urutan pemuatan script --}}
+{{-- ... (kode HTML lainnya) ... --}}
+
 @push('scripts')
 <script>
 // Fungsi-fungsi yang akan dipanggil dari HTML (onclick) harus berada di lingkup global
@@ -868,9 +868,6 @@ window.initializePage = function() {
     
     // Setup outgoing item selector
     window.setupOutgoingItemSelector();
-
-    // No longer fetching for a separate verification table
-    // window.fetchPendingVerificationItems();
 }
 
 /**
@@ -958,17 +955,6 @@ window.setupFilters = function() {
     if (destinationFilter) destinationFilter.addEventListener('change', filterOutgoingTable);
     if (dateOutgoingFilter) dateOutgoingFilter.addEventListener('change', filterOutgoingTable);
 
-    // No longer need filters for a separate verification table
-    // const searchVerificationInput = document.getElementById('searchVerificationInput');
-    // const dateVerificationFilter = document.getElementById('dateVerificationFilter');
-    // const conditionVerificationFilter = document.getElementById('conditionVerificationFilter');
-
-    // function filterVerificationTable() { /* ... */ }
-
-    // if (searchVerificationInput) searchVerificationInput.addEventListener('keyup', filterVerificationTable);
-    // if (dateVerificationFilter) dateVerificationFilter.addEventListener('change', filterVerificationTable);
-    // if (conditionVerificationFilter) conditionVerificationFilter.addEventListener('change', filterVerificationTable);
-
     // Event listener for tab change to trigger filter on the active tab
     const itemTabs = document.getElementById('itemTabs');
     if (itemTabs) {
@@ -979,10 +965,6 @@ window.setupFilters = function() {
             } else if (activeTabId === 'outgoing-items-tab') {
                 filterOutgoingTable();
             }
-            // No longer a separate verification tab to filter
-            // else if (activeTabId === 'verify-items-tab') {
-            //     filterVerificationTable();
-            // }
         });
     }
 }
@@ -1090,6 +1072,15 @@ window.viewItemDetails = async function(itemId, itemType = 'incoming') { // Adde
                                 <div class="d-grid gap-2">
                                     <button class="btn btn-warning btn-sm" onclick="window.editIncomingItem(${item.id})">
                                         <i class="fas fa-edit"></i> Edit Barang
+                                    </button>
+                                    <button class="btn btn-info btn-sm" onclick="window.showRackSelector('crud_lokasi_rak', ${item.id})">
+                                        <i class="fas fa-arrows-alt"></i> Pindah Lokasi
+                                    </button>
+                                    <button class="btn btn-primary btn-sm" onclick="window.duplicateItem(${item.id})">
+                                        <i class="fas fa-copy"></i> Duplikat Barang
+                                    </button>
+                                    <button class="btn btn-success btn-sm" onclick="window.generateQR(${item.id})">
+                                        <i class="fas fa-qrcode"></i> QR Code
                                     </button>
                                 </div>
                             </div>
@@ -1682,7 +1673,7 @@ window.deleteIncomingItem = async function(itemId) { // Added async
                     console.error('Error parsing response for non-OK status:', parseError);
                     errorText += ` (Failed to parse response: ${parseError.message})`;
                 }
-                console.error('Server response was not OK:', errorText);
+                console.error('Server response for deleteIncomingItem was not OK:', errorText);
                 window.showAlert('error', `Gagal menghapus barang masuk. Status: ${response.status}. Detail di konsol.`);
                 return;
             }
@@ -1736,7 +1727,7 @@ window.deleteOutgoingItem = async function(itemId) { // Added async
                     console.error('Error parsing response for non-OK status:', parseError);
                     errorText += ` (Failed to parse response: ${parseError.message})`;
                 }
-                console.error('Server response was not OK:', errorText);
+                console.error('Server response for deleteOutgoingItem was not OK:', errorText);
                 window.showAlert('error', `Gagal menghapus barang keluar. Status: ${response.status}. Detail di konsol.`);
                 return;
             }
@@ -2600,7 +2591,7 @@ window.handleVerificationFormSubmit = async function(event) {
     const namaProdusen = formData.get('nama_produsen');
     const namaBarang = formData.get('nama_barang');
     const jumlahBarang = parseInt(formData.get('jumlah_barang'));
-    const satuanBarang = formData.get('satuan_barang');
+    const satuanBarang = formData.get('satuan_barang'); 
     const kondisiBarang = formData.get('kondisi_barang');
 
     // Basic validation
@@ -2623,6 +2614,7 @@ window.handleVerificationFormSubmit = async function(event) {
             nama_barang: namaBarang,
             kategori_barang: 'Unknown', // Kategori tidak ada di form ini, bisa diisi default atau dipilih nanti
             jumlah_barang: jumlahBarang,
+            satuan_barang: satuanBarang, 
             tanggal_masuk_barang: new Date().toISOString().split('T')[0], // Tanggal hari ini
             nama_produsen: namaProdusen,
             metode_bayar: null, // Tidak ada di form ini
@@ -2631,6 +2623,10 @@ window.handleVerificationFormSubmit = async function(event) {
             is_damaged: (kondisiBarang !== 'Baik'), // True if damaged/mismatched/expired
             kondisi_fisik: kondisiBarang // Send the specific condition
         };
+
+        // --- DEBUGGING: Log payload sebelum dikirim ---
+        console.log('Payload yang akan dikirim:', payload);
+        // --- AKHIR DEBUGGING ---
 
         const response = await fetch('{{ route("staff.items.verify") }}', { // Route to process verification
             method: 'POST',
