@@ -220,7 +220,8 @@
                             <div class="mt-3 text-start">
                                 <button class="btn btn-danger me-2"><i class="fas fa-file-pdf"></i> Cetak PDF</button>
                                 <button class="btn btn-success me-2"><i class="fas fa-file-excel"></i> Cetak Excel</button>
-                                <button class="btn btn-info" onclick="window.open('{{ route("staff.warehouse_monitor") }}', '_blank')"><i class="fas fa-warehouse"></i> Lihat Kondisi Distribusi Barang Gudang</button>
+                                {{-- Tombol untuk melihat kondisi distribusi gudang --}}
+                                <button class="btn btn-info" onclick="showWarehouseView()"><i class="fas fa-warehouse"></i> Lihat Kondisi Distribusi Barang Gudang</button>
                             </div>
                         </div>
                         <div class="tab-pane fade" id="outgoing-stock" role="tabpanel" aria-labelledby="outgoing-tab">
@@ -643,6 +644,42 @@
             // window.location.href = `{{ route('staff.warehouse_monitor') }}?highlight=${location}`;
         }
 
+        /**
+         * Menampilkan tampilan gudang di layar monitor terpisah.
+         */
+        window.showWarehouseView = function() {
+            const monitorWindow = window.open('{{ route("staff.warehouse_monitor") }}', 'warehouseMonitor', 
+                'width=1920,height=1080,fullscreen=yes,scrollbars=no,resizable=no');
+            
+            if (monitorWindow) {
+                monitorWindow.focus();
+            } else {
+                // Menggunakan modal kustom sebagai pengganti alert
+                // Anda perlu menambahkan elemen modal ini di HTML Anda
+                const alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
+                document.getElementById('alertModalTitle').innerText = 'Error';
+                document.getElementById('alertModalBody').innerText = 'Pop-up diblokir. Silakan izinkan pop-up untuk fitur ini.';
+                alertModal.show();
+            }
+        }
     });
 </script>
+
+{{-- Custom Alert Modal (Pengganti alert()) --}}
+<div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="alertModalLabel">Peringatan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="alertModalBody">
+                <!-- Message will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection

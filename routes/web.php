@@ -62,9 +62,6 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/staff/outgoing-items/{id}', [ItemManagementController::class, 'deleteOutgoingItem'])->name('staff.outgoing_items.delete');
         Route::get('/staff/outgoing-items/{id}', [ItemManagementController::class, 'getOutgoingItem'])->name('staff.outgoing_items.show'); // Untuk mendapatkan detail item keluar
 
-        // Monitor Gudang
-        Route::get('/staff/warehouse-monitor', [ItemManagementController::class, 'showWarehouseMonitor'])->name('staff.warehouse_monitor');
-
         // Fungsi Lainnya
         Route::get('/staff/items/search', [ItemManagementController::class, 'searchItems'])->name('staff.items.search');
         Route::get('/staff/items/category/{category}', [ItemManagementController::class, 'getItemsByCategory'])->name('staff.items.by_category');
@@ -83,5 +80,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/staff/items/pending-verification', [ItemManagementController::class, 'getPendingVerificationItems'])->name('staff.items.pending-verification');
         Route::post('/staff/items/verify', [ItemManagementController::class, 'verify'])->name('staff.items.verify');
 
+    });
+
+    // Monitor Gudang (Accessible by both manager and admin)
+    Route::middleware([RoleMiddleware::class.':manager,admin'])->group(function () {
+        Route::get('/staff/warehouse-monitor', [ItemManagementController::class, 'showWarehouseMonitor'])->name('staff.warehouse_monitor');
     });
 });
