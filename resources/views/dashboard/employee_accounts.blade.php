@@ -132,6 +132,8 @@
                                     <label for="role" class="form-label">Peran Pegawai *</label>
                                     <select class="form-select" id="role" name="role" required>
                                         <option value="">Pilih Peran</option>
+                                        {{-- Add 'Sales' role option --}}
+                                        <option value="sales" {{ old('role') == 'sales' ? 'selected' : '' }}>Sales</option>
                                         @foreach($roles as $roleOption)
                                             <option value="{{ $roleOption }}" {{ old('role') == $roleOption ? 'selected' : '' }}>
                                                 {{ ucfirst($roleOption) }}
@@ -185,7 +187,7 @@
                                                 <td>{{ $account->username }}</td>
                                                 <td>{{ $account->email }}</td>
                                                 <td>
-                                                    <span class="badge {{ $account->role === 'manager' ? 'bg-primary' : 'bg-secondary' }}">
+                                                    <span class="badge {{ $account->role === 'manager' ? 'bg-primary' : ($account->role === 'sales' ? 'bg-info' : 'bg-secondary') }}">
                                                         {{ ucfirst($account->role) }}
                                                     </span>
                                                 </td>
@@ -274,6 +276,8 @@
                         <label for="edit_role" class="form-label">Peran Pegawai *</label>
                         <select class="form-select" id="edit_role" name="role" required>
                             <option value="">Pilih Peran</option>
+                            {{-- Add 'Sales' role option --}}
+                            <option value="sales">Sales</option>
                             @foreach($roles as $roleOption)
                                 <option value="{{ $roleOption }}">{{ ucfirst($roleOption) }}</option>
                             @endforeach
