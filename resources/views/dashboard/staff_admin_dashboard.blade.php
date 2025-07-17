@@ -89,8 +89,8 @@
                 </div>
             @endif
 
-            {{-- Konten Dashboard Staff Admin --}}
-            <div class="row">
+            {{-- Bagian Ringkasan (Summary Cards) --}}
+            <div class="row mb-4">
                 <div class="col-12">
                     <h2 class="mb-4">Selamat Datang di Dashboard Staff Admin!</h2>
                     <p class="lead">Anda dapat mengelola operasi harian dan melihat laporan dasar.</p>
@@ -99,61 +99,101 @@
                         <div>Gunakan navigasi di samping untuk mengakses fitur-fitur yang tersedia.</div>
                     </div>
                 </div>
-                
-                {{-- Widget Ringkasan Stok Barang --}}
-                <div class="col-md-6 mb-4">
-                    <div class="card shadow-sm h-100">
+
+                {{-- Card: Jumlah Total Barang Masuk Hari Ini --}}
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2">
                         <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-boxes"></i> Ringkasan Stok Barang</h5>
-                            <p class="card-text">Total barang masuk: {{ $incomingItems->sum('jumlah_barang') }} unit</p>
-                            <p class="card-text">Total barang keluar: {{ $outgoingItems->sum('jumlah_barang') }} unit</p>
-                            <a href="{{ route('staff.items.index') }}" class="btn btn-primary btn-sm">Lihat Data Barang</a>
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Barang Masuk Hari Ini</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">250 Pcs</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-box fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- Widget Pengelolaan Barang --}}
-                <div class="col-md-6 mb-4">
-                    <div class="card shadow-sm h-100">
+                {{-- Card: Jumlah Total Barang Keluar Hari Ini --}}
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
                         <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-cogs"></i> Pengelolaan Barang</h5>
-                            <p class="card-text">Kelola lokasi barang di gudang dan pesanan barang keluar.</p>
-                            <a href="{{ route('staff.item.management') }}" class="btn btn-success btn-sm">Kelola Barang</a>
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Barang Keluar Hari Ini</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">200 Pcs</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-truck-loading fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- Widget Aktivitas Terbaru --}}
-                <div class="col-12 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white">
-                            <h5 class="mb-0">Aktivitas Terbaru</h5>
-                        </div>
+                {{-- Card: Jumlah Transaksi Penjualan Hari Ini --}}
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2">
                         <div class="card-body">
-                            <ul class="list-group list-group-flush">
-                                @if($incomingItems->count() > 0)
-                                    @foreach($incomingItems->take(3) as $item)
-                                        <li class="list-group-item">
-                                            Barang "{{ $item->nama_barang }}" masuk gudang ({{ $item->jumlah_barang }} unit) - {{ $item->tanggal_masuk_barang->diffForHumans() }}
-                                        </li>
-                                    @endforeach
-                                @else
-                                    <li class="list-group-item">Belum ada aktivitas barang masuk.</li>
-                                @endif
-                                
-                                @if($outgoingItems->count() > 0)
-                                    @foreach($outgoingItems->take(2) as $item)
-                                        <li class="list-group-item">
-                                            Barang "{{ $item->nama_barang }}" keluar ({{ $item->jumlah_barang }} unit) - {{ $item->tanggal_keluar_barang->diffForHumans() }}
-                                        </li>
-                                    @endforeach
-                                @endif
-                            </ul>
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        Transaksi Penjualan Hari Ini</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">10 Nota</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
+                {{-- Card: Jumlah Transaksi Pembelian Hari Ini --}}
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        Transaksi Pembelian Hari Ini</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">3 Produk</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            {{-- Bagian Grafik Mingguan --}}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">Statistik Barang Masuk dan Keluar Mingguan</h6>
+                            <div class="d-flex align-items-center">
+                                <button id="prevWeek" class="btn btn-sm btn-outline-secondary me-2"><i class="fas fa-chevron-left"></i> Sebelumnya</button>
+                                <span id="currentWeekPeriod" class="text-muted me-2">1 - 7 Juli 2025</span>
+                                <button id="nextWeek" class="btn btn-sm btn-outline-secondary">Berikutnya <i class="fas fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-area">
+                                <canvas id="weeklyBarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -182,46 +222,57 @@
         }
     }
 
-    .stat-icon {
-        background: rgba(0,123,255,0.1);
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto;
+    /* Styles for Summary Cards */
+    .card.border-left-primary {
+        border-left: .25rem solid #4e73df!important;
     }
-    .card-header .nav-link {
-        font-weight: 600;
-        color: var(--secondary-color);
-        border: none;
-        border-bottom: 2px solid transparent;
-        transition: all 0.3s ease;
+    .card.border-left-success {
+        border-left: .25rem solid #1cc88a!important;
     }
-    .card-header .nav-link.active {
-        color: var(--primary-color);
-        border-bottom-color: var(--primary-color);
-        background-color: transparent;
+    .card.border-left-info {
+        border-left: .25rem solid #36b9cc!important;
     }
-    .card-header .nav-link:hover {
-        border-bottom-color: var(--primary-color);
+    .card.border-left-warning {
+        border-left: .25rem solid #f6c23e!important;
     }
-    .card-header-tabs {
-        border-bottom: none;
+    .text-xs {
+        font-size: .7rem;
     }
-    .table th {
-        font-weight: 600;
-        font-size: 0.9rem;
+    .font-weight-bold {
+        font-weight: 700!important;
     }
-    .btn {
-        border-radius: 6px;
+    .text-primary {
+        color: #4e73df!important;
     }
-    .badge {
-        font-size: 0.75rem;
+    .text-success {
+        color: #1cc88a!important;
+    }
+    .text-info {
+        color: #36b9cc!important;
+    }
+    .text-warning {
+        color: #f6c23e!important;
+    }
+    .text-gray-800 {
+        color: #5a5c69!important;
+    }
+    .text-gray-300 {
+        color: #dddfeb!important;
+    }
+    .fa-2x {
+        font-size: 2em;
+    }
+
+    /* New style for chart height */
+    .chart-area {
+        height: 400px; /* Adjust this value as needed */
+        min-height: 300px; /* Ensure a minimum height */
     }
 </style>
 
+@push('scripts')
+{{-- Chart.js CDN --}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Auto dismiss alerts after 5 seconds
@@ -243,6 +294,131 @@
                 alert.style.transform = 'translateY(0)';
             }, 100);
         });
+
+        // Weekly Bar Chart
+        const ctx = document.getElementById('weeklyBarChart').getContext('2d');
+        let currentWeekStart = new Date();
+        // Set to the most recent Monday
+        currentWeekStart.setDate(currentWeekStart.getDate() - (currentWeekStart.getDay() + 6) % 7);
+
+        const weeklyData = {
+            labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
+            datasets: [{
+                label: 'Barang Masuk',
+                backgroundColor: 'rgba(54, 162, 235, 0.8)', // Biru terang
+                borderColor: 'rgba(54, 162, 235, 1)',
+                data: [150, 180, 160, 200, 170, 190, 140], // Dummy data
+                borderRadius: 5,
+            }, {
+                label: 'Barang Keluar',
+                backgroundColor: 'rgba(255, 99, 132, 0.8)', // Merah muda
+                borderColor: 'rgba(255, 99, 132, 1)',
+                data: [120, 150, 130, 170, 140, 160, 110], // Dummy data
+                borderRadius: 5,
+            }]
+        };
+
+        const weeklyBarChart = new Chart(ctx, {
+            type: 'bar',
+            data: weeklyData,
+            options: {
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        left: 10,
+                        right: 25,
+                        top: 25,
+                        bottom: 0
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            maxTicksLimit: 7
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            min: 0,
+                            max: 300, // Max value for Y-axis
+                            maxTicksLimit: 5,
+                            padding: 10,
+                            callback: function(value, index, values) {
+                                return value + ' Pcs'; // Add 'Pcs' to Y-axis labels
+                            }
+                        },
+                        grid: {
+                            color: "rgb(234, 236, 244)",
+                            zeroLineColor: "rgb(234, 236, 244)",
+                            drawBorder: false,
+                            borderDash: [2],
+                            zeroLineBorderDash: [2]
+                        }
+                    },
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            fontColor: '#858796'
+                        }
+                    },
+                    tooltip: {
+                        titleMarginBottom: 10,
+                        titleFontColor: '#ffffff',
+                        titleFontSize: 14,
+                        backgroundColor: "rgb(0,0,0)",
+                        bodyFontColor: "#ffffff",
+                        borderColor: '#dddfeb',
+                        borderWidth: 1,
+                        xPadding: 15,
+                        yPadding: 15,
+                        displayColors: false,
+                        caretPadding: 10,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.raw + ' Pcs';
+                                return label;
+                            }
+                        }
+                    },
+                },
+                responsive: true
+            }
+        });
+
+        function updateChartPeriod() {
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            const endDate = new Date(currentWeekStart);
+            endDate.setDate(currentWeekStart.getDate() + 6);
+            document.getElementById('currentWeekPeriod').innerText =
+                `${currentWeekStart.toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })} - ${endDate.toLocaleDateString('id-ID', options)}`;
+        }
+
+        document.getElementById('prevWeek').addEventListener('click', function() {
+            currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+            updateChartPeriod();
+            // In a real application, you would fetch new data here
+            // For now, we'll just update the period display
+        });
+
+        document.getElementById('nextWeek').addEventListener('click', function() {
+            currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+            updateChartPeriod();
+            // In a real application, you would fetch new data here
+            // For now, we'll just update the period display
+        });
+
+        updateChartPeriod(); // Initial update
     });
 </script>
-@endsection 
+@endpush
