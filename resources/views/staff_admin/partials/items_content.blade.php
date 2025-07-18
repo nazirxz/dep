@@ -47,14 +47,13 @@
                     <i class="fas fa-arrow-up"></i> Barang Keluar
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="add-items-tab" data-bs-toggle="tab" data-bs-target="#add-items" type="button" role="tab">
-                    <i class="fas fa-plus"></i> Tambah Barang
-                </button>
-            </li>
-            {{-- TAB Verifikasi Barang Masuk dihapus dari navigasi tab karena formnya sudah dipindahkan ke dalam tab Barang Masuk --}}
+            {{-- Tab Tambah Barang dihapus --}}
         </ul>
         <div class="d-flex align-items-center gap-2">
+            {{-- Tombol Tambah Barang Masuk Baru dipindahkan ke sini --}}
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.addNewIncomingItem()">
+                <i class="fas fa-plus"></i> Tambah Barang Masuk Baru
+            </button>
             <button class="btn btn-primary btn-sm" onclick="window.refreshData()">
                 <i class="fas fa-sync-alt"></i> Refresh
             </button>
@@ -302,9 +301,7 @@
                                     <td colspan="12" class="text-center py-4"> {{-- Updated colspan --}}
                                         <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                                         <p class="text-muted">Tidak ada data barang masuk.</p>
-                                        <button class="btn btn-primary" onclick="window.addNewIncomingItem()">
-                                            <i class="fas fa-plus"></i> Tambah Barang Baru
-                                        </button>
+                                        {{-- Tombol Tambah Barang Masuk Baru dipindahkan ke header --}}
                                     </td>
                                 </tr>
                             @endif
@@ -552,10 +549,9 @@
                 </div>
             </div>
 
-            {{-- Tab Tambah Barang --}}
-            <div class="tab-pane fade" id="add-items" role="tabpanel">
+            {{-- Tab Tambah Barang (dihapus) --}}
+            {{-- <div class="tab-pane fade" id="add-items" role="tabpanel">
                 <div class="row">
-                    {{-- Tombol Tambah Barang Masuk --}}
                     <div class="col-md-6">
                         <div class="card border-primary">
                             <div class="card-header bg-primary text-white">
@@ -570,7 +566,6 @@
                         </div>
                     </div>
 
-                    {{-- Tombol Tambah Barang Keluar --}}
                     <div class="col-md-6">
                         <div class="card border-danger">
                             <div class="card-header bg-danger text-white">
@@ -586,7 +581,6 @@
                     </div>
                 </div>
 
-                {{-- Quick Actions --}}
                 <div class="row mt-4">
                     <div class="col-12">
                         <div class="card border-info">
@@ -600,16 +594,6 @@
                                             <i class="fas fa-file-csv"></i> Import dari CSV
                                         </button>
                                     </div>
-                                    <!-- <div class="col-md-3">
-                                        <button class="btn btn-outline-success w-100 mb-2" onclick="window.generateBarcode()">
-                                            <i class="fas fa-barcode"></i> Generate Barcode
-                                        </button>
-                                    </div> -->
-                                    <!-- <div class="col-md-3">
-                                        <button class="btn btn-outline-warning w-100 mb-2" onclick="window.stockOpname()">
-                                            <i class="fas fa-clipboard-check"></i> Stock Opname
-                                        </button>
-                                    </div> -->
                                     <div class="col-md-3">
                                         <button class="btn btn-outline-info w-100 mb-2" onclick="window.viewWarehouse()">
                                             <i class="fas fa-warehouse"></i> Lihat Gudang
@@ -620,7 +604,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
         </div>
     </div>
 </div>
