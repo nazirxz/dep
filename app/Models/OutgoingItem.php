@@ -33,6 +33,7 @@ class OutgoingItem extends Model
         'metode_bayar', // Kolom baru
         'pembayaran_transaksi', // Kolom baru
         'nota_transaksi', // Kolom baru
+        'foto_barang', // Kolom baru untuk foto barang
     ];
 
     /**

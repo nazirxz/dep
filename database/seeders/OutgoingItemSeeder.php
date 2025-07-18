@@ -4,8 +4,8 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\OutgoingItem; // Import model OutgoingItem
-use App\Models\IncomingItem; // Import model IncomingItem
+use App\Models\OutgoingItem;
+use Carbon\Carbon; // Pastikan Carbon diimpor
 use Faker\Factory as Faker; // Import Faker
 
 class OutgoingItemSeeder extends Seeder
@@ -15,60 +15,69 @@ class OutgoingItemSeeder extends Seeder
      */
     public function run(): void
     {
-        $faker = Faker::create('id_ID'); // Menggunakan Faker dengan lokal Indonesia
+        // Hapus data yang sudah ada untuk menghindari duplikasi saat seeding ulang
+        OutgoingItem::truncate();
 
-        // Ambil beberapa barang masuk yang ada untuk dijadikan barang keluar
-        // Pastikan ada IncomingItem yang tersedia dan memiliki jumlah > 0
-        $incomingItems = IncomingItem::where('jumlah_barang', '>', 0)->get();
+        // Menggunakan Faker untuk data dummy
+        $faker = Faker::create('id_ID');
 
-        if ($incomingItems->isEmpty()) {
-            $this->command->info('Tidak ada IncomingItem yang cukup untuk membuat OutgoingItem. Jalankan IncomingItemSeeder terlebih dahulu.');
-            return;
-        }
+        OutgoingItem::create([
+            'nama_barang' => 'Chitato Sapi Panggang',
+            'kategori_barang' => 'Makanan Ringan',
+            'tanggal_keluar_barang' => Carbon::now()->subDays(3),
+            'jumlah_barang' => 50,
+            'tujuan_distribusi' => 'Toko A',
+            'lokasi_rak_barang' => 'R6-3-4', // Diperbarui sesuai permintaan
+            'nama_produsen' => 'Indofood Fritolay',
+            'metode_bayar' => 'Cash',
+            'pembayaran_transaksi' => 60000.00,
+            'nota_transaksi' => 'OUT/2025/001',
+            'foto_barang' => 'images/chitato.jpg', // Menambahkan foto barang
+        ]);
 
-        // Contoh data barang keluar
-        $numOutgoingItems = 20; // Jumlah barang keluar yang ingin dibuat
+        OutgoingItem::create([
+            'nama_barang' => 'Aqua Botol 60,0 ml',
+            'kategori_barang' => 'Minuman',
+            'tanggal_keluar_barang' => Carbon::now()->subDays(1),
+            'jumlah_barang' => 100,
+            'tujuan_distribusi' => 'Supermarket B',
+            'lokasi_rak_barang' => 'R1-2-1', // Contoh format baru
+            'nama_produsen' => 'Danone Aqua',
+            'metode_bayar' => 'Transfer Bank',
+            'pembayaran_transaksi' => 150000.00,
+            'nota_transaksi' => 'OUT/2025/002',
+            'foto_barang' => null, // Contoh barang tanpa foto
+        ]);
 
-        for ($i = 0; $i < $numOutgoingItems; $i++) {
-            // Pilih IncomingItem secara acak dari yang tersedia
-            $incomingItem = $incomingItems->random();
+        OutgoingItem::create([
+            'nama_barang' => 'Sabun Mandi Lifebuoy',
+            'kategori_barang' => 'Perlengkapan Mandi',
+            'tanggal_keluar_barang' => Carbon::now()->subDays(2),
+            'jumlah_barang' => 30,
+            'tujuan_distribusi' => 'Minimarket C',
+            'lokasi_rak_barang' => 'R3-5-2', // Contoh format baru
+            'nama_produsen' => 'Unilever',
+            'metode_bayar' => 'Cash',
+            'pembayaran_transaksi' => 35000.00,
+            'nota_transaksi' => 'OUT/2025/003',
+            'foto_barang' => null, // Contoh barang tanpa foto
+        ]);
 
-            // Pastikan jumlah yang akan dikeluarkan tidak melebihi jumlah yang tersedia
-            $quantityToMove = $faker->numberBetween(1, min(10, $incomingItem->jumlah_barang));
-
-            // Jika jumlah yang akan dikeluarkan adalah 0 atau IncomingItem sudah habis, lewati iterasi ini
-            if ($quantityToMove === 0 || $incomingItem->jumlah_barang < $quantityToMove) {
-                continue;
-            }
-
-            // Kurangi jumlah barang di IncomingItem
-            $incomingItem->jumlah_barang -= $quantityToMove;
-            // Di sini Anda tidak perlu memperbarui status_barang karena kolom tersebut sudah tidak ada.
-            // Jika Anda memiliki logika lain yang bergantung pada jumlah_barang, pastikan itu sesuai.
-            $incomingItem->save();
-
-            // Tentukan data pengecer dan transaksi secara acak atau berdasarkan logika lain
-            $namaPengecer = $faker->randomElement(['Pembeli A', 'Pembeli B', 'Reseller C', 'Pelanggan Online XYZ']);
-            $metodeBayar = $faker->randomElement(['Cash', 'Transfer Bank', 'Kartu Kredit']);
-            $pembayaranTransaksi = $faker->randomFloat(2, 100000, 5000000); // Contoh rentang harga
-            $notaTransaksi = 'NOTA-' . strtoupper(uniqid()); // Contoh nota transaksi
-
-            // Buat entri OutgoingItem
+        // Anda bisa menambahkan lebih banyak data di sini dengan format lokasi rak yang baru
+        for ($i = 0; $i < 5; $i++) { // Menambahkan 5 data dummy lagi
             OutgoingItem::create([
-                'nama_barang' => $incomingItem->nama_barang,
-                'kategori_barang' => $incomingItem->kategori_barang,
-                'tanggal_keluar_barang' => $faker->dateTimeBetween('-1 year', 'now')->format('Y-m-d'),
-                'jumlah_barang' => $quantityToMove,
-                'tujuan_distribusi' => $faker->randomElement(['Toko A', 'Toko B', 'Pelanggan Online', 'Distributor XYZ', 'Cabang Pusat']),
-                'lokasi_rak_barang' => $incomingItem->lokasi_rak_barang,
-                'nama_produsen' => $namaPengecer, // Data baru
-                'metode_bayar' => $metodeBayar, // Data baru
-                'pembayaran_transaksi' => $pembayaranTransaksi, // Data baru
-                'nota_transaksi' => $notaTransaksi, // Data baru
-                'created_at' => now(),
-                'updated_at' => now(),
+                'nama_barang' => $faker->word . ' ' . $faker->randomElement(['Baru', 'Lama', 'Premium']),
+                'kategori_barang' => $faker->randomElement(['Elektronik', 'Pakaian', 'Alat Tulis', 'Kecantikan']),
+                'tanggal_keluar_barang' => $faker->dateTimeBetween('-6 months', 'now')->format('Y-m-d'),
+                'jumlah_barang' => $faker->numberBetween(10, 100),
+                'tujuan_distribusi' => $faker->company,
+                'lokasi_rak_barang' => 'R' . $faker->numberBetween(1, 10) . '-' . $faker->numberBetween(1, 5) . '-' . $faker->numberBetween(1, 5), // Format lokasi rak baru
+                'nama_produsen' => $faker->name,
+                'metode_bayar' => $faker->randomElement(['Cash', 'Transfer Bank', 'Kartu Kredit']),
+                'pembayaran_transaksi' => $faker->randomFloat(2, 50000, 5000000),
+                'nota_transaksi' => 'OUT/' . date('Y') . '/' . $faker->unique()->randomNumber(5),
+                'foto_barang' => $faker->boolean(50) ? 'images/chitato.jpg' : null, // 50% kemungkinan ada foto chitato
             ]);
         }
-        $this->command->info('Outgoing items seeded successfully!');
     }
 }
