@@ -43,6 +43,5 @@ class OutgoingItem extends Model
      */
     protected $casts = [
         'tanggal_keluar_barang' => 'date', // Mengubah tanggal menjadi objek Carbon
-        'pembayaran_transaksi' => 'decimal:2', // Pastikan dicasting sebagai decimal
     ];
 }

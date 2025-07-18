@@ -59,9 +59,9 @@ class ItemManagementController extends Controller
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
             'nama_produsen' => 'nullable|string|max:255',
             'metode_bayar' => 'nullable|string|max:50',
-            'pembayaran_transaksi' => 'nullable|numeric|min:0',
-            'nota_transaksi' => 'nullable|string|max:255',
-            'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Added validation for image
+            'pembayaran_transaksi' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048', // Changed to image
+            'nota_transaksi' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048', // Changed to image
+            'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ], [
             'nama_barang.required' => 'Nama barang wajib diisi.',
             'kategori_barang.required' => 'Kategori barang wajib diisi.',
@@ -69,8 +69,12 @@ class ItemManagementController extends Controller
             'jumlah_barang.min' => 'Jumlah barang minimal 1.',
             'tanggal_masuk_barang.required' => 'Tanggal masuk wajib diisi.',
             'lokasi_rak_barang.regex' => 'Format lokasi rak tidak valid. Gunakan format R[1-8]-[1-4]-[1-6].',
-            'pembayaran_transaksi.numeric' => 'Pembayaran transaksi harus berupa angka.',
-            'pembayaran_transaksi.min' => 'Pembayaran transaksi minimal 0.',
+            'pembayaran_transaksi.image' => 'Pembayaran transaksi harus berupa gambar atau PDF.',
+            'pembayaran_transaksi.mimes' => 'Format file pembayaran transaksi yang diizinkan: jpeg, png, jpg, gif, svg, pdf.',
+            'pembayaran_transaksi.max' => 'Ukuran file pembayaran transaksi maksimal 2MB.',
+            'nota_transaksi.image' => 'Nota transaksi harus berupa gambar atau PDF.',
+            'nota_transaksi.mimes' => 'Format file nota transaksi yang diizinkan: jpeg, png, jpg, gif, svg, pdf.',
+            'nota_transaksi.max' => 'Ukuran file nota transaksi maksimal 2MB.',
             'foto_barang.image' => 'File harus berupa gambar.',
             'foto_barang.mimes' => 'Format gambar yang diizinkan: jpeg, png, jpg, gif, svg.',
             'foto_barang.max' => 'Ukuran gambar maksimal 2MB.',
@@ -89,6 +93,18 @@ class ItemManagementController extends Controller
         if ($request->hasFile('foto_barang')) {
             $fotoPath = $request->file('foto_barang')->store('images', 'public');
             \Log::info('storeIncomingItem: Image uploaded', ['path' => $fotoPath]);
+        }
+
+        $pembayaranTransaksiPath = null;
+        if ($request->hasFile('pembayaran_transaksi')) {
+            $pembayaranTransaksiPath = $request->file('pembayaran_transaksi')->store('transactions', 'public');
+            \Log::info('storeIncomingItem: Pembayaran Transaksi uploaded', ['path' => $pembayaranTransaksiPath]);
+        }
+
+        $notaTransaksiPath = null;
+        if ($request->hasFile('nota_transaksi')) {
+            $notaTransaksiPath = $request->file('nota_transaksi')->store('transactions', 'public');
+            \Log::info('storeIncomingItem: Nota Transaksi uploaded', ['path' => $notaTransaksiPath]);
         }
 
         // Logika untuk menangani lokasi rak barang
@@ -116,12 +132,25 @@ class ItemManagementController extends Controller
                 $existingSameItemOnRack->jumlah_barang += $request->jumlah_barang;
                 // Update foto juga jika ada yang baru diunggah
                 if ($fotoPath) {
-                    // Hapus foto lama jika ada
                     if ($existingSameItemOnRack->foto_barang) {
                         Storage::disk('public')->delete($existingSameItemOnRack->foto_barang);
                     }
                     $existingSameItemOnRack->foto_barang = $fotoPath;
                 }
+                // Update pembayaran_transaksi dan nota_transaksi juga jika ada yang baru diunggah
+                if ($pembayaranTransaksiPath) {
+                    if ($existingSameItemOnRack->pembayaran_transaksi) {
+                        Storage::disk('public')->delete($existingSameItemOnRack->pembayaran_transaksi);
+                    }
+                    $existingSameItemOnRack->pembayaran_transaksi = $pembayaranTransaksiPath;
+                }
+                if ($notaTransaksiPath) {
+                    if ($existingSameItemOnRack->nota_transaksi) {
+                        Storage::disk('public')->delete($existingSameItemOnRack->nota_transaksi);
+                    }
+                    $existingSameItemOnRack->nota_transaksi = $notaTransaksiPath;
+                }
+
                 $existingSameItemOnRack->save();
                 \Log::info('storeIncomingItem: Item quantity updated successfully', ['item_id' => $existingSameItemOnRack->id, 'final_qty' => $existingSameItemOnRack->jumlah_barang]);
 
@@ -142,8 +171,8 @@ class ItemManagementController extends Controller
                 'lokasi_rak_barang' => $request->lokasi_rak_barang,
                 'nama_produsen' => $request->nama_produsen,
                 'metode_bayar' => $request->metode_bayar,
-                'pembayaran_transaksi' => $request->pembayaran_transaksi,
-                'nota_transaksi' => $request->nota_transaksi,
+                'pembayaran_transaksi' => $pembayaranTransaksiPath, // Save the image path
+                'nota_transaksi' => $notaTransaksiPath, // Save the image path
                 'foto_barang' => $fotoPath, // Save the image path
             ]);
             \Log::info('storeIncomingItem: New item created successfully', ['item_id' => $incomingItem->id, 'data' => $incomingItem->toArray()]);
@@ -154,9 +183,15 @@ class ItemManagementController extends Controller
                 'data' => $incomingItem
             ]);
         } catch (\Exception $e) {
-            // If an error occurs after file upload, delete the uploaded file
+            // If an error occurs after file upload, delete the uploaded files
             if ($fotoPath) {
                 Storage::disk('public')->delete($fotoPath);
+            }
+            if ($pembayaranTransaksiPath) {
+                Storage::disk('public')->delete($pembayaranTransaksiPath);
+            }
+            if ($notaTransaksiPath) {
+                Storage::disk('public')->delete($notaTransaksiPath);
             }
             // Log error for debugging
             \Log::error('Error in storeIncomingItem: ' . $e->getMessage(), ['exception' => $e]);
@@ -183,8 +218,8 @@ class ItemManagementController extends Controller
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/', // Opsional, tapi penting untuk penarikan spesifik
             'nama_produsen' => 'nullable|string|max:255', // Kolom baru
             'metode_bayar' => 'nullable|string|max:50', // Kolom baru
-            'pembayaran_transaksi' => 'nullable|numeric|min:0', // Kolom baru
-            'nota_transaksi' => 'nullable|string|max:255', // Kolom baru
+            'pembayaran_transaksi' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048', // Changed to image
+            'nota_transaksi' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048', // Changed to image
             'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Added validation for image
         ], [
             'nama_barang.required' => 'Nama barang wajib diisi.',
@@ -194,8 +229,12 @@ class ItemManagementController extends Controller
             'tanggal_keluar_barang.required' => 'Tanggal keluar wajib diisi.',
             'tujuan_distribusi.required' => 'Tujuan distribusi wajib diisi.',
             'lokasi_rak_barang.regex' => 'Format lokasi rak tidak valid. Gunakan format R[1-8]-[1-4]-[1-6].',
-            'pembayaran_transaksi.numeric' => 'Pembayaran transaksi harus berupa angka.',
-            'pembayaran_transaksi.min' => 'Pembayaran transaksi minimal 0.',
+            'pembayaran_transaksi.image' => 'Pembayaran transaksi harus berupa gambar atau PDF.',
+            'pembayaran_transaksi.mimes' => 'Format file pembayaran transaksi yang diizinkan: jpeg, png, jpg, gif, svg, pdf.',
+            'pembayaran_transaksi.max' => 'Ukuran file pembayaran transaksi maksimal 2MB.',
+            'nota_transaksi.image' => 'Nota transaksi harus berupa gambar atau PDF.',
+            'nota_transaksi.mimes' => 'Format file nota transaksi yang diizinkan: jpeg, png, jpg, gif, svg, pdf.',
+            'nota_transaksi.max' => 'Ukuran file nota transaksi maksimal 2MB.',
             'foto_barang.image' => 'File harus berupa gambar.',
             'foto_barang.mimes' => 'Format gambar yang diizinkan: jpeg, png, jpg, gif, svg.',
             'foto_barang.max' => 'Ukuran gambar maksimal 2MB.',
@@ -211,6 +250,9 @@ class ItemManagementController extends Controller
         }
 
         $fotoPath = null;
+        $pembayaranTransaksiPath = null;
+        $notaTransaksiPath = null;
+
         if ($request->hasFile('foto_barang')) {
             $fotoPath = $request->file('foto_barang')->store('images', 'public');
             \Log::info('storeOutgoingItem: Image uploaded', ['path' => $fotoPath]);
@@ -221,6 +263,30 @@ class ItemManagementController extends Controller
                                                 ->first();
             if ($incomingItemForPhoto && $incomingItemForPhoto->foto_barang) {
                 $fotoPath = $incomingItemForPhoto->foto_barang;
+            }
+        }
+
+        if ($request->hasFile('pembayaran_transaksi')) {
+            $pembayaranTransaksiPath = $request->file('pembayaran_transaksi')->store('transactions', 'public');
+            \Log::info('storeOutgoingItem: Pembayaran Transaksi uploaded', ['path' => $pembayaranTransaksiPath]);
+        } else {
+            $incomingItemForPayment = IncomingItem::where('nama_barang', $request->nama_barang)
+                                                  ->where('kategori_barang', $request->kategori_barang)
+                                                  ->first();
+            if ($incomingItemForPayment && $incomingItemForPayment->pembayaran_transaksi) {
+                $pembayaranTransaksiPath = $incomingItemForPayment->pembayaran_transaksi;
+            }
+        }
+
+        if ($request->hasFile('nota_transaksi')) {
+            $notaTransaksiPath = $request->file('nota_transaksi')->store('transactions', 'public');
+            \Log::info('storeOutgoingItem: Nota Transaksi uploaded', ['path' => $notaTransaksiPath]);
+        } else {
+            $incomingItemForNota = IncomingItem::where('nama_barang', $request->nama_barang)
+                                               ->where('kategori_barang', $request->kategori_barang)
+                                               ->first();
+            if ($incomingItemForNota && $incomingItemForNota->nota_transaksi) {
+                $notaTransaksiPath = $incomingItemForNota->nota_transaksi;
             }
         }
 
@@ -266,8 +332,8 @@ class ItemManagementController extends Controller
                 'lokasi_rak_barang' => $request->lokasi_rak_barang, // Simpan lokasi rak dari mana barang keluar
                 'nama_produsen' => $request->nama_produsen, // Kolom baru
                 'metode_bayar' => $request->metode_bayar, // Kolom baru
-                'pembayaran_transaksi' => $request->pembayaran_transaksi, // Kolom baru
-                'nota_transaksi' => $request->nota_transaksi, // Kolom baru
+                'pembayaran_transaksi' => $pembayaranTransaksiPath, // Save the image path
+                'nota_transaksi' => $notaTransaksiPath, // Save the image path
                 'foto_barang' => $fotoPath, // Save the image path
             ]);
             \Log::info('storeOutgoingItem: Outgoing item created', ['outgoing_item_id' => $outgoingItem->id, 'data' => $outgoingItem->toArray()]);
@@ -296,9 +362,15 @@ class ItemManagementController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            // If an error occurs after file upload, delete the uploaded file
-            if ($fotoPath && $request->hasFile('foto_barang')) { // Only delete if it was a new upload
+            // If an error occurs after file upload, delete the uploaded files
+            if ($fotoPath && $request->hasFile('foto_barang')) {
                 Storage::disk('public')->delete($fotoPath);
+            }
+            if ($pembayaranTransaksiPath && $request->hasFile('pembayaran_transaksi')) {
+                Storage::disk('public')->delete($pembayaranTransaksiPath);
+            }
+            if ($notaTransaksiPath && $request->hasFile('nota_transaksi')) {
+                Storage::disk('public')->delete($notaTransaksiPath);
             }
             \Log::error('Error in storeOutgoingItem: ' . $e->getMessage(), ['exception' => $e]);
             return response()->json([
@@ -323,9 +395,9 @@ class ItemManagementController extends Controller
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
             'nama_produsen' => 'nullable|string|max:255',
             'metode_bayar' => 'nullable|string|max:50',
-            'pembayaran_transaksi' => 'nullable|numeric|min:0',
-            'nota_transaksi' => 'nullable|string|max:255',
-            'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Added validation for image
+            'pembayaran_transaksi' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048', // Changed to image
+            'nota_transaksi' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048', // Changed to image
+            'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -341,30 +413,61 @@ class ItemManagementController extends Controller
             $incomingItem = IncomingItem::findOrFail($id);
             $oldLocation = $incomingItem->lokasi_rak_barang;
             $newLocation = $request->lokasi_rak_barang;
-            $oldFotoPath = $incomingItem->foto_barang; // Get current photo path
-            $fotoPathToSave = $oldFotoPath; // Default to old path
+
+            $oldFotoPath = $incomingItem->foto_barang;
+            $fotoPathToSave = $oldFotoPath;
+
+            $oldPembayaranTransaksiPath = $incomingItem->pembayaran_transaksi;
+            $pembayaranTransaksiPathToSave = $oldPembayaranTransaksiPath;
+
+            $oldNotaTransaksiPath = $incomingItem->nota_transaksi;
+            $notaTransaksiPathToSave = $oldNotaTransaksiPath;
 
             \Log::info('updateIncomingItem: Found item', ['item_id' => $incomingItem->id, 'current_data' => $incomingItem->toArray()]);
 
             // Handle foto_barang upload
             if ($request->hasFile('foto_barang')) {
-                // Upload new photo
                 $fotoPathToSave = $request->file('foto_barang')->store('images', 'public');
-                // Delete old photo if it exists
                 if ($oldFotoPath) {
                     Storage::disk('public')->delete($oldFotoPath);
-                    \Log::info('updateIncomingItem: Old image deleted', ['old_path' => $oldFotoPath]);
                 }
-                \Log::info('updateIncomingItem: New image uploaded', ['new_path' => $fotoPathToSave]);
-            } else if ($request->input('foto_barang_removed', false)) { // Check if client explicitly signaled photo removal
+            } else if ($request->input('foto_barang_removed', false)) {
                 if ($oldFotoPath) {
                     Storage::disk('public')->delete($oldFotoPath);
-                    \Log::info('updateIncomingItem: Image explicitly removed by user', ['old_path' => $oldFotoPath]);
                 }
                 $fotoPathToSave = null;
             } else {
-                // If no new file uploaded and not explicitly removed, retain existing photo
                 $fotoPathToSave = $oldFotoPath;
+            }
+
+            // Handle pembayaran_transaksi upload
+            if ($request->hasFile('pembayaran_transaksi')) {
+                $pembayaranTransaksiPathToSave = $request->file('pembayaran_transaksi')->store('transactions', 'public');
+                if ($oldPembayaranTransaksiPath) {
+                    Storage::disk('public')->delete($oldPembayaranTransaksiPath);
+                }
+            } else if ($request->input('pembayaran_transaksi_removed', false)) {
+                if ($oldPembayaranTransaksiPath) {
+                    Storage::disk('public')->delete($oldPembayaranTransaksiPath);
+                }
+                $pembayaranTransaksiPathToSave = null;
+            } else {
+                $pembayaranTransaksiPathToSave = $oldPembayaranTransaksiPath;
+            }
+
+            // Handle nota_transaksi upload
+            if ($request->hasFile('nota_transaksi')) {
+                $notaTransaksiPathToSave = $request->file('nota_transaksi')->store('transactions', 'public');
+                if ($oldNotaTransaksiPath) {
+                    Storage::disk('public')->delete($oldNotaTransaksiPath);
+                }
+            } else if ($request->input('nota_transaksi_removed', false)) {
+                if ($oldNotaTransaksiPath) {
+                    Storage::disk('public')->delete($oldNotaTransaksiPath);
+                }
+                $notaTransaksiPathToSave = null;
+            } else {
+                $notaTransaksiPathToSave = $oldNotaTransaksiPath;
             }
 
 
@@ -399,8 +502,8 @@ class ItemManagementController extends Controller
                 'lokasi_rak_barang' => $newLocation, // Gunakan newLocation yang sudah disesuaikan
                 'nama_produsen' => $request->nama_produsen,
                 'metode_bayar' => $request->metode_bayar,
-                'pembayaran_transaksi' => $request->pembayaran_transaksi,
-                'nota_transaksi' => $request->nota_transaksi,
+                'pembayaran_transaksi' => $pembayaranTransaksiPathToSave, // Save the updated image path
+                'nota_transaksi' => $notaTransaksiPathToSave, // Save the updated image path
                 'foto_barang' => $fotoPathToSave, // Save the updated image path
             ]);
             \Log::info('updateIncomingItem: Item updated successfully', ['item_id' => $incomingItem->id, 'updated_data' => $incomingItem->toArray()]);
@@ -412,9 +515,15 @@ class ItemManagementController extends Controller
                 'data' => $incomingItem
             ]);
         } catch (\Exception $e) {
-            // If an error occurs after new file upload, delete the newly uploaded file to prevent orphans
+            // If an error occurs after new file upload, delete the newly uploaded files to prevent orphans
             if (isset($fotoPathToSave) && $request->hasFile('foto_barang')) {
                 Storage::disk('public')->delete($fotoPathToSave);
+            }
+            if (isset($pembayaranTransaksiPathToSave) && $request->hasFile('pembayaran_transaksi')) {
+                Storage::disk('public')->delete($pembayaranTransaksiPathToSave);
+            }
+            if (isset($notaTransaksiPathToSave) && $request->hasFile('nota_transaksi')) {
+                Storage::disk('public')->delete($notaTransaksiPathToSave);
             }
             // Log error for debugging
             \Log::error('Error in updateIncomingItem: ' . $e->getMessage(), ['exception' => $e]);
@@ -441,8 +550,8 @@ class ItemManagementController extends Controller
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
             'nama_produsen' => 'nullable|string|max:255', // Kolom baru
             'metode_bayar' => 'nullable|string|max:50', // Kolom baru
-            'pembayaran_transaksi' => 'nullable|numeric|min:0', // Kolom baru
-            'nota_transaksi' => 'nullable|string|max:255', // Kolom baru
+            'pembayaran_transaksi' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048', // Changed to image
+            'nota_transaksi' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048', // Changed to image
             'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Added validation for image
         ]);
 
@@ -460,6 +569,12 @@ class ItemManagementController extends Controller
             $oldFotoPath = $outgoingItem->foto_barang;
             $fotoPathToSave = $oldFotoPath;
 
+            $oldPembayaranTransaksiPath = $outgoingItem->pembayaran_transaksi;
+            $pembayaranTransaksiPathToSave = $oldPembayaranTransaksiPath;
+
+            $oldNotaTransaksiPath = $outgoingItem->nota_transaksi;
+            $notaTransaksiPathToSave = $oldNotaTransaksiPath;
+
             // Handle foto_barang upload
             if ($request->hasFile('foto_barang')) {
                 $fotoPathToSave = $request->file('foto_barang')->store('images', 'public');
@@ -475,6 +590,36 @@ class ItemManagementController extends Controller
                 $fotoPathToSave = $oldFotoPath;
             }
 
+            // Handle pembayaran_transaksi upload
+            if ($request->hasFile('pembayaran_transaksi')) {
+                $pembayaranTransaksiPathToSave = $request->file('pembayaran_transaksi')->store('transactions', 'public');
+                if ($oldPembayaranTransaksiPath) {
+                    Storage::disk('public')->delete($oldPembayaranTransaksiPath);
+                }
+            } else if ($request->input('pembayaran_transaksi_removed', false)) {
+                if ($oldPembayaranTransaksiPath) {
+                    Storage::disk('public')->delete($oldPembayaranTransaksiPath);
+                }
+                $pembayaranTransaksiPathToSave = null;
+            } else {
+                $pembayaranTransaksiPathToSave = $oldPembayaranTransaksiPath;
+            }
+
+            // Handle nota_transaksi upload
+            if ($request->hasFile('nota_transaksi')) {
+                $notaTransaksiPathToSave = $request->file('nota_transaksi')->store('transactions', 'public');
+                if ($oldNotaTransaksiPath) {
+                    Storage::disk('public')->delete($oldNotaTransaksiPath);
+                }
+            } else if ($request->input('nota_transaksi_removed', false)) {
+                if ($oldNotaTransaksiPath) {
+                    Storage::disk('public')->delete($oldNotaTransaksiPath);
+                }
+                $notaTransaksiPathToSave = null;
+            } else {
+                $notaTransaksiPathToSave = $oldNotaTransaksiPath;
+            }
+
             \Log::info('updateOutgoingItem: Found item', ['item_id' => $outgoingItem->id, 'current_data' => $outgoingItem->toArray()]);
 
             $outgoingItem->update([
@@ -486,8 +631,8 @@ class ItemManagementController extends Controller
                 'lokasi_rak_barang' => $request->lokasi_rak_barang,
                 'nama_produsen' => $request->nama_produsen, // Kolom baru
                 'metode_bayar' => $request->metode_bayar, // Kolom baru
-                'pembayaran_transaksi' => $request->pembayaran_transaksi, // Kolom baru
-                'nota_transaksi' => $request->nota_transaksi, // Kolom baru
+                'pembayaran_transaksi' => $pembayaranTransaksiPathToSave, // Save the updated image path
+                'nota_transaksi' => $notaTransaksiPathToSave, // Save the updated image path
                 'foto_barang' => $fotoPathToSave, // Save the updated image path
             ]);
             \Log::info('updateOutgoingItem: Item updated successfully', ['item_id' => $outgoingItem->id, 'updated_data' => $outgoingItem->toArray()]);
@@ -500,6 +645,12 @@ class ItemManagementController extends Controller
         } catch (\Exception $e) {
             if (isset($fotoPathToSave) && $request->hasFile('foto_barang')) {
                 Storage::disk('public')->delete($fotoPathToSave);
+            }
+            if (isset($pembayaranTransaksiPathToSave) && $request->hasFile('pembayaran_transaksi')) {
+                Storage::disk('public')->delete($pembayaranTransaksiPathToSave);
+            }
+            if (isset($notaTransaksiPathToSave) && $request->hasFile('nota_transaksi')) {
+                Storage::disk('public')->delete($notaTransaksiPathToSave);
             }
             // Log error for debugging
             \Log::error('Error in updateOutgoingItem: ' . $e->getMessage(), ['exception' => $e]);
@@ -523,6 +674,17 @@ class ItemManagementController extends Controller
                 Storage::disk('public')->delete($incomingItem->foto_barang);
                 \Log::info('deleteIncomingItem: Associated image deleted', ['path' => $incomingItem->foto_barang]);
             }
+            // Delete associated pembayaran_transaksi if exists
+            if ($incomingItem->pembayaran_transaksi) {
+                Storage::disk('public')->delete($incomingItem->pembayaran_transaksi);
+                \Log::info('deleteIncomingItem: Associated pembayaran_transaksi deleted', ['path' => $incomingItem->pembayaran_transaksi]);
+            }
+            // Delete associated nota_transaksi if exists
+            if ($incomingItem->nota_transaksi) {
+                Storage::disk('public')->delete($incomingItem->nota_transaksi);
+                \Log::info('deleteIncomingItem: Associated nota_transaksi deleted', ['path' => $incomingItem->nota_transaksi]);
+            }
+
             \Log::info('deleteIncomingItem: Found item', ['item_id' => $incomingItem->id, 'data' => $incomingItem->toArray()]);
             $incomingItem->delete();
             \Log::info('deleteIncomingItem: Item deleted successfully', ['item_id' => $id]);
@@ -554,6 +716,17 @@ class ItemManagementController extends Controller
                 Storage::disk('public')->delete($outgoingItem->foto_barang);
                 \Log::info('deleteOutgoingItem: Associated image deleted', ['path' => $outgoingItem->foto_barang]);
             }
+            // Delete associated pembayaran_transaksi if exists
+            if ($outgoingItem->pembayaran_transaksi && Storage::disk('public')->exists($outgoingItem->pembayaran_transaksi)) {
+                Storage::disk('public')->delete($outgoingItem->pembayaran_transaksi);
+                \Log::info('deleteOutgoingItem: Associated pembayaran_transaksi deleted', ['path' => $outgoingItem->pembayaran_transaksi]);
+            }
+            // Delete associated nota_transaksi if exists
+            if ($outgoingItem->nota_transaksi && Storage::disk('public')->exists($outgoingItem->nota_transaksi)) {
+                Storage::disk('public')->delete($outgoingItem->nota_transaksi);
+                \Log::info('deleteOutgoingItem: Associated nota_transaksi deleted', ['path' => $outgoingItem->nota_transaksi]);
+            }
+
             \Log::info('deleteOutgoingItem: Found item', ['item_id' => $outgoingItem->id, 'data' => $outgoingItem->toArray()]);
             $outgoingItem->delete();
             \Log::info('deleteOutgoingItem: Item deleted successfully', ['item_id' => $id]);
@@ -915,7 +1088,7 @@ class ItemManagementController extends Controller
                 $items = IncomingItem::all();
                 $callback = function() use ($items) {
                     $file = fopen('php://output', 'w');
-                    // Header CSV baru, tambahkan 'Foto Barang'
+                    // Header CSV baru, tambahkan 'Foto Barang', 'Pembayaran Transaksi', 'Nota Transaksi'
                     fputcsv($file, ['ID', 'Nama Barang', 'Kategori', 'Jumlah', 'Tanggal Masuk', 'Lokasi Rak', 'Nama Produsen', 'Metode Bayar', 'Pembayaran Transaksi', 'Nota Transaksi', 'Foto Barang']);
                     foreach ($items as $item) {
                         fputcsv($file, [
@@ -927,9 +1100,9 @@ class ItemManagementController extends Controller
                             $item->lokasi_rak_barang,
                             $item->nama_produsen,
                             $item->metode_bayar,
-                            $item->pembayaran_transaksi,
-                            $item->nota_transaksi,
-                            $item->foto_barang, // Add foto_barang
+                            $item->pembayaran_transaksi, // Add pembayaran_transaksi path
+                            $item->nota_transaksi, // Add nota_transaksi path
+                            $item->foto_barang, // Add foto_barang path
                         ]);
                     }
                     fclose($file);
@@ -938,7 +1111,7 @@ class ItemManagementController extends Controller
                 $items = OutgoingItem::all();
                 $callback = function() use ($items) {
                     $file = fopen('php://output', 'w');
-                    // Header CSV baru, tambahkan 'Foto Barang'
+                    // Header CSV baru, tambahkan 'Foto Barang', 'Pembayaran Transaksi', 'Nota Transaksi'
                     fputcsv($file, ['ID', 'Nama Barang', 'Kategori', 'Jumlah', 'Tanggal Keluar', 'Tujuan Distribusi', 'Lokasi Rak', 'Nama Produsen', 'Metode Bayar', 'Pembayaran Transaksi', 'Nota Transaksi', 'Foto Barang']);
                     foreach ($items as $item) {
                         fputcsv($file, [
@@ -951,9 +1124,9 @@ class ItemManagementController extends Controller
                             $item->lokasi_rak_barang,
                             $item->nama_produsen,
                             $item->metode_bayar,
-                            $item->pembayaran_transaksi,
-                            $item->nota_transaksi,
-                            $item->foto_barang, // Add foto_barang
+                            $item->pembayaran_transaksi, // Add pembayaran_transaksi path
+                            $item->nota_transaksi, // Add nota_transaksi path
+                            $item->foto_barang, // Add foto_barang path
                         ]);
                     }
                     fclose($file);
@@ -1057,8 +1230,8 @@ class ItemManagementController extends Controller
                 'lokasi_rak_barang' => null, // Setel ke null agar penempatan otomatis bisa menempatkannya
                 'nama_produsen' => $originalItem->nama_produsen, // Kolom baru
                 'metode_bayar' => $originalItem->metode_bayar, // Kolom baru
-                'pembayaran_transaksi' => $originalItem->pembayaran_transaksi, // Kolom baru
-                'nota_transaksi' => $originalItem->nota_transaksi, // Kolom baru
+                'pembayaran_transaksi' => $originalItem->pembayaran_transaksi, // Copy pembayaran_transaksi path
+                'nota_transaksi' => $originalItem->nota_transaksi, // Copy nota_transaksi path
                 'foto_barang' => $originalItem->foto_barang, // Copy foto_barang
             ]);
             \Log::info('duplicateItem: Item duplicated successfully', ['new_item_id' => $duplicatedItem->id, 'data' => $duplicatedItem->toArray()]);
@@ -1163,9 +1336,9 @@ class ItemManagementController extends Controller
                 'location' => $incomingItem->lokasi_rak_barang,
                 'nama_produsen' => $incomingItem->nama_produsen,
                 'metode_bayar' => $incomingItem->metode_bayar,
-                'pembayaran_transaksi' => $incomingItem->pembayaran_transaksi,
-                'nota_transaksi' => $incomingItem->nota_transaksi,
-                'foto_barang' => $incomingItem->foto_barang, // Add foto_barang
+                'pembayaran_transaksi' => $incomingItem->pembayaran_transaksi, // Add pembayaran_transaksi
+                'nota_transaksi' => $incomingItem->nota_transaksi, // Add nota_transaksi
+                'foto_barang' => $incomingItem->foto_barang,
                 'description' => 'Barang masuk'
             ];
 
@@ -1179,9 +1352,9 @@ class ItemManagementController extends Controller
                     'location' => $outgoing->lokasi_rak_barang,
                     'nama_produsen' => $outgoing->nama_produsen,
                     'metode_bayar' => $outgoing->metode_bayar,
-                    'pembayaran_transaksi' => $outgoing->pembayaran_transaksi,
-                    'nota_transaksi' => $outgoing->nota_transaksi,
-                    'foto_barang' => $outgoing->foto_barang, // Add foto_barang
+                    'pembayaran_transaksi' => $outgoing->pembayaran_transaksi, // Add pembayaran_transaksi
+                    'nota_transaksi' => $outgoing->nota_transaksi, // Add nota_transaksi
+                    'foto_barang' => $outgoing->foto_barang,
                     'description' => 'Barang keluar ke ' . ($outgoing->tujuan_distribusi ?? $outgoing->nama_produsen)
                 ];
             }
@@ -1277,10 +1450,18 @@ class ItemManagementController extends Controller
                         break;
 
                     case 'delete':
-                        // Delete associated photo if exists
+                        // Delete associated photos if exists
                         if ($item->foto_barang) {
                             Storage::disk('public')->delete($item->foto_barang);
                             \Log::info('bulkUpdate: Associated image deleted during bulk delete', ['path' => $item->foto_barang]);
+                        }
+                        if ($item->pembayaran_transaksi) {
+                            Storage::disk('public')->delete($item->pembayaran_transaksi);
+                            \Log::info('bulkUpdate: Associated pembayaran_transaksi deleted during bulk delete', ['path' => $item->pembayaran_transaksi]);
+                        }
+                        if ($item->nota_transaksi) {
+                            Storage::disk('public')->delete($item->nota_transaksi);
+                            \Log::info('bulkUpdate: Associated nota_transaksi deleted during bulk delete', ['path' => $item->nota_transaksi]);
                         }
                         $item->delete();
                         $updatedCount++;
@@ -1389,9 +1570,9 @@ class ItemManagementController extends Controller
             'lokasi_rak_barang' => $data[4] ?? null,
             'nama_produsen' => $data[5] ?? null,
             'metode_bayar' => $data[6] ?? null,
-            'pembayaran_transaksi' => $data[7] ?? 0,
-            'nota_transaksi' => $data[8] ?? null,
-            'foto_barang' => $data[9] ?? null, // Added foto_barang
+            'pembayaran_transaksi' => $data[7] ?? null, // Changed to path string
+            'nota_transaksi' => $data[8] ?? null, // Changed to path string
+            'foto_barang' => $data[9] ?? null,
         ];
 
         // Validasi data impor
@@ -1403,9 +1584,9 @@ class ItemManagementController extends Controller
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
             'nama_produsen' => 'nullable|string|max:255',
             'metode_bayar' => 'nullable|string|max:50',
-            'pembayaran_transaksi' => 'nullable|numeric|min:0',
-            'nota_transaksi' => 'nullable|string|max:255',
-            'foto_barang' => 'nullable|string|max:255', // Validate as string path for CSV import
+            'pembayaran_transaksi' => 'nullable|string|max:255', // Validate as string path for CSV import
+            'nota_transaksi' => 'nullable|string|max:255', // Validate as string path for CSV import
+            'foto_barang' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -1431,9 +1612,15 @@ class ItemManagementController extends Controller
             if ($existingSameItemOnRack) {
                 // Jika barang yang sama sudah ada, perbarui jumlahnya
                 $existingSameItemOnRack->jumlah_barang += $csvData['jumlah_barang'];
-                // Update foto juga jika ada yang baru diunggah dari CSV
+                // Update foto, pembayaran_transaksi, dan nota_transaksi juga jika ada yang baru diunggah dari CSV
                 if ($csvData['foto_barang']) {
                     $existingSameItemOnRack->foto_barang = $csvData['foto_barang'];
+                }
+                if ($csvData['pembayaran_transaksi']) {
+                    $existingSameItemOnRack->pembayaran_transaksi = $csvData['pembayaran_transaksi'];
+                }
+                if ($csvData['nota_transaksi']) {
+                    $existingSameItemOnRack->nota_transaksi = $csvData['nota_transaksi'];
                 }
                 $existingSameItemOnRack->save();
                 \Log::info('importIncomingItem (private): Updated existing item on rack', ['item_id' => $existingSameItemOnRack->id, 'final_qty' => $existingSameItemOnRack->jumlah_barang]);
@@ -1449,9 +1636,9 @@ class ItemManagementController extends Controller
             'lokasi_rak_barang' => $csvData['lokasi_rak_barang'],
             'nama_produsen' => $csvData['nama_produsen'],
             'metode_bayar' => $csvData['metode_bayar'],
-            'pembayaran_transaksi' => $csvData['pembayaran_transaksi'],
-            'nota_transaksi' => $csvData['nota_transaksi'],
-            'foto_barang' => $csvData['foto_barang'], // Save foto_barang from CSV
+            'pembayaran_transaksi' => $csvData['pembayaran_transaksi'], // Save pembayaran_transaksi from CSV
+            'nota_transaksi' => $csvData['nota_transaksi'], // Save nota_transaksi from CSV
+            'foto_barang' => $csvData['foto_barang'],
         ]);
         \Log::info('importIncomingItem (private): New item created', ['nama_barang' => $csvData['nama_barang'], 'jumlah_barang' => $csvData['jumlah_barang']]);
     }
@@ -1516,8 +1703,8 @@ class ItemManagementController extends Controller
                     'lokasi_rak_barang' => null, // Biarkan null untuk nanti ditetapkan atau otomatis
                     'nama_produsen' => $namaProdusen,
                     'metode_bayar' => $data['metode_bayar'] ?? null,
-                    'pembayaran_transaksi' => $data['pembayaran_transaksi'] ?? null,
-                    'nota_transaksi' => $data['nota_transaksi'] ?? null,
+                    'pembayaran_transaksi' => $data['pembayaran_transaksi'] ?? null, // Default to null for image path
+                    'nota_transaksi' => $data['nota_transaksi'] ?? null, // Default to null for image path
                     // Tambahkan kolom lain yang relevan jika ada di tabel incoming_items
                     // 'satuan_barang' => $satuanBarang, // Uncomment if you add satuan_barang to IncomingItem model/migration
                     'foto_barang' => null, // No photo upload in this verification form, so default to null
@@ -1583,9 +1770,9 @@ class ItemManagementController extends Controller
             'lokasi_rak_barang' => $data[5] ?? null,
             'nama_produsen' => $data[6] ?? null,
             'metode_bayar' => $data[7] ?? null,
-            'pembayaran_transaksi' => $data[8] ?? 0,
-            'nota_transaksi' => $data[9] ?? null,
-            'foto_barang' => $data[10] ?? null, // Added foto_barang
+            'pembayaran_transaksi' => $data[8] ?? null, // Changed to path string
+            'nota_transaksi' => $data[9] ?? null, // Changed to path string
+            'foto_barang' => $data[10] ?? null,
         ];
 
         // Validasi data impor
@@ -1598,9 +1785,9 @@ class ItemManagementController extends Controller
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
             'nama_produsen' => 'nullable|string|max:255',
             'metode_bayar' => 'nullable|string|max:50',
-            'pembayaran_transaksi' => 'nullable|numeric|min:0',
-            'nota_transaksi' => 'nullable|string|max:255',
-            'foto_barang' => 'nullable|string|max:255', // Validate as string path for CSV import
+            'pembayaran_transaksi' => 'nullable|string|max:255', // Validate as string path for CSV import
+            'nota_transaksi' => 'nullable|string|max:255', // Validate as string path for CSV import
+            'foto_barang' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -1637,9 +1824,9 @@ class ItemManagementController extends Controller
                 'lokasi_rak_barang' => $csvData['lokasi_rak_barang'],
                 'nama_produsen' => $csvData['nama_produsen'],
                 'metode_bayar' => $csvData['metode_bayar'],
-                'pembayaran_transaksi' => $csvData['pembayaran_transaksi'],
-                'nota_transaksi' => $csvData['nota_transaksi'],
-                'foto_barang' => $csvData['foto_barang'], // Save foto_barang from CSV
+                'pembayaran_transaksi' => $csvData['pembayaran_transaksi'], // Save pembayaran_transaksi from CSV
+                'nota_transaksi' => $csvData['nota_transaksi'], // Save nota_transaksi from CSV
+                'foto_barang' => $csvData['foto_barang'],
             ]);
             \Log::info('importOutgoingItem (private): Outgoing item created during import', ['nama_barang' => $csvData['nama_barang'], 'jumlah' => $csvData['jumlah_barang']]);
 

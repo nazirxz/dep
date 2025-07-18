@@ -22,12 +22,12 @@ class IncomingItemSeeder extends Seeder
             'kategori_barang' => 'Makanan Ringan',
             'tanggal_masuk_barang' => Carbon::now()->subDays(10),
             'jumlah_barang' => 120,
-            'lokasi_rak_barang' => 'R6-3-4', // Diperbarui sesuai permintaan
+            'lokasi_rak_barang' => 'R6-3-4',
             'nama_produsen' => 'Indofood Fritolay',
             'metode_bayar' => 'Transfer Bank',
-            'pembayaran_transaksi' => 120000.00,
-            'nota_transaksi' => 'INV/2025/001',
-            'foto_barang' => 'images/chitato.jpg', // Menambahkan foto barang
+            'pembayaran_transaksi' => 'transactions/sample_payment_chitato.jpg', // Diperbarui menjadi jalur gambar
+            'nota_transaksi' => 'transactions/sample_nota_chitato.pdf', // Diperbarui menjadi jalur gambar
+            'foto_barang' => 'images/chitato.jpg',
         ]);
 
         IncomingItem::create([
@@ -35,12 +35,12 @@ class IncomingItemSeeder extends Seeder
             'kategori_barang' => 'Minuman',
             'tanggal_masuk_barang' => Carbon::now()->subDays(5),
             'jumlah_barang' => 200,
-            'lokasi_rak_barang' => 'R1-2-1', // Contoh format baru
+            'lokasi_rak_barang' => 'R1-2-1',
             'nama_produsen' => 'Danone Aqua',
             'metode_bayar' => 'Cash',
-            'pembayaran_transaksi' => 250000.00,
-            'nota_transaksi' => 'INV/2025/002',
-            'foto_barang' => null, // Contoh barang tanpa foto
+            'pembayaran_transaksi' => null, // Contoh tanpa bukti pembayaran
+            'nota_transaksi' => 'transactions/sample_nota_aqua.png', // Contoh nota dalam bentuk gambar
+            'foto_barang' => null,
         ]);
 
         IncomingItem::create([
@@ -48,12 +48,12 @@ class IncomingItemSeeder extends Seeder
             'kategori_barang' => 'Perlengkapan Mandi',
             'tanggal_masuk_barang' => Carbon::now()->subDays(7),
             'jumlah_barang' => 80,
-            'lokasi_rak_barang' => 'R3-5-2', // Contoh format baru
+            'lokasi_rak_barang' => 'R3-5-2',
             'nama_produsen' => 'Unilever',
             'metode_bayar' => 'Transfer Bank',
-            'pembayaran_transaksi' => 80000.00,
-            'nota_transaksi' => 'INV/2025/003',
-            'foto_barang' => null, // Contoh barang tanpa foto
+            'pembayaran_transaksi' => 'transactions/sample_payment_lifebuoy.pdf', // Contoh bukti pembayaran PDF
+            'nota_transaksi' => null, // Contoh tanpa nota transaksi
+            'foto_barang' => null,
         ]);
 
         // Anda bisa menambahkan lebih banyak data di sini

@@ -183,14 +183,13 @@
                                     <input type="checkbox" class="form-check-input" id="selectAllIncomingHeader">
                                 </th>
                                 <th>No.</th>
-                                <th>Foto Barang</th> {{-- Kolom baru untuk foto --}}
+                                <th>Foto Barang</th>
                                 <th>Nama Barang</th>
                                 <th>Kategori</th>
                                 <th>Jumlah</th>
                                 <th>Tanggal Masuk</th>
                                 <th>Lokasi Rak</th>
                                 <th>Nama Produsen</th>
-                                <th>Metode Bayar</th>
                                 <th>Pembayaran Transaksi</th>
                                 <th>Nota Transaksi</th>
                                 <th>Aksi</th>
@@ -250,9 +249,32 @@
                                             @endif
                                         </td>
                                         <td>{{ $item->nama_produsen ?? '-' }}</td>
-                                        <td>{{ $item->metode_bayar ?? '-' }}</td>
-                                        <td>Rp{{ number_format($item->pembayaran_transaksi, 2, ',', '.') }}</td>
-                                        <td>{{ $item->nota_transaksi ?? '-' }}</td>
+                                        <td>
+                                            @if($item->pembayaran_transaksi)
+                                                <a href="{{ asset('storage/' . $item->pembayaran_transaksi) }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Lihat Bukti Pembayaran">
+                                                    @if(Str::endsWith($item->pembayaran_transaksi, ['.pdf']))
+                                                        <i class="fas fa-file-pdf"></i> PDF
+                                                    @else
+                                                        <i class="fas fa-image"></i> Gambar
+                                                    @endif
+                                                </a>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($item->nota_transaksi)
+                                                <a href="{{ asset('storage/' . $item->nota_transaksi) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Lihat Nota Transaksi">
+                                                    @if(Str::endsWith($item->nota_transaksi, ['.pdf']))
+                                                        <i class="fas fa-file-pdf"></i> PDF
+                                                    @else
+                                                        <i class="fas fa-image"></i> Gambar
+                                                    @endif
+                                                </a>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
                                         <td>
                                             <div class="btn-group" role="group">
                                                 <button class="btn btn-sm btn-info" onclick="window.viewItemDetails({{ $item->id }})" 
@@ -277,7 +299,7 @@
                                 @endforeach
                             @else
                                 <tr>
-                                    <td colspan="13" class="text-center py-4"> {{-- Updated colspan --}}
+                                    <td colspan="12" class="text-center py-4"> {{-- Updated colspan --}}
                                         <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                                         <p class="text-muted">Tidak ada data barang masuk.</p>
                                         <button class="btn btn-primary" onclick="window.addNewIncomingItem()">
@@ -385,14 +407,13 @@
                         <thead class="table-light">
                             <tr>
                                 <th>No.</th>
-                                <th>Foto Barang</th> {{-- Kolom baru untuk foto --}}
+                                <th>Foto Barang</th>
                                 <th>Nama Barang</th>
                                 <th>Kategori</th>
                                 <th>Jumlah</th>
                                 <th>Tanggal Keluar</th>
                                 <th>Lokasi Rak Asal</th>
                                 <th>Nama Produsen</th>
-                                <th>Metode Bayar</th>
                                 <th>Pembayaran Transaksi</th>
                                 <th>Nota Transaksi</th>
                                 <th>Aksi</th>
@@ -439,9 +460,32 @@
                                             @endif
                                         </td>
                                         <td>{{ $item->nama_produsen ?? '-' }}</td>
-                                        <td>{{ $item->metode_bayar ?? '-' }}</td>
-                                        <td>Rp{{ number_format($item->pembayaran_transaksi, 2, ',', '.') }}</td>
-                                        <td>{{ $item->nota_transaksi ?? '-' }}</td>
+                                        <td>
+                                            @if($item->pembayaran_transaksi)
+                                                <a href="{{ asset('storage/' . $item->pembayaran_transaksi) }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Lihat Bukti Pembayaran">
+                                                    @if(Str::endsWith($item->pembayaran_transaksi, ['.pdf']))
+                                                        <i class="fas fa-file-pdf"></i> PDF
+                                                    @else
+                                                        <i class="fas fa-image"></i> Gambar
+                                                    @endif
+                                                </a>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($item->nota_transaksi)
+                                                <a href="{{ asset('storage/' . $item->nota_transaksi) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Lihat Nota Transaksi">
+                                                    @if(Str::endsWith($item->nota_transaksi, ['.pdf']))
+                                                        <i class="fas fa-file-pdf"></i> PDF
+                                                    @else
+                                                        <i class="fas fa-image"></i> Gambar
+                                                    @endif
+                                                </a>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
                                         <td>
                                             <div class="btn-group" role="group">
                                                 <button class="btn btn-sm btn-info" onclick="window.viewItemDetails({{ $item->id }}, 'outgoing')" 
@@ -466,7 +510,7 @@
                                 @endforeach
                             @else
                                 <tr>
-                                    <td colspan="12" class="text-center py-4"> {{-- Updated colspan --}}
+                                    <td colspan="11" class="text-center py-4"> {{-- Updated colspan --}}
                                         <i class="fas fa-truck fa-3x text-muted mb-3"></i>
                                         <p class="text-muted">Tidak ada data barang keluar.</p>
                                     </td>
@@ -672,7 +716,7 @@
                         <label for="csvFile" class="form-label">File CSV</label>
                         <input type="file" class="form-control" id="csvFile" name="csv_file" accept=".csv" required>
                         <small class="form-text text-muted">
-                            Format: nama_barang, kategori_barang, jumlah_barang, tanggal_masuk_barang, lokasi_rak_barang, nama_produsen, metode_bayar, pembayaran_transaksi, nota_transaksi
+                            Format: nama_barang, kategori_barang, jumlah_barang, tanggal_masuk_barang, lokasi_rak_barang, nama_produsen, metode_bayar, pembayaran_transaksi, nota_transaksi, foto_barang
                         </small>
                     </div>
                     <div class="mb-3">
@@ -1032,11 +1076,20 @@ window.updateBulkActions = function() {
 }
 
 /**
+ * Helper function to determine if a file path is a PDF.
+ * @param {string} filePath - The path to the file.
+ * @returns {boolean} True if the file is a PDF, false otherwise.
+ */
+window.isPdf = function(filePath) {
+    return filePath && filePath.toLowerCase().endsWith('.pdf');
+};
+
+/**
  * Displays item detail modal (incoming or outgoing).
  * @param {number} itemId - Item ID.
  * @param {string} itemType - 'incoming' or 'outgoing'.
  */
-window.viewItemDetails = async function(itemId, itemType = 'incoming') { // Added async
+window.viewItemDetails = async function(itemId, itemType = 'incoming') {
     let itemsData = [];
     if (itemType === 'incoming') {
         itemsData = @json($incomingItems ?? []);
@@ -1050,11 +1103,33 @@ window.viewItemDetails = async function(itemId, itemType = 'incoming') { // Adde
         const modalContent = document.getElementById('itemDetailContent');
         let htmlContent = '';
 
+        // --- DEBUGGING: Check the actual value and type of pembayaran_transaksi ---
+        console.log('Debugging item.pembayaran_transaksi:', item.pembayaran_transaksi);
+        console.log('Type of item.pembayaran_transaksi:', typeof item.pembayaran_transaksi);
+        // --- END DEBUGGING ---
+
+        const fotoBarangHtml = item.foto_barang
+            ? `<img src="{{ asset('storage') }}/${item.foto_barang}" alt="Foto Barang" class="img-fluid rounded mb-3" style="max-width: 200px; height: auto;">`
+            : `<img src="https://placehold.co/200x200/e0e0e0/ffffff?text=No+Image" alt="No Image" class="img-fluid rounded mb-3">`;
+
+        const pembayaranTransaksiHtml = item.pembayaran_transaksi
+            ? `<a href="{{ asset('storage') }}/${item.pembayaran_transaksi}" target="_blank" class="btn btn-sm btn-outline-primary mt-2" title="Lihat Bukti Pembayaran">` +
+              (window.isPdf(item.pembayaran_transaksi) ? `<i class="fas fa-file-pdf"></i> PDF` : `<i class="fas fa-image"></i> Gambar`) +
+              `</a>`
+            : `-`;
+
+        const notaTransaksiHtml = item.nota_transaksi
+            ? `<a href="{{ asset('storage') }}/${item.nota_transaksi}" target="_blank" class="btn btn-sm btn-outline-secondary mt-2" title="Lihat Nota Transaksi">` +
+              (window.isPdf(item.nota_transaksi) ? `<i class="fas fa-file-pdf"></i> PDF` : `<i class="fas fa-image"></i> Gambar`) +
+              `</a>`
+            : `-`;
+
+
         if (itemType === 'incoming') {
             htmlContent = `
                 <div class="row">
                     <div class="col-md-4 text-center">
-                        ${item.foto_barang ? `<img src="{{ asset('storage') }}/${item.foto_barang}" alt="Foto Barang" class="img-fluid rounded mb-3" style="max-width: 200px; height: auto;">` : `<img src="https://placehold.co/200x200/e0e0e0/ffffff?text=No+Image" alt="No Image" class="img-fluid rounded mb-3">`}
+                        ${fotoBarangHtml}
                     </div>
                     <div class="col-md-8">
                         <div class="card">
@@ -1071,8 +1146,8 @@ window.viewItemDetails = async function(itemId, itemType = 'incoming') { // Adde
                                     <tr><td><strong>Lokasi Rak:</strong></td><td>${item.lokasi_rak_barang ? '<span class="badge bg-info">' + item.lokasi_rak_barang + '</span>' : '<span class="badge bg-secondary">Belum ditempatkan</span>'}</td></tr>
                                     <tr><td><strong>Nama Produsen:</strong></td><td>${item.nama_produsen ?? '-'}</td></tr>
                                     <tr><td><strong>Metode Bayar:</strong></td><td>${item.metode_bayar ?? '-'}</td></tr>
-                                    <tr><td><strong>Pembayaran Transaksi:</strong></td><td>Rp${window.number_format(item.pembayaran_transaksi, 2, ',', '.')}</td></tr>
-                                    <tr><td><strong>Nota Transaksi:</strong></td><td>${item.nota_transaksi ?? '-'}</td></tr>
+                                    <tr><td><strong>Pembayaran Transaksi:</strong></td><td>${pembayaranTransaksiHtml}</td></tr>
+                                    <tr><td><strong>Nota Transaksi:</strong></td><td>${notaTransaksiHtml}</td></tr>
                                 </table>
                             </div>
                         </div>
@@ -1122,7 +1197,7 @@ window.viewItemDetails = async function(itemId, itemType = 'incoming') { // Adde
             htmlContent = `
                 <div class="row">
                     <div class="col-md-4 text-center">
-                        ${item.foto_barang ? `<img src="{{ asset('storage') }}/${item.foto_barang}" alt="Foto Barang" class="img-fluid rounded mb-3" style="max-width: 200px; height: auto;">` : `<img src="https://placehold.co/200x200/e0e0e0/ffffff?text=No+Image" alt="No Image" class="img-fluid rounded mb-3">`}
+                        ${fotoBarangHtml}
                     </div>
                     <div class="col-md-8">
                         <div class="card">
@@ -1139,8 +1214,8 @@ window.viewItemDetails = async function(itemId, itemType = 'incoming') { // Adde
                                     <tr><td><strong>Lokasi Rak Asal:</strong></td><td>${item.lokasi_rak_barang ? '<span class="badge bg-info">' + item.lokasi_rak_barang + '</span>' : '<span class="badge bg-secondary">-</span>'}</td></tr>
                                     <tr><td><strong>Nama Produsen:</strong></td><td>${item.nama_produsen ?? '-'}</td></tr>
                                     <tr><td><strong>Metode Bayar:</strong></td><td>${item.metode_bayar ?? '-'}</td></tr>
-                                    <tr><td><strong>Pembayaran Transaksi:</strong></td><td>Rp${window.number_format(item.pembayaran_transaksi, 2, ',', '.')}</td></tr>
-                                    <tr><td><strong>Nota Transaksi:</strong></td><td>${item.nota_transaksi ?? '-'}</td></tr>
+                                    <tr><td><strong>Pembayaran Transaksi:</strong></td><td>${pembayaranTransaksiHtml}</td></tr>
+                                    <tr><td><strong>Nota Transaksi:</strong></td><td>${notaTransaksiHtml}</td></tr>
                                 </table>
                             </div>
                         </div>
@@ -1208,7 +1283,7 @@ window.addNewIncomingItem = function() {
  * Displays the CRUD form modal for editing an incoming item.
  * @param {number} itemId - The ID of the incoming item to edit.
  */
-window.editIncomingItem = async function(itemId) { // Added async
+window.editIncomingItem = async function(itemId) {
     try {
         const response = await fetch(`/staff/incoming-items/${itemId}`);
         if (!response.ok) {
@@ -1235,7 +1310,7 @@ window.editIncomingItem = async function(itemId) { // Added async
  * Displays the CRUD form modal for editing an outgoing item.
  * @param {number} itemId - The ID of the outgoing item to edit.
  */
-window.editOutgoingItem = async function(itemId) { // Added async
+window.editOutgoingItem = async function(itemId) {
     try {
         const response = await fetch(`/staff/outgoing-items/${itemId}`);
         if (!response.ok) {
@@ -1332,29 +1407,25 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <label for="crud_nama_produsen" class="form-label">Nama Produsen</label>
                     <input type="text" class="form-control" id="crud_nama_produsen" name="nama_produsen" placeholder="Nama Produsen (opsional)">
                 </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="crud_metode_bayar" class="form-label">Metode Bayar</label>
-                            <select class="form-select" id="crud_metode_bayar" name="metode_bayar">
-                                <option value="">Pilih Metode</option>
-                                <option value="Cash">Cash</option>
-                                <option value="Transfer Bank">Transfer Bank</option>
-                                <option value="Kartu Kredit">Kartu Kredit</option>
-                                <option value="Debit">Debit</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="crud_pembayaran_transaksi" class="form-label">Pembayaran Transaksi</label>
-                            <input type="number" step="0.01" class="form-control" id="crud_pembayaran_transaksi" name="pembayaran_transaksi" placeholder="0.00">
-                        </div>
-                    </div>
+                <div class="mb-3">
+                    <label for="crud_metode_bayar" class="form-label">Metode Bayar</label>
+                    <select class="form-select" id="crud_metode_bayar" name="metode_bayar">
+                        <option value="">Pilih Metode</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Transfer Bank">Transfer Bank</option>
+                        <option value="Kartu Kredit">Kartu Kredit</option>
+                        <option value="Debit">Debit</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="crud_pembayaran_transaksi" class="form-label">Bukti Pembayaran Transaksi</label>
+                    <input type="file" class="form-control" id="crud_pembayaran_transaksi" name="pembayaran_transaksi" accept="image/*,application/pdf">
+                    <small class="form-text text-muted">Unggah gambar atau PDF bukti pembayaran (opsional).</small>
                 </div>
                 <div class="mb-3">
                     <label for="crud_nota_transaksi" class="form-label">Nota Transaksi</label>
-                    <input type="text" class="form-control" id="crud_nota_transaksi" name="nota_transaksi" placeholder="Nomor Nota (opsional)">
+                    <input type="file" class="form-control" id="crud_nota_transaksi" name="nota_transaksi" accept="image/*,application/pdf">
+                    <small class="form-text text-muted">Unggah gambar atau PDF nota transaksi (opsional).</small>
                 </div>
                 <div class="mb-3">
                     <label for="crud_foto_barang" class="form-label">Foto Barang</label>
@@ -1371,10 +1442,17 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
             let availableStockText = '';
             let defaultLocation = '';
             let defaultCategory = '';
+            let defaultFoto = '';
+            let defaultPembayaran = '';
+            let defaultNota = '';
+
             if (itemData) {
                 availableStockText = `Stok tersedia: ${itemData.jumlah_barang} unit`;
                 defaultLocation = itemData.lokasi_rak_barang || '';
                 defaultCategory = itemData.kategori_barang || '';
+                defaultFoto = itemData.foto_barang || '';
+                defaultPembayaran = itemData.pembayaran_transaksi || '';
+                defaultNota = itemData.nota_transaksi || '';
             }
 
             formHtml = `
@@ -1389,6 +1467,8 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                                         data-available="{{ $incItem->jumlah_barang }}" 
                                         data-location="{{ $incItem->lokasi_rak_barang }}"
                                         data-foto="{{ $incItem->foto_barang }}"
+                                        data-pembayaran="{{ $incItem->pembayaran_transaksi }}"
+                                        data-nota="{{ $incItem->nota_transaksi }}"
                                         ${itemData && itemData.nama_barang === '{{ $incItem->nama_barang }}' ? 'selected' : ''}>
                                     {{ $incItem->nama_barang }} ({{ $incItem->jumlah_barang }} unit tersedia)
                                 </option>
@@ -1423,36 +1503,38 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <label for="crud_nama_produsen_outgoing" class="form-label">Nama Produsen *</label>
                     <input type="text" class="form-control" id="crud_nama_produsen_outgoing" name="nama_produsen" required placeholder="Nama Produsen">
                 </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="crud_metode_bayar_outgoing" class="form-label">Metode Bayar</label>
-                            <select class="form-select" id="crud_metode_bayar_outgoing" name="metode_bayar">
-                                <option value="">Pilih Metode</option>
-                                <option value="Cash">Cash</option>
-                                <option value="Transfer Bank">Transfer Bank</option>
-                                <option value="Kartu Kredit">Kartu Kredit</option>
-                                <option value="Debit">Debit</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="crud_pembayaran_transaksi_outgoing" class="form-label">Pembayaran Transaksi</label>
-                            <input type="number" step="0.01" class="form-control" id="crud_pembayaran_transaksi_outgoing" name="pembayaran_transaksi" placeholder="0.00">
-                        </div>
+                <div class="mb-3">
+                    <label for="crud_metode_bayar_outgoing" class="form-label">Metode Bayar</label>
+                    <select class="form-select" id="crud_metode_bayar_outgoing" name="metode_bayar">
+                        <option value="">Pilih Metode</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Transfer Bank">Transfer Bank</option>
+                        <option value="Kartu Kredit">Kartu Kredit</option>
+                        <option value="Debit">Debit</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="crud_pembayaran_transaksi_outgoing" class="form-label">Bukti Pembayaran Transaksi</label>
+                    <input type="file" class="form-control" id="crud_pembayaran_transaksi_outgoing" name="pembayaran_transaksi" accept="image/*,application/pdf">
+                    <small class="form-text text-muted">Unggah gambar atau PDF bukti pembayaran (opsional).</small>
+                    <div id="current_pembayaran_transaksi_outgoing" class="mt-2">
+                        ${defaultPembayaran ? (window.isPdf(defaultPembayaran) ? `<a href="{{ asset('storage') }}/${defaultPembayaran}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="{{ asset('storage') }}/${defaultPembayaran}" alt="Current Payment" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
                     </div>
                 </div>
                 <div class="mb-3">
                     <label for="crud_nota_transaksi_outgoing" class="form-label">Nota Transaksi</label>
-                    <input type="text" class="form-control" id="crud_nota_transaksi_outgoing" name="nota_transaksi" placeholder="Nomor Nota (opsional)">
+                    <input type="file" class="form-control" id="crud_nota_transaksi_outgoing" name="nota_transaksi" accept="image/*,application/pdf">
+                    <small class="form-text text-muted">Unggah gambar atau PDF nota transaksi (opsional).</small>
+                    <div id="current_nota_transaksi_outgoing" class="mt-2">
+                        ${defaultNota ? (window.isPdf(defaultNota) ? `<a href="{{ asset('storage') }}/${defaultNota}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="{{ asset('storage') }}/${defaultNota}" alt="Current Nota" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label for="crud_foto_barang_outgoing" class="form-label">Foto Barang</label>
                     <input type="file" class="form-control" id="crud_foto_barang_outgoing" name="foto_barang" accept="image/*">
                     <small class="form-text text-muted">Unggah gambar barang (opsional).</small>
                     <div id="current_foto_barang_outgoing" class="mt-2">
-                        ${itemData && itemData.foto_barang ? `<img src="{{ asset('storage') }}/${itemData.foto_barang}" alt="Current Photo" style="width: 100px; height: auto; border-radius: 5px;">` : ''}
+                        ${defaultFoto ? `<img src="{{ asset('storage') }}/${defaultFoto}" alt="Current Photo" style="width: 100px; height: auto; border-radius: 5px;">` : ''}
                     </div>
                 </div>
             `;
@@ -1511,29 +1593,39 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <label for="crud_nama_produsen" class="form-label">Nama Produsen</label>
                     <input type="text" class="form-control" id="crud_nama_produsen" name="nama_produsen" value="${itemData.nama_produsen || ''}" placeholder="Nama Produsen (opsional)">
                 </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="crud_metode_bayar" class="form-label">Metode Bayar</label>
-                            <select class="form-select" id="crud_metode_bayar" name="metode_bayar">
-                                <option value="">Pilih Metode</option>
-                                <option value="Cash" ${itemData.metode_bayar === 'Cash' ? 'selected' : ''}>Cash</option>
-                                <option value="Transfer Bank" ${itemData.metode_bayar === 'Transfer Bank' ? 'selected' : ''}>Transfer Bank</option>
-                                <option value="Kartu Kredit" ${itemData.metode_bayar === 'Kartu Kredit' ? 'selected' : ''}>Kartu Kredit</option>
-                                <option value="Debit" ${itemData.metode_bayar === 'Debit' ? 'selected' : ''}>Debit</option>
-                            </select>
-                        </div>
+                <div class="mb-3">
+                    <label for="crud_metode_bayar" class="form-label">Metode Bayar</label>
+                    <select class="form-select" id="crud_metode_bayar" name="metode_bayar">
+                        <option value="">Pilih Metode</option>
+                        <option value="Cash" ${itemData.metode_bayar === 'Cash' ? 'selected' : ''}>Cash</option>
+                        <option value="Transfer Bank" ${itemData.metode_bayar === 'Transfer Bank' ? 'selected' : ''}>Transfer Bank</option>
+                        <option value="Kartu Kredit" ${itemData.metode_bayar === 'Kartu Kredit' ? 'selected' : ''}>Kartu Kredit</option>
+                        <option value="Debit" ${itemData.metode_bayar === 'Debit' ? 'selected' : ''}>Debit</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="crud_pembayaran_transaksi" class="form-label">Bukti Pembayaran Transaksi</label>
+                    <input type="file" class="form-control" id="crud_pembayaran_transaksi" name="pembayaran_transaksi" accept="image/*,application/pdf">
+                    <small class="form-text text-muted">Unggah gambar atau PDF bukti pembayaran (biarkan kosong untuk tidak mengubah).</small>
+                    <div id="current_pembayaran_transaksi" class="mt-2">
+                        ${itemData.pembayaran_transaksi ? (window.isPdf(itemData.pembayaran_transaksi) ? `<a href="{{ asset('storage') }}/${itemData.pembayaran_transaksi}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="{{ asset('storage') }}/${itemData.pembayaran_transaksi}" alt="Current Payment" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
                     </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="crud_pembayaran_transaksi" class="form-label">Pembayaran Transaksi</label>
-                            <input type="number" step="0.01" class="form-control" id="crud_pembayaran_transaksi" name="pembayaran_transaksi" value="${itemData.pembayaran_transaksi || 0.00}">
-                        </div>
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" id="remove_pembayaran_transaksi" name="pembayaran_transaksi_removed" value="true">
+                        <label class="form-check-label" for="remove_pembayaran_transaksi">Hapus bukti pembayaran yang ada</label>
                     </div>
                 </div>
                 <div class="mb-3">
                     <label for="crud_nota_transaksi" class="form-label">Nota Transaksi</label>
-                    <input type="text" class="form-control" id="crud_nota_transaksi" name="nota_transaksi" value="${itemData.nota_transaksi || ''}" placeholder="Nomor Nota (opsional)">
+                    <input type="file" class="form-control" id="crud_nota_transaksi" name="nota_transaksi" accept="image/*,application/pdf">
+                    <small class="form-text text-muted">Unggah gambar atau PDF nota transaksi (biarkan kosong untuk tidak mengubah).</small>
+                    <div id="current_nota_transaksi" class="mt-2">
+                        ${itemData.nota_transaksi ? (window.isPdf(itemData.nota_transaksi) ? `<a href="{{ asset('storage') }}/${itemData.nota_transaksi}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="{{ asset('storage') }}/${itemData.nota_transaksi}" alt="Current Nota" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
+                    </div>
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" id="remove_nota_transaksi" name="nota_transaksi_removed" value="true">
+                        <label class="form-check-label" for="remove_nota_transaksi">Hapus nota transaksi yang ada</label>
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label for="crud_foto_barang" class="form-label">Foto Barang</label>
@@ -1541,6 +1633,10 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <small class="form-text text-muted">Unggah gambar barang (biarkan kosong untuk tidak mengubah).</small>
                     <div id="current_foto_barang" class="mt-2">
                         ${itemData.foto_barang ? `<img src="{{ asset('storage') }}/${itemData.foto_barang}" alt="Current Photo" style="width: 100px; height: auto; border-radius: 5px;">` : ''}
+                    </div>
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" id="remove_foto_barang" name="foto_barang_removed" value="true">
+                        <label class="form-check-label" for="remove_foto_barang">Hapus foto barang yang ada</label>
                     </div>
                 </div>
             `;
@@ -1582,29 +1678,39 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <label for="crud_nama_produsen_outgoing" class="form-label">Nama Produsen</label>
                     <input type="text" class="form-control" id="crud_nama_produsen_outgoing" name="nama_produsen" value="${itemData.nama_produsen || ''}" placeholder="Nama Produsen (opsional)">
                 </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="crud_metode_bayar_outgoing" class="form-label">Metode Bayar</label>
-                            <select class="form-select" id="crud_metode_bayar_outgoing" name="metode_bayar">
-                                <option value="">Pilih Metode</option>
-                                <option value="Cash" ${itemData.metode_bayar === 'Cash' ? 'selected' : ''}>Cash</option>
-                                <option value="Transfer Bank" ${itemData.metode_bayar === 'Transfer Bank' ? 'selected' : ''}>Transfer Bank</option>
-                                <option value="Kartu Kredit" ${itemData.metode_bayar === 'Kartu Kredit' ? 'selected' : ''}>Kartu Kredit</option>
-                                <option value="Debit" ${itemData.metode_bayar === 'Debit' ? 'selected' : ''}>Debit</option>
-                            </select>
-                        </div>
+                <div class="mb-3">
+                    <label for="crud_metode_bayar_outgoing" class="form-label">Metode Bayar</label>
+                    <select class="form-select" id="crud_metode_bayar_outgoing" name="metode_bayar">
+                        <option value="">Pilih Metode</option>
+                        <option value="Cash" ${itemData.metode_bayar === 'Cash' ? 'selected' : ''}>Cash</option>
+                        <option value="Transfer Bank" ${itemData.metode_bayar === 'Transfer Bank' ? 'selected' : ''}>Transfer Bank</option>
+                        <option value="Kartu Kredit" ${itemData.metode_bayar === 'Kartu Kredit' ? 'selected' : ''}>Kartu Kredit</option>
+                        <option value="Debit" ${itemData.metode_bayar === 'Debit' ? 'selected' : ''}>Debit</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="crud_pembayaran_transaksi_outgoing" class="form-label">Bukti Pembayaran Transaksi</label>
+                    <input type="file" class="form-control" id="crud_pembayaran_transaksi_outgoing" name="pembayaran_transaksi" accept="image/*,application/pdf">
+                    <small class="form-text text-muted">Unggah gambar atau PDF bukti pembayaran (biarkan kosong untuk tidak mengubah).</small>
+                    <div id="current_pembayaran_transaksi_outgoing" class="mt-2">
+                        ${itemData.pembayaran_transaksi ? (window.isPdf(itemData.pembayaran_transaksi) ? `<a href="{{ asset('storage') }}/${itemData.pembayaran_transaksi}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="{{ asset('storage') }}/${itemData.pembayaran_transaksi}" alt="Current Payment" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
                     </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="crud_pembayaran_transaksi_outgoing" class="form-label">Pembayaran Transaksi</label>
-                            <input type="number" step="0.01" class="form-control" id="crud_pembayaran_transaksi_outgoing" name="pembayaran_transaksi" value="${itemData.pembayaran_transaksi || 0.00}">
-                        </div>
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" id="remove_pembayaran_transaksi_outgoing" name="pembayaran_transaksi_removed" value="true">
+                        <label class="form-check-label" for="remove_pembayaran_transaksi_outgoing">Hapus bukti pembayaran yang ada</label>
                     </div>
                 </div>
                 <div class="mb-3">
                     <label for="crud_nota_transaksi_outgoing" class="form-label">Nota Transaksi</label>
-                    <input type="text" class="form-control" id="crud_nota_transaksi_outgoing" name="nota_transaksi" value="${itemData.nota_transaksi || ''}" placeholder="Nomor Nota (opsional)">
+                    <input type="file" class="form-control" id="crud_nota_transaksi_outgoing" name="nota_transaksi" accept="image/*,application/pdf">
+                    <small class="form-text text-muted">Unggah gambar atau PDF nota transaksi (biarkan kosong untuk tidak mengubah).</small>
+                    <div id="current_nota_transaksi_outgoing" class="mt-2">
+                        ${itemData.nota_transaksi ? (window.isPdf(itemData.nota_transaksi) ? `<a href="{{ asset('storage') }}/${itemData.nota_transaksi}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="{{ asset('storage') }}/${itemData.nota_transaksi}" alt="Current Nota" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
+                    </div>
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" id="remove_nota_transaksi_outgoing" name="nota_transaksi_removed" value="true">
+                        <label class="form-check-label" for="remove_nota_transaksi_outgoing">Hapus nota transaksi yang ada</label>
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label for="crud_foto_barang_outgoing" class="form-label">Foto Barang</label>
@@ -1612,6 +1718,10 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <small class="form-text text-muted">Unggah gambar barang (biarkan kosong untuk tidak mengubah).</small>
                     <div id="current_foto_barang_outgoing" class="mt-2">
                         ${itemData.foto_barang ? `<img src="{{ asset('storage') }}/${itemData.foto_barang}" alt="Current Photo" style="width: 100px; height: auto; border-radius: 5px;">` : ''}
+                    </div>
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" id="remove_foto_barang_outgoing" name="foto_barang_removed" value="true">
+                        <label class="form-check-label" for="remove_foto_barang_outgoing">Hapus foto barang yang ada</label>
                     </div>
                 </div>
             `;
@@ -1749,7 +1859,7 @@ window.handleItemCrudSubmit = async function(event, itemType, mode) {
  * Handles the deletion of an incoming item.
  * @param {number} itemId - The ID of the incoming item to delete.
  */
-window.deleteIncomingItem = async function(itemId) { // Added async
+window.deleteIncomingItem = async function(itemId) {
     window.showCustomConfirm('Are you sure you want to delete this incoming item? This action cannot be undone.', async () => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         window.showAlert('info', 'Deleting incoming item...');
@@ -1803,7 +1913,7 @@ window.deleteIncomingItem = async function(itemId) { // Added async
  * Handles the deletion of an outgoing item.
  * @param {number} itemId - The ID of the outgoing item to delete.
  */
-window.deleteOutgoingItem = async function(itemId) { // Added async
+window.deleteOutgoingItem = async function(itemId) {
     window.showCustomConfirm('Are you sure you want to delete this outgoing item? This action cannot be undone.', async () => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         window.showAlert('info', 'Deleting outgoing item...');
@@ -1863,6 +1973,8 @@ window.updateOutgoingFormFields = function(selectElement) {
     const available = selectedOption.dataset.available || '0';
     const location = selectedOption.dataset.location || '';
     const foto = selectedOption.dataset.foto || ''; // Get foto_barang
+    const pembayaran = selectedOption.dataset.pembayaran || ''; // Get pembayaran_transaksi
+    const nota = selectedOption.dataset.nota || ''; // Get nota_transaksi
 
     document.getElementById('crud_kategori_barang').value = category;
     document.getElementById('crud_lokasi_asal').value = location;
@@ -1877,6 +1989,30 @@ window.updateOutgoingFormFields = function(selectElement) {
             currentFotoDiv.innerHTML = `<img src="{{ asset('storage') }}/${foto}" alt="Current Photo" style="width: 100px; height: auto; border-radius: 5px;">`;
         } else {
             currentFotoDiv.innerHTML = '';
+        }
+    }
+
+    // Display current pembayaran_transaksi in the form
+    const currentPembayaranDiv = document.getElementById('current_pembayaran_transaksi_outgoing');
+    if (currentPembayaranDiv) {
+        if (pembayaran) {
+            currentPembayaranDiv.innerHTML = window.isPdf(pembayaran) 
+                ? `<a href="{{ asset('storage') }}/${pembayaran}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` 
+                : `<img src="{{ asset('storage') }}/${pembayaran}" alt="Current Payment" style="width: 100px; height: auto; border-radius: 5px;">`;
+        } else {
+            currentPembayaranDiv.innerHTML = '';
+        }
+    }
+
+    // Display current nota_transaksi in the form
+    const currentNotaDiv = document.getElementById('current_nota_transaksi_outgoing');
+    if (currentNotaDiv) {
+        if (nota) {
+            currentNotaDiv.innerHTML = window.isPdf(nota) 
+                ? `<a href="{{ asset('storage') }}/${nota}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` 
+                : `<img src="{{ asset('storage') }}/${nota}" alt="Current Nota" style="width: 100px; height: auto; border-radius: 5px;">`;
+        } else {
+            currentNotaDiv.innerHTML = '';
         }
     }
 }
@@ -2061,12 +2197,10 @@ window.confirmRackSelection = async function() {
                     formData.append('lokasi_rak_barang', newLocation); // Update only location
                     formData.append('nama_produsen', existingItemData.data.nama_produsen || '');
                     formData.append('metode_bayar', existingItemData.data.metode_bayar || '');
-                    formData.append('pembayaran_transaksi', existingItemData.data.pembayaran_transaksi || 0.00);
-                    formData.append('nota_transaksi', existingItemData.data.nota_transaksi || '');
-                    // Preserve existing foto_barang if not explicitly changed
-                    if (existingItemData.data.foto_barang) {
-                        formData.append('foto_barang_existing', existingItemData.data.foto_barang);
-                    }
+                    // For file fields, if not explicitly changed, retain existing path
+                    formData.append('pembayaran_transaksi_existing', existingItemData.data.pembayaran_transaksi || '');
+                    formData.append('nota_transaksi_existing', existingItemData.data.nota_transaksi || '');
+                    formData.append('foto_barang_existing', existingItemData.data.foto_barang || '');
 
 
                     const response = await fetch(`/staff/incoming-items/${itemId}`, {
@@ -2487,8 +2621,8 @@ window.processCSVImport = async function() {
 window.downloadCSVTemplate = function() {
     // Updated template to reflect new columns
     const csvContent = "nama_barang,kategori_barang,jumlah_barang,tanggal_masuk_barang,lokasi_rak_barang,nama_produsen,metode_bayar,pembayaran_transaksi,nota_transaksi,foto_barang\n" +
-                      "Contoh Barang,Makanan,100,2024-01-01,R1-1-1,Toko ABC,Cash,150000.00,INV-001,images/chitato.jpg\n" +
-                      "Contoh Barang 2,Minuman,50,2024-01-01,R1-1-2,Supplier XYZ,Transfer Bank,75000.00,INV-002,"; // Example with no photo
+                      "Contoh Barang,Makanan,100,2024-01-01,R1-1-1,Toko ABC,Cash,path/to/payment.jpg,path/to/invoice.pdf,images/chitato.jpg\n" +
+                      "Contoh Barang 2,Minuman,50,2024-01-01,R1-1-2,Supplier XYZ,Transfer Bank,,path/to/invoice2.png,"; // Example with no payment photo
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -2631,7 +2765,7 @@ window.printItemDetails = function() {
     window.print();
 }
 
-window.duplicateItem = async function(itemId) { // Added async
+window.duplicateItem = async function(itemId) {
     window.showCustomConfirm('Are you sure you want to duplicate this item?', async () => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         window.showAlert('info', 'Duplicating item...');
@@ -2734,7 +2868,7 @@ window.handleVerificationFormSubmit = async function(event) {
         // Prepare data for backend API call
         const payload = {
             nama_barang: namaBarang,
-            kategori_barang: 'Unknown', // Category is not in this form, can be set to default or chosen later
+            kategori_barang: 'Umum', // Category is not in this form, set to default
             jumlah_barang: jumlahBarang,
             satuan_barang: satuanBarang, 
             tanggal_masuk_barang: new Date().toISOString().split('T')[0], // Today's date
