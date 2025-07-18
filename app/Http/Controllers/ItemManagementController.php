@@ -61,6 +61,7 @@ class ItemManagementController extends Controller
             'metode_bayar' => 'nullable|string|max:50',
             'pembayaran_transaksi' => 'nullable|numeric|min:0',
             'nota_transaksi' => 'nullable|string|max:255',
+            'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Added validation for image
         ], [
             'nama_barang.required' => 'Nama barang wajib diisi.',
             'kategori_barang.required' => 'Kategori barang wajib diisi.',
@@ -70,6 +71,9 @@ class ItemManagementController extends Controller
             'lokasi_rak_barang.regex' => 'Format lokasi rak tidak valid. Gunakan format R[1-8]-[1-4]-[1-6].',
             'pembayaran_transaksi.numeric' => 'Pembayaran transaksi harus berupa angka.',
             'pembayaran_transaksi.min' => 'Pembayaran transaksi minimal 0.',
+            'foto_barang.image' => 'File harus berupa gambar.',
+            'foto_barang.mimes' => 'Format gambar yang diizinkan: jpeg, png, jpg, gif, svg.',
+            'foto_barang.max' => 'Ukuran gambar maksimal 2MB.',
         ]);
 
         if ($validator->fails()) {
@@ -79,6 +83,12 @@ class ItemManagementController extends Controller
                 'message' => 'Validasi gagal.',
                 'errors' => $validator->errors()
             ], 422);
+        }
+
+        $fotoPath = null;
+        if ($request->hasFile('foto_barang')) {
+            $fotoPath = $request->file('foto_barang')->store('images', 'public');
+            \Log::info('storeIncomingItem: Image uploaded', ['path' => $fotoPath]);
         }
 
         // Logika untuk menangani lokasi rak barang
@@ -104,7 +114,14 @@ class ItemManagementController extends Controller
                 // Jika barang yang sama sudah ada, perbarui jumlahnya
                 \Log::info('storeIncomingItem: Updating quantity for existing item on rack', ['item_id' => $existingSameItemOnRack->id, 'old_qty' => $existingSameItemOnRack->jumlah_barang, 'new_qty_added' => $request->jumlah_barang]);
                 $existingSameItemOnRack->jumlah_barang += $request->jumlah_barang;
-                // Tidak perlu memperbarui status_barang karena kolom sudah dihapus
+                // Update foto juga jika ada yang baru diunggah
+                if ($fotoPath) {
+                    // Hapus foto lama jika ada
+                    if ($existingSameItemOnRack->foto_barang) {
+                        Storage::disk('public')->delete($existingSameItemOnRack->foto_barang);
+                    }
+                    $existingSameItemOnRack->foto_barang = $fotoPath;
+                }
                 $existingSameItemOnRack->save();
                 \Log::info('storeIncomingItem: Item quantity updated successfully', ['item_id' => $existingSameItemOnRack->id, 'final_qty' => $existingSameItemOnRack->jumlah_barang]);
 
@@ -127,7 +144,7 @@ class ItemManagementController extends Controller
                 'metode_bayar' => $request->metode_bayar,
                 'pembayaran_transaksi' => $request->pembayaran_transaksi,
                 'nota_transaksi' => $request->nota_transaksi,
-                // 'status_barang' => $this->determineStatus($request->jumlah_barang), // Kolom dihapus
+                'foto_barang' => $fotoPath, // Save the image path
             ]);
             \Log::info('storeIncomingItem: New item created successfully', ['item_id' => $incomingItem->id, 'data' => $incomingItem->toArray()]);
 
@@ -137,6 +154,10 @@ class ItemManagementController extends Controller
                 'data' => $incomingItem
             ]);
         } catch (\Exception $e) {
+            // If an error occurs after file upload, delete the uploaded file
+            if ($fotoPath) {
+                Storage::disk('public')->delete($fotoPath);
+            }
             // Log error for debugging
             \Log::error('Error in storeIncomingItem: ' . $e->getMessage(), ['exception' => $e]);
             return response()->json([
@@ -164,6 +185,7 @@ class ItemManagementController extends Controller
             'metode_bayar' => 'nullable|string|max:50', // Kolom baru
             'pembayaran_transaksi' => 'nullable|numeric|min:0', // Kolom baru
             'nota_transaksi' => 'nullable|string|max:255', // Kolom baru
+            'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Added validation for image
         ], [
             'nama_barang.required' => 'Nama barang wajib diisi.',
             'kategori_barang.required' => 'Kategori barang wajib diisi.',
@@ -174,6 +196,9 @@ class ItemManagementController extends Controller
             'lokasi_rak_barang.regex' => 'Format lokasi rak tidak valid. Gunakan format R[1-8]-[1-4]-[1-6].',
             'pembayaran_transaksi.numeric' => 'Pembayaran transaksi harus berupa angka.',
             'pembayaran_transaksi.min' => 'Pembayaran transaksi minimal 0.',
+            'foto_barang.image' => 'File harus berupa gambar.',
+            'foto_barang.mimes' => 'Format gambar yang diizinkan: jpeg, png, jpg, gif, svg.',
+            'foto_barang.max' => 'Ukuran gambar maksimal 2MB.',
         ]);
 
         if ($validator->fails()) {
@@ -184,6 +209,21 @@ class ItemManagementController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
+
+        $fotoPath = null;
+        if ($request->hasFile('foto_barang')) {
+            $fotoPath = $request->file('foto_barang')->store('images', 'public');
+            \Log::info('storeOutgoingItem: Image uploaded', ['path' => $fotoPath]);
+        } else {
+            // If no new photo is uploaded, try to get it from the incoming item
+            $incomingItemForPhoto = IncomingItem::where('nama_barang', $request->nama_barang)
+                                                ->where('kategori_barang', $request->kategori_barang)
+                                                ->first();
+            if ($incomingItemForPhoto && $incomingItemForPhoto->foto_barang) {
+                $fotoPath = $incomingItemForPhoto->foto_barang;
+            }
+        }
+
 
         // Cek ketersediaan stok berdasarkan nama barang, kategori, dan lokasi rak (jika disediakan)
         $incomingItemQuery = IncomingItem::where('nama_barang', $request->nama_barang)
@@ -228,13 +268,13 @@ class ItemManagementController extends Controller
                 'metode_bayar' => $request->metode_bayar, // Kolom baru
                 'pembayaran_transaksi' => $request->pembayaran_transaksi, // Kolom baru
                 'nota_transaksi' => $request->nota_transaksi, // Kolom baru
+                'foto_barang' => $fotoPath, // Save the image path
             ]);
             \Log::info('storeOutgoingItem: Outgoing item created', ['outgoing_item_id' => $outgoingItem->id, 'data' => $outgoingItem->toArray()]);
 
 
             // Perbarui stok barang masuk
             $incomingItem->jumlah_barang -= $request->jumlah_barang;
-            // $incomingItem->status_barang = $this->determineStatus($incomingItem->jumlah_barang); // Kolom dihapus
             $incomingItem->save();
             \Log::info('storeOutgoingItem: Incoming item stock updated', ['item_id' => $incomingItem->id, 'final_qty' => $incomingItem->jumlah_barang]);
 
@@ -256,6 +296,10 @@ class ItemManagementController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            // If an error occurs after file upload, delete the uploaded file
+            if ($fotoPath && $request->hasFile('foto_barang')) { // Only delete if it was a new upload
+                Storage::disk('public')->delete($fotoPath);
+            }
             \Log::error('Error in storeOutgoingItem: ' . $e->getMessage(), ['exception' => $e]);
             return response()->json([
                 'success' => false,
@@ -281,6 +325,7 @@ class ItemManagementController extends Controller
             'metode_bayar' => 'nullable|string|max:50',
             'pembayaran_transaksi' => 'nullable|numeric|min:0',
             'nota_transaksi' => 'nullable|string|max:255',
+            'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Added validation for image
         ]);
 
         if ($validator->fails()) {
@@ -296,7 +341,31 @@ class ItemManagementController extends Controller
             $incomingItem = IncomingItem::findOrFail($id);
             $oldLocation = $incomingItem->lokasi_rak_barang;
             $newLocation = $request->lokasi_rak_barang;
+            $oldFotoPath = $incomingItem->foto_barang; // Get current photo path
+            $fotoPathToSave = $oldFotoPath; // Default to old path
+
             \Log::info('updateIncomingItem: Found item', ['item_id' => $incomingItem->id, 'current_data' => $incomingItem->toArray()]);
+
+            // Handle foto_barang upload
+            if ($request->hasFile('foto_barang')) {
+                // Upload new photo
+                $fotoPathToSave = $request->file('foto_barang')->store('images', 'public');
+                // Delete old photo if it exists
+                if ($oldFotoPath) {
+                    Storage::disk('public')->delete($oldFotoPath);
+                    \Log::info('updateIncomingItem: Old image deleted', ['old_path' => $oldFotoPath]);
+                }
+                \Log::info('updateIncomingItem: New image uploaded', ['new_path' => $fotoPathToSave]);
+            } else if ($request->input('foto_barang_removed', false)) { // Check if client explicitly signaled photo removal
+                if ($oldFotoPath) {
+                    Storage::disk('public')->delete($oldFotoPath);
+                    \Log::info('updateIncomingItem: Image explicitly removed by user', ['old_path' => $oldFotoPath]);
+                }
+                $fotoPathToSave = null;
+            } else {
+                // If no new file uploaded and not explicitly removed, retain existing photo
+                $fotoPathToSave = $oldFotoPath;
+            }
 
 
             // Jika lokasi rak diubah dan lokasi baru tidak null
@@ -332,7 +401,7 @@ class ItemManagementController extends Controller
                 'metode_bayar' => $request->metode_bayar,
                 'pembayaran_transaksi' => $request->pembayaran_transaksi,
                 'nota_transaksi' => $request->nota_transaksi,
-                // 'status_barang' => $this->determineStatus($request->jumlah_barang), // Kolom dihapus
+                'foto_barang' => $fotoPathToSave, // Save the updated image path
             ]);
             \Log::info('updateIncomingItem: Item updated successfully', ['item_id' => $incomingItem->id, 'updated_data' => $incomingItem->toArray()]);
 
@@ -343,6 +412,10 @@ class ItemManagementController extends Controller
                 'data' => $incomingItem
             ]);
         } catch (\Exception $e) {
+            // If an error occurs after new file upload, delete the newly uploaded file to prevent orphans
+            if (isset($fotoPathToSave) && $request->hasFile('foto_barang')) {
+                Storage::disk('public')->delete($fotoPathToSave);
+            }
             // Log error for debugging
             \Log::error('Error in updateIncomingItem: ' . $e->getMessage(), ['exception' => $e]);
             return response()->json([
@@ -370,6 +443,7 @@ class ItemManagementController extends Controller
             'metode_bayar' => 'nullable|string|max:50', // Kolom baru
             'pembayaran_transaksi' => 'nullable|numeric|min:0', // Kolom baru
             'nota_transaksi' => 'nullable|string|max:255', // Kolom baru
+            'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Added validation for image
         ]);
 
         if ($validator->fails()) {
@@ -383,6 +457,24 @@ class ItemManagementController extends Controller
 
         try {
             $outgoingItem = OutgoingItem::findOrFail($id);
+            $oldFotoPath = $outgoingItem->foto_barang;
+            $fotoPathToSave = $oldFotoPath;
+
+            // Handle foto_barang upload
+            if ($request->hasFile('foto_barang')) {
+                $fotoPathToSave = $request->file('foto_barang')->store('images', 'public');
+                if ($oldFotoPath) {
+                    Storage::disk('public')->delete($oldFotoPath);
+                }
+            } else if ($request->input('foto_barang_removed', false)) {
+                if ($oldFotoPath) {
+                    Storage::disk('public')->delete($oldFotoPath);
+                }
+                $fotoPathToSave = null;
+            } else {
+                $fotoPathToSave = $oldFotoPath;
+            }
+
             \Log::info('updateOutgoingItem: Found item', ['item_id' => $outgoingItem->id, 'current_data' => $outgoingItem->toArray()]);
 
             $outgoingItem->update([
@@ -396,6 +488,7 @@ class ItemManagementController extends Controller
                 'metode_bayar' => $request->metode_bayar, // Kolom baru
                 'pembayaran_transaksi' => $request->pembayaran_transaksi, // Kolom baru
                 'nota_transaksi' => $request->nota_transaksi, // Kolom baru
+                'foto_barang' => $fotoPathToSave, // Save the updated image path
             ]);
             \Log::info('updateOutgoingItem: Item updated successfully', ['item_id' => $outgoingItem->id, 'updated_data' => $outgoingItem->toArray()]);
 
@@ -405,6 +498,9 @@ class ItemManagementController extends Controller
                 'data' => $outgoingItem
             ]);
         } catch (\Exception $e) {
+            if (isset($fotoPathToSave) && $request->hasFile('foto_barang')) {
+                Storage::disk('public')->delete($fotoPathToSave);
+            }
             // Log error for debugging
             \Log::error('Error in updateOutgoingItem: ' . $e->getMessage(), ['exception' => $e]);
             return response()->json([
@@ -422,6 +518,11 @@ class ItemManagementController extends Controller
         \Log::info('deleteIncomingItem: Request received', ['item_id' => $id]);
         try {
             $incomingItem = IncomingItem::findOrFail($id);
+            // Delete associated photo if exists
+            if ($incomingItem->foto_barang) {
+                Storage::disk('public')->delete($incomingItem->foto_barang);
+                \Log::info('deleteIncomingItem: Associated image deleted', ['path' => $incomingItem->foto_barang]);
+            }
             \Log::info('deleteIncomingItem: Found item', ['item_id' => $incomingItem->id, 'data' => $incomingItem->toArray()]);
             $incomingItem->delete();
             \Log::info('deleteIncomingItem: Item deleted successfully', ['item_id' => $id]);
@@ -448,6 +549,11 @@ class ItemManagementController extends Controller
         \Log::info('deleteOutgoingItem: Request received', ['item_id' => $id]);
         try {
             $outgoingItem = OutgoingItem::findOrFail($id);
+            // Delete associated photo if exists
+            if ($outgoingItem->foto_barang && Storage::disk('public')->exists($outgoingItem->foto_barang)) {
+                Storage::disk('public')->delete($outgoingItem->foto_barang);
+                \Log::info('deleteOutgoingItem: Associated image deleted', ['path' => $outgoingItem->foto_barang]);
+            }
             \Log::info('deleteOutgoingItem: Found item', ['item_id' => $outgoingItem->id, 'data' => $outgoingItem->toArray()]);
             $outgoingItem->delete();
             \Log::info('deleteOutgoingItem: Item deleted successfully', ['item_id' => $id]);
@@ -629,8 +735,6 @@ class ItemManagementController extends Controller
                 'total_incoming_items' => IncomingItem::count(),
                 'total_outgoing_items' => OutgoingItem::count(),
                 'total_stock' => IncomingItem::sum('jumlah_barang'),
-                // 'low_stock_items' => IncomingItem::where('jumlah_barang', '<', 10)->count(), // Status barang dihapus
-                // 'empty_stock_items' => IncomingItem::where('jumlah_barang', '=', 0)->count(), // Status barang dihapus
                 'categories' => IncomingItem::distinct('kategori_barang')->count('kategori_barang'),
                 'recent_incoming' => IncomingItem::orderBy('tanggal_masuk_barang', 'desc')->take(5)->get(),
                 'recent_outgoing' => OutgoingItem::orderBy('tanggal_keluar_barang', 'desc')->take(5)->get(),
@@ -811,8 +915,8 @@ class ItemManagementController extends Controller
                 $items = IncomingItem::all();
                 $callback = function() use ($items) {
                     $file = fopen('php://output', 'w');
-                    // Header CSV baru
-                    fputcsv($file, ['ID', 'Nama Barang', 'Kategori', 'Jumlah', 'Tanggal Masuk', 'Lokasi Rak', 'Nama Produsen', 'Metode Bayar', 'Pembayaran Transaksi', 'Nota Transaksi']);
+                    // Header CSV baru, tambahkan 'Foto Barang'
+                    fputcsv($file, ['ID', 'Nama Barang', 'Kategori', 'Jumlah', 'Tanggal Masuk', 'Lokasi Rak', 'Nama Produsen', 'Metode Bayar', 'Pembayaran Transaksi', 'Nota Transaksi', 'Foto Barang']);
                     foreach ($items as $item) {
                         fputcsv($file, [
                             $item->id,
@@ -825,6 +929,7 @@ class ItemManagementController extends Controller
                             $item->metode_bayar,
                             $item->pembayaran_transaksi,
                             $item->nota_transaksi,
+                            $item->foto_barang, // Add foto_barang
                         ]);
                     }
                     fclose($file);
@@ -833,8 +938,8 @@ class ItemManagementController extends Controller
                 $items = OutgoingItem::all();
                 $callback = function() use ($items) {
                     $file = fopen('php://output', 'w');
-                    // Header CSV baru
-                    fputcsv($file, ['ID', 'Nama Barang', 'Kategori', 'Jumlah', 'Tanggal Keluar', 'Tujuan Distribusi', 'Lokasi Rak', 'Nama Produsen', 'Metode Bayar', 'Pembayaran Transaksi', 'Nota Transaksi']);
+                    // Header CSV baru, tambahkan 'Foto Barang'
+                    fputcsv($file, ['ID', 'Nama Barang', 'Kategori', 'Jumlah', 'Tanggal Keluar', 'Tujuan Distribusi', 'Lokasi Rak', 'Nama Produsen', 'Metode Bayar', 'Pembayaran Transaksi', 'Nota Transaksi', 'Foto Barang']);
                     foreach ($items as $item) {
                         fputcsv($file, [
                             $item->id,
@@ -848,6 +953,7 @@ class ItemManagementController extends Controller
                             $item->metode_bayar,
                             $item->pembayaran_transaksi,
                             $item->nota_transaksi,
+                            $item->foto_barang, // Add foto_barang
                         ]);
                     }
                     fclose($file);
@@ -881,7 +987,6 @@ class ItemManagementController extends Controller
                 'code' => 'ITM' . str_pad($item->id, 6, '0', STR_PAD_LEFT),
                 'category' => $item->kategori_barang,
                 'location' => $item->lokasi_rak_barang,
-                // 'status' => $item->status_barang, // Kolom dihapus
             ];
             \Log::info('generateBarcode: Barcode data generated', ['barcode_data' => $barcodeData]);
 
@@ -915,7 +1020,6 @@ class ItemManagementController extends Controller
                 'quantity' => $item->jumlah_barang,
                 'location' => $item->lokasi_rak_barang,
                 'date_added' => $item->tanggal_masuk_barang->format('Y-m-d'),
-                // 'status' => $item->status_barang, // Kolom dihapus
                 'url' => url('/staff/items?item=' . $item->id)
             ];
             \Log::info('generateQRCode: QR Code data generated', ['qr_data' => $qrData]);
@@ -955,7 +1059,7 @@ class ItemManagementController extends Controller
                 'metode_bayar' => $originalItem->metode_bayar, // Kolom baru
                 'pembayaran_transaksi' => $originalItem->pembayaran_transaksi, // Kolom baru
                 'nota_transaksi' => $originalItem->nota_transaksi, // Kolom baru
-                // 'status_barang' => $this->determineStatus($originalItem->jumlah_barang), // Kolom dihapus
+                'foto_barang' => $originalItem->foto_barang, // Copy foto_barang
             ]);
             \Log::info('duplicateItem: Item duplicated successfully', ['new_item_id' => $duplicatedItem->id, 'data' => $duplicatedItem->toArray()]);
 
@@ -1011,8 +1115,6 @@ class ItemManagementController extends Controller
                         'items' => $items
                     ];
                 }),
-                // 'low_stock_items' => $items->where('jumlah_barang', '<', 10), // Status barang dihapus
-                // 'out_of_stock_items' => $items->where('jumlah_barang', '=', 0), // Status barang dihapus
                 'items_by_location' => $items->whereNotNull('lokasi_rak_barang')->groupBy('lokasi_rak_barang')
             ];
             // Hitung ulang statistik stok rendah/habis jika diperlukan di laporan
@@ -1063,6 +1165,7 @@ class ItemManagementController extends Controller
                 'metode_bayar' => $incomingItem->metode_bayar,
                 'pembayaran_transaksi' => $incomingItem->pembayaran_transaksi,
                 'nota_transaksi' => $incomingItem->nota_transaksi,
+                'foto_barang' => $incomingItem->foto_barang, // Add foto_barang
                 'description' => 'Barang masuk'
             ];
 
@@ -1078,6 +1181,7 @@ class ItemManagementController extends Controller
                     'metode_bayar' => $outgoing->metode_bayar,
                     'pembayaran_transaksi' => $outgoing->pembayaran_transaksi,
                     'nota_transaksi' => $outgoing->nota_transaksi,
+                    'foto_barang' => $outgoing->foto_barang, // Add foto_barang
                     'description' => 'Barang keluar ke ' . ($outgoing->tujuan_distribusi ?? $outgoing->nama_produsen)
                 ];
             }
@@ -1173,6 +1277,11 @@ class ItemManagementController extends Controller
                         break;
 
                     case 'delete':
+                        // Delete associated photo if exists
+                        if ($item->foto_barang) {
+                            Storage::disk('public')->delete($item->foto_barang);
+                            \Log::info('bulkUpdate: Associated image deleted during bulk delete', ['path' => $item->foto_barang]);
+                        }
                         $item->delete();
                         $updatedCount++;
                         \Log::info('bulkUpdate: Item deleted', ['item_id' => $item->id]);
@@ -1245,20 +1354,6 @@ class ItemManagementController extends Controller
     // ============ METODE PEMBANTU PRIBADI ============
 
     /**
-     * Metode determineStatus dihapus karena kolom status_barang sudah tidak ada.
-     */
-    // private function determineStatus($quantity)
-    // {
-    //     if ($quantity == 0) {
-    //         return 'Habis';
-    //     } elseif ($quantity < 10) {
-    //         return 'Stok Rendah';
-    //     } else {
-    //         return 'Tersedia';
-    //     }
-    // }
-
-    /**
      * Mencari lokasi yang tersedia untuk penempatan item.
      */
     private function findAvailableLocation($occupiedLocations)
@@ -1285,7 +1380,7 @@ class ItemManagementController extends Controller
         $data = array_values($record);
         
         // Sesuaikan indeks data dengan kolom CSV yang baru
-        // Format CSV: nama_barang,kategori_barang,jumlah_barang,tanggal_masuk_barang,lokasi_rak_barang,nama_produsen,metode_bayar,pembayaran_transaksi,nota_transaksi
+        // Format CSV: nama_barang,kategori_barang,jumlah_barang,tanggal_masuk_barang,lokasi_rak_barang,nama_produsen,metode_bayar,pembayaran_transaksi,nota_transaksi,foto_barang
         $csvData = [
             'nama_barang' => $data[0] ?? '',
             'kategori_barang' => $data[1] ?? '',
@@ -1296,6 +1391,7 @@ class ItemManagementController extends Controller
             'metode_bayar' => $data[6] ?? null,
             'pembayaran_transaksi' => $data[7] ?? 0,
             'nota_transaksi' => $data[8] ?? null,
+            'foto_barang' => $data[9] ?? null, // Added foto_barang
         ];
 
         // Validasi data impor
@@ -1309,6 +1405,7 @@ class ItemManagementController extends Controller
             'metode_bayar' => 'nullable|string|max:50',
             'pembayaran_transaksi' => 'nullable|numeric|min:0',
             'nota_transaksi' => 'nullable|string|max:255',
+            'foto_barang' => 'nullable|string|max:255', // Validate as string path for CSV import
         ]);
 
         if ($validator->fails()) {
@@ -1334,7 +1431,10 @@ class ItemManagementController extends Controller
             if ($existingSameItemOnRack) {
                 // Jika barang yang sama sudah ada, perbarui jumlahnya
                 $existingSameItemOnRack->jumlah_barang += $csvData['jumlah_barang'];
-                // Tidak perlu memperbarui status_barang karena kolom sudah dihapus
+                // Update foto juga jika ada yang baru diunggah dari CSV
+                if ($csvData['foto_barang']) {
+                    $existingSameItemOnRack->foto_barang = $csvData['foto_barang'];
+                }
                 $existingSameItemOnRack->save();
                 \Log::info('importIncomingItem (private): Updated existing item on rack', ['item_id' => $existingSameItemOnRack->id, 'final_qty' => $existingSameItemOnRack->jumlah_barang]);
                 return; // Barang diperbarui, tidak perlu membuat yang baru
@@ -1351,7 +1451,7 @@ class ItemManagementController extends Controller
             'metode_bayar' => $csvData['metode_bayar'],
             'pembayaran_transaksi' => $csvData['pembayaran_transaksi'],
             'nota_transaksi' => $csvData['nota_transaksi'],
-            // 'status_barang' => $this->determineStatus($csvData['jumlah_barang']), // Kolom dihapus
+            'foto_barang' => $csvData['foto_barang'], // Save foto_barang from CSV
         ]);
         \Log::info('importIncomingItem (private): New item created', ['nama_barang' => $csvData['nama_barang'], 'jumlah_barang' => $csvData['jumlah_barang']]);
     }
@@ -1419,7 +1519,8 @@ class ItemManagementController extends Controller
                     'pembayaran_transaksi' => $data['pembayaran_transaksi'] ?? null,
                     'nota_transaksi' => $data['nota_transaksi'] ?? null,
                     // Tambahkan kolom lain yang relevan jika ada di tabel incoming_items
-                    'satuan_barang' => $satuanBarang, // Pastikan satuan_barang juga disimpan
+                    // 'satuan_barang' => $satuanBarang, // Uncomment if you add satuan_barang to IncomingItem model/migration
+                    'foto_barang' => null, // No photo upload in this verification form, so default to null
                 ]);
 
                 DB::commit(); // Commit transaksi jika berhasil
@@ -1464,84 +1565,6 @@ class ItemManagementController extends Controller
 
 
     /**
-     * Memproses verifikasi barang masuk.
-     * Jika tidak rusak, akan di-insert ke tabel IncomingItem.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function processVerification(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'nama_barang' => 'required|string|max:255',
-            // 'kategori_barang' => 'required|string|max:255', // Kategori tidak ada di form verifikasi, bisa diisi default atau dipilih nanti
-            'jumlah_barang' => 'required|integer|min:1',
-            'tanggal_masuk_barang' => 'required|date',
-            'nama_produsen' => 'nullable|string|max:255',
-            'metode_bayar' => 'nullable|string|max:255',
-            'pembayaran_transaksi' => 'nullable|numeric|min:0',
-            'nota_transaksi' => 'nullable|string|max:255',
-            'kondisi_fisik' => 'required|string|in:Baik,Rusak Ringan,Rusak Parah,Tidak Sesuai,Kadaluarsa', // Kondisi baru
-            // 'satuan_barang' => 'required|string|max:50', // Tambahkan validasi jika disimpan di DB
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal.',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $kondisiFisik = $request->input('kondisi_fisik');
-            $itemName = $request->input('nama_barang');
-
-            // Logika untuk menentukan apakah barang dianggap "tidak rusak" dan harus masuk stok
-            $isNotDamaged = ($kondisiFisik === 'Baik');
-
-            if ($isNotDamaged) {
-                // Jika barang tidak rusak, masukkan ke tabel IncomingItem
-                IncomingItem::create([
-                    'nama_barang' => $itemName,
-                    'kategori_barang' => $request->input('kategori_barang') ?? 'Lainnya', // Default jika tidak ada input kategori
-                    'jumlah_barang' => $request->input('jumlah_barang'),
-                    'tanggal_masuk_barang' => $request->input('tanggal_masuk_barang'),
-                    'lokasi_rak_barang' => null, // Lokasi rak bisa diisi nanti atau melalui quick assign
-                    'nama_produsen' => $request->input('nama_produsen'),
-                    'metode_bayar' => $request->input('metode_bayar'),
-                    'pembayaran_transaksi' => $request->input('pembayaran_transaksi'),
-                    'nota_transaksi' => $request->input('nota_transaksi'),
-                    // Anda bisa menambahkan kolom 'kondisi_fisik' di tabel IncomingItem jika ingin menyimpannya
-                ]);
-
-                DB::commit();
-                return response()->json([
-                    'success' => true,
-                    'message' => "Barang '{$itemName}' berhasil diverifikasi sebagai BAIK dan ditambahkan ke stok."
-                ]);
-            } else {
-                // Jika barang rusak, tidak dimasukkan ke IncomingItem.
-                // Dalam aplikasi nyata, Anda mungkin mencatatnya di tabel 'damaged_items'
-                // atau tabel log lainnya dengan detail kondisi.
-                DB::commit();
-                return response()->json([
-                    'success' => true,
-                    'message' => "Barang '{$itemName}' berhasil ditandai sebagai {$kondisiFisik}. Tidak ditambahkan ke stok utama."
-                ]);
-            }
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal memproses verifikasi barang: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
      * Mengimpor barang keluar dari catatan CSV.
      */
     private function importOutgoingItem($record, $index, $hasHeader)
@@ -1550,7 +1573,7 @@ class ItemManagementController extends Controller
         $data = array_values($record);
         
         // Sesuaikan indeks data dengan kolom CSV yang baru
-        // Format CSV: nama_barang,kategori_barang,jumlah_barang,tanggal_keluar_barang,tujuan_distribusi,lokasi_rak_barang,nama_produsen,metode_bayar,pembayaran_transaksi,nota_transaksi
+        // Format CSV: nama_barang,kategori_barang,jumlah_barang,tanggal_keluar_barang,tujuan_distribusi,lokasi_rak_barang,nama_produsen,metode_bayar,pembayaran_transaksi,nota_transaksi,foto_barang
         $csvData = [
             'nama_barang' => $data[0] ?? '',
             'kategori_barang' => $data[1] ?? '',
@@ -1562,6 +1585,7 @@ class ItemManagementController extends Controller
             'metode_bayar' => $data[7] ?? null,
             'pembayaran_transaksi' => $data[8] ?? 0,
             'nota_transaksi' => $data[9] ?? null,
+            'foto_barang' => $data[10] ?? null, // Added foto_barang
         ];
 
         // Validasi data impor
@@ -1576,6 +1600,7 @@ class ItemManagementController extends Controller
             'metode_bayar' => 'nullable|string|max:50',
             'pembayaran_transaksi' => 'nullable|numeric|min:0',
             'nota_transaksi' => 'nullable|string|max:255',
+            'foto_barang' => 'nullable|string|max:255', // Validate as string path for CSV import
         ]);
 
         if ($validator->fails()) {
@@ -1614,12 +1639,12 @@ class ItemManagementController extends Controller
                 'metode_bayar' => $csvData['metode_bayar'],
                 'pembayaran_transaksi' => $csvData['pembayaran_transaksi'],
                 'nota_transaksi' => $csvData['nota_transaksi'],
+                'foto_barang' => $csvData['foto_barang'], // Save foto_barang from CSV
             ]);
             \Log::info('importOutgoingItem (private): Outgoing item created during import', ['nama_barang' => $csvData['nama_barang'], 'jumlah' => $csvData['jumlah_barang']]);
 
 
             $incomingItem->jumlah_barang -= $csvData['jumlah_barang'];
-            // $incomingItem->status_barang = $this->determineStatus($incomingItem->jumlah_barang); // Kolom dihapus
             $incomingItem->save();
             \Log::info('importOutgoingItem (private): Incoming item stock reduced during import', ['item_id' => $incomingItem->id, 'final_qty' => $incomingItem->jumlah_barang]);
 
