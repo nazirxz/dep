@@ -10,6 +10,7 @@ use App\Models\IncomingItem;
 use App\Models\OutgoingItem;
 use App\Models\Producer;
 use App\Models\User;
+use App\Models\Category; // Added this import
 use Carbon\Carbon;
 
 class HomeController extends Controller
@@ -89,6 +90,12 @@ class HomeController extends Controller
         // Mengambil data barang keluar dari database
         $outgoingItems = OutgoingItem::orderBy('tanggal_keluar_barang', 'desc')->get();
 
+        // Get producers data
+        $producers = Producer::orderBy('nama_produsen_supplier')->get();
+
+        // Get categories data
+        $categories = Category::orderBy('nama_kategori')->get();
+
         // --- Data untuk Grafik Tren Penjualan/Pembelian ---
         // Anda dapat menyesuaikan rentang tanggal ini sesuai kebutuhan
         $startDate = Carbon::now()->subDays(6)->startOfDay(); // 7 hari terakhir
@@ -137,12 +144,13 @@ class HomeController extends Controller
         return view('dashboard.report_stock', [
             'incomingItems' => $incomingItems,
             'outgoingItems' => $outgoingItems,
+            'producers' => $producers,
+            'categories' => $categories,
             'chartLabels' => $daysOfWeek,
             'purchaseTrendData' => $purchaseData,
             'salesTrendData' => $salesData,
             'chartPeriod' => $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y'),
-            // Variabel status stok tidak lagi diteruskan dari sini karena sudah di index()
-            'plentyStockCount' => $plentyStockCount, // Tetap diteruskan untuk tabel ringkasan di report_stock
+            'plentyStockCount' => $plentyStockCount,
             'lowStockCount' => $lowStockCount,
             'outOfStockCount' => $outOfStockCount,
         ]);

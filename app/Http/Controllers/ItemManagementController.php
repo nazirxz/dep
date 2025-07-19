@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\IncomingItem;
 use App\Models\OutgoingItem;
+use App\Models\VerificationItem;
+use App\Models\Producer;
+use App\Models\Category;
 use Carbon\Carbon;
 use League\Csv\Reader;
 
@@ -22,10 +25,14 @@ class ItemManagementController extends Controller
         $user = Auth::user();
         $incomingItems = IncomingItem::orderBy('tanggal_masuk_barang', 'desc')->get();
         $outgoingItems = OutgoingItem::orderBy('tanggal_keluar_barang', 'desc')->get();
+        $producers = Producer::orderBy('nama_produsen_supplier')->get();
+        $categories = Category::orderBy('nama_kategori')->get();
 
         return view('staff_admin.items', [
             'incomingItems' => $incomingItems,
             'outgoingItems' => $outgoingItems,
+            'producers' => $producers,
+            'categories' => $categories,
         ]);
     }
 
@@ -37,10 +44,14 @@ class ItemManagementController extends Controller
         $user = Auth::user();
         $incomingItems = IncomingItem::orderBy('tanggal_masuk_barang', 'desc')->get();
         $outgoingItems = OutgoingItem::orderBy('tanggal_keluar_barang', 'desc')->get();
+        $producers = Producer::orderBy('nama_produsen_supplier')->get();
+        $categories = Category::orderBy('nama_kategori')->get();
 
         return view('staff_admin.item_management', [
             'incomingItems' => $incomingItems,
             'outgoingItems' => $outgoingItems,
+            'producers' => $producers,
+            'categories' => $categories,
         ]);
     }
 
@@ -53,25 +64,28 @@ class ItemManagementController extends Controller
 
         $validator = Validator::make($request->all(), [
             'nama_barang' => 'required|string|max:255',
-            'kategori_barang' => 'required|string|max:100',
+            'category_id' => 'required|exists:categories,id',
+            'producer_id' => 'required|exists:producers,id',
             'jumlah_barang' => 'required|integer|min:1',
             'tanggal_masuk_barang' => 'required|date',
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
-            'nama_produsen' => 'nullable|string|max:255',
             'metode_bayar' => 'nullable|string|max:50',
-            'pembayaran_transaksi' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048', // Changed to image
-            'nota_transaksi' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048', // Changed to image
+            'pembayaran_transaksi' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048',
+            'nota_transaksi' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048',
             'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ], [
             'nama_barang.required' => 'Nama barang wajib diisi.',
-            'kategori_barang.required' => 'Kategori barang wajib diisi.',
+            'category_id.required' => 'Kategori barang wajib diisi.',
+            'category_id.exists' => 'Kategori barang tidak valid.',
+            'producer_id.required' => 'Produsen wajib diisi.',
+            'producer_id.exists' => 'Produsen tidak valid.',
             'jumlah_barang.required' => 'Jumlah barang wajib diisi.',
             'jumlah_barang.min' => 'Jumlah barang minimal 1.',
             'tanggal_masuk_barang.required' => 'Tanggal masuk wajib diisi.',
             'lokasi_rak_barang.regex' => 'Format lokasi rak tidak valid. Gunakan format R[1-8]-[1-4]-[1-6].',
-            'pembayaran_transaksi.image' => 'Pembayaran transaksi harus berupa gambar atau PDF.',
-            'pembayaran_transaksi.mimes' => 'Format file pembayaran transaksi yang diizinkan: jpeg, png, jpg, gif, svg, pdf.',
-            'pembayaran_transaksi.max' => 'Ukuran file pembayaran transaksi maksimal 2MB.',
+            'pembayaran_transaksi.image' => 'Bukti pembayaran harus berupa gambar atau PDF.',
+            'pembayaran_transaksi.mimes' => 'Format file bukti pembayaran yang diizinkan: jpeg, png, jpg, gif, svg, pdf.',
+            'pembayaran_transaksi.max' => 'Ukuran file bukti pembayaran maksimal 2MB.',
             'nota_transaksi.image' => 'Nota transaksi harus berupa gambar atau PDF.',
             'nota_transaksi.mimes' => 'Format file nota transaksi yang diizinkan: jpeg, png, jpg, gif, svg, pdf.',
             'nota_transaksi.max' => 'Ukuran file nota transaksi maksimal 2MB.',
@@ -89,6 +103,7 @@ class ItemManagementController extends Controller
             ], 422);
         }
 
+        // Process file uploads
         $fotoPath = null;
         if ($request->hasFile('foto_barang')) {
             $fotoPath = $request->file('foto_barang')->store('images', 'public');
@@ -107,73 +122,21 @@ class ItemManagementController extends Controller
             \Log::info('storeIncomingItem: Nota Transaksi uploaded', ['path' => $notaTransaksiPath]);
         }
 
-        // Logika untuk menangani lokasi rak barang
-        if ($request->lokasi_rak_barang) {
-            // Cek apakah ada barang lain (dengan nama berbeda) di lokasi rak ini
-            $existingDifferentItemOnRack = IncomingItem::where('lokasi_rak_barang', $request->lokasi_rak_barang)
-                                                        ->where('nama_barang', '!=', $request->nama_barang)
-                                                        ->where('jumlah_barang', '>', 0) // Hanya jika ada barang aktif di sana
-                                                        ->first();
-            if ($existingDifferentItemOnRack) {
-                \Log::warning('storeIncomingItem: Rack occupied by different item', ['location' => $request->lokasi_rak_barang, 'existing_item' => $existingDifferentItemOnRack->nama_barang]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Lokasi rak sudah ditempati oleh barang lain (' . $existingDifferentItemOnRack->nama_barang . ').'
-                ], 422);
-            }
-            
-            // Cek apakah ada barang yang sama di lokasi rak ini
-            $existingSameItemOnRack = IncomingItem::where('lokasi_rak_barang', $request->lokasi_rak_barang)
-                                                    ->where('nama_barang', $request->nama_barang)
-                                                    ->first();
-            if ($existingSameItemOnRack) {
-                // Jika barang yang sama sudah ada, perbarui jumlahnya
-                \Log::info('storeIncomingItem: Updating quantity for existing item on rack', ['item_id' => $existingSameItemOnRack->id, 'old_qty' => $existingSameItemOnRack->jumlah_barang, 'new_qty_added' => $request->jumlah_barang]);
-                $existingSameItemOnRack->jumlah_barang += $request->jumlah_barang;
-                // Update foto juga jika ada yang baru diunggah
-                if ($fotoPath) {
-                    if ($existingSameItemOnRack->foto_barang) {
-                        Storage::disk('public')->delete($existingSameItemOnRack->foto_barang);
-                    }
-                    $existingSameItemOnRack->foto_barang = $fotoPath;
-                }
-                // Update pembayaran_transaksi dan nota_transaksi juga jika ada yang baru diunggah
-                if ($pembayaranTransaksiPath) {
-                    if ($existingSameItemOnRack->pembayaran_transaksi) {
-                        Storage::disk('public')->delete($existingSameItemOnRack->pembayaran_transaksi);
-                    }
-                    $existingSameItemOnRack->pembayaran_transaksi = $pembayaranTransaksiPath;
-                }
-                if ($notaTransaksiPath) {
-                    if ($existingSameItemOnRack->nota_transaksi) {
-                        Storage::disk('public')->delete($existingSameItemOnRack->nota_transaksi);
-                    }
-                    $existingSameItemOnRack->nota_transaksi = $notaTransaksiPath;
-                }
-
-                $existingSameItemOnRack->save();
-                \Log::info('storeIncomingItem: Item quantity updated successfully', ['item_id' => $existingSameItemOnRack->id, 'final_qty' => $existingSameItemOnRack->jumlah_barang]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Jumlah barang di lokasi rak yang sama berhasil diperbarui.',
-                    'data' => $existingSameItemOnRack
-                ]);
-            }
-        }
-
         try {
+            // Get category name from category_id
+            $category = Category::findOrFail($request->category_id);
+            
             $incomingItem = IncomingItem::create([
                 'nama_barang' => $request->nama_barang,
-                'kategori_barang' => $request->kategori_barang,
+                'kategori_barang' => $category->nama_kategori,
                 'jumlah_barang' => $request->jumlah_barang,
                 'tanggal_masuk_barang' => $request->tanggal_masuk_barang,
                 'lokasi_rak_barang' => $request->lokasi_rak_barang,
-                'nama_produsen' => $request->nama_produsen,
+                'producer_id' => $request->producer_id,
                 'metode_bayar' => $request->metode_bayar,
-                'pembayaran_transaksi' => $pembayaranTransaksiPath, // Save the image path
-                'nota_transaksi' => $notaTransaksiPath, // Save the image path
-                'foto_barang' => $fotoPath, // Save the image path
+                'pembayaran_transaksi' => $pembayaranTransaksiPath,
+                'nota_transaksi' => $notaTransaksiPath,
+                'foto_barang' => $fotoPath,
             ]);
             \Log::info('storeIncomingItem: New item created successfully', ['item_id' => $incomingItem->id, 'data' => $incomingItem->toArray()]);
 
@@ -193,7 +156,7 @@ class ItemManagementController extends Controller
             if ($notaTransaksiPath) {
                 Storage::disk('public')->delete($notaTransaksiPath);
             }
-            // Log error for debugging
+            
             \Log::error('Error in storeIncomingItem: ' . $e->getMessage(), ['exception' => $e]);
             return response()->json([
                 'success' => false,
@@ -1738,5 +1701,43 @@ class ItemManagementController extends Controller
                 \Log::info('importOutgoingItem (private): Incoming item rack location cleared due to zero stock during import', ['item_id' => $incomingItem->id]);
             }
         });
+    }
+
+    public function getPendingVerificationItems()
+    {
+        try {
+            \Log::info('getPendingVerificationItems: Fetching pending verification items');
+            
+            $pendingItems = VerificationItem::with('producer')
+                                         ->where('is_verified', false)
+                                         ->get()
+                                         ->map(function ($item) {
+                                             return [
+                                                 'id' => $item->id,
+                                                 'nama_barang' => $item->nama_barang,
+                                                 'kategori_barang' => $item->kategori_barang,
+                                                 'jumlah_barang' => $item->jumlah_barang,
+                                                 'nama_produsen' => $item->producer ? $item->producer->nama_produsen : null,
+                                                 'producer_id' => $item->producer_id
+                                             ];
+                                         });
+
+            \Log::info('getPendingVerificationItems: Found items', ['count' => $pendingItems->count()]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $pendingItems
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in getPendingVerificationItems: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengambil data: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

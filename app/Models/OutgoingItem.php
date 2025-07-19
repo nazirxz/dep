@@ -10,38 +10,38 @@ class OutgoingItem extends Model
 {
     use HasFactory;
 
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'outgoing_items'; // Nama tabel di database
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'nama_barang',
         'kategori_barang',
+        'category_id',
         'tanggal_keluar_barang',
         'jumlah_barang',
         'tujuan_distribusi',
         'lokasi_rak_barang',
-        'nama_produsen', // Kolom baru
-        'metode_bayar', // Kolom baru
-        'pembayaran_transaksi', // Kolom baru
-        'nota_transaksi', // Kolom baru
-        'foto_barang', // Kolom baru untuk foto barang
+        'producer_id',
+        'metode_bayar',
+        'pembayaran_transaksi',
+        'nota_transaksi',
+        'foto_barang',
+    ];
+
+    protected $casts = [
+        'tanggal_keluar_barang' => 'date',
     ];
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
+     * Get the producer that owns this item.
      */
-    protected $casts = [
-        'tanggal_keluar_barang' => 'date', // Mengubah tanggal menjadi objek Carbon
-    ];
+    public function producer()
+    {
+        return $this->belongsTo(Producer::class);
+    }
+
+    /**
+     * Get the category that owns this item.
+     */
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
 }

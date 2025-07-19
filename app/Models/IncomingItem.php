@@ -10,37 +10,47 @@ class IncomingItem extends Model
 {
     use HasFactory;
 
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'incoming_items'; // Nama tabel di database
+    protected $table = 'incoming_items';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'nama_barang',
         'kategori_barang',
+        'category_id',
         'tanggal_masuk_barang',
         'jumlah_barang',
         'lokasi_rak_barang',
-        'nama_produsen', // Kolom baru
-        'metode_bayar', // Kolom baru
-        'pembayaran_transaksi', // Kolom baru
-        'nota_transaksi', // Kolom baru
-        'foto_barang', // Kolom baru untuk foto barang
+        'producer_id',
+        'metode_bayar',
+        'pembayaran_transaksi',
+        'nota_transaksi',
+        'foto_barang',
+    ];
+
+    protected $casts = [
+        'tanggal_masuk_barang' => 'date',
     ];
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
+     * Get the producer that owns this item.
      */
-    protected $casts = [
-        'tanggal_masuk_barang' => 'date', // Mengubah tanggal menjadi objek Carbon
-    ];
+    public function producer()
+    {
+        return $this->belongsTo(Producer::class);
+    }
+
+    /**
+     * Get the category that owns this item.
+     */
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * Get the verification record associated with this item.
+     */
+    public function verificationItem()
+    {
+        return $this->hasOne(VerificationItem::class);
+    }
 }

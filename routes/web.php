@@ -92,4 +92,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware([RoleMiddleware::class.':manager,admin'])->group(function () {
         Route::get('/staff/warehouse-monitor', [ItemManagementController::class, 'showWarehouseMonitor'])->name('staff.warehouse_monitor');
     });
+
+    // Verification routes
+    Route::post('/verify-incoming-item/{id}', [VerificationItemController::class, 'verify'])->name('verify.incoming-item');
 });

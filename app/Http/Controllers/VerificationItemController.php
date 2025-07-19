@@ -7,6 +7,7 @@ use App\Models\IncomingItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 class VerificationItemController extends Controller
 {
@@ -50,33 +51,85 @@ class VerificationItemController extends Controller
 
     public function verify(Request $request, $id)
     {
-        $item = VerificationItem::findOrFail($id);
-    
-        // Validasi input verifikasi
-        $validator = Validator::make($request->all(), [
-            'kategori_barang' => 'required|string|max:100',
-            'lokasi_rak_barang' => 'nullable|string|max:50',
-        ]);
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'message' => 'Validasi gagal', 'errors' => $validator->errors()], 422);
-        }
-    
-        // Simpan ke tabel incoming_items
-        $incoming = new \App\Models\IncomingItem([
-            'nama_barang' => $item->nama_barang,
-            'kategori_barang' => $request->kategori_barang,
-            'tanggal_masuk_barang' => $item->tanggal_masuk_barang,
-            'jumlah_barang' => $item->jumlah_barang,
-            'satuan_barang' => $item->satuan_barang,
-            'lokasi_rak_barang' => $request->lokasi_rak_barang,
-            'nama_produsen' => $item->nama_produsen,
-        ]);
-        $incoming->save();
-    
-        // Hapus data dari tabel verifikasi_barang
-        $item->delete();
-    
-        return response()->json(['success' => true, 'message' => 'Barang berhasil diverifikasi dan dipindahkan ke stok masuk']);
-    }
+        try {
+            \Log::info('verify: Starting verification process', ['item_id' => $id, 'request_data' => $request->all()]);
+            
+            $item = VerificationItem::findOrFail($id);
+            
+            if ($item->is_verified) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Barang ini sudah diverifikasi sebelumnya.'
+                ], 422);
+            }
+            
+            // Validasi input verifikasi
+            $validator = Validator::make($request->all(), [
+                'producer_id' => 'required|exists:producers,id',
+                'satuan_barang' => 'required|string|max:50',
+                'kondisi_fisik' => 'required|string|in:Baik,Rusak Ringan,Tidak Sesuai',
+                'catatan_verifikasi' => 'nullable|string|max:1000',
+            ]);
 
+            if ($validator->fails()) {
+                \Log::warning('verify: Validation failed', ['errors' => $validator->errors()]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Create new incoming item
+            $incoming = IncomingItem::create([
+                'nama_barang' => $item->nama_barang,
+                'kategori_barang' => $item->kategori_barang,
+                'tanggal_masuk_barang' => $item->tanggal_masuk_barang,
+                'jumlah_barang' => $item->jumlah_barang,
+                'satuan_barang' => $request->satuan_barang,
+                'lokasi_rak_barang' => null, // Will be assigned later
+                'producer_id' => $request->producer_id,
+                'metode_bayar' => $item->metode_bayar,
+                'pembayaran_transaksi' => $item->pembayaran_transaksi,
+                'nota_transaksi' => $item->nota_transaksi,
+                'foto_barang' => $item->foto_barang,
+            ]);
+
+            // Update verification item
+            $item->update([
+                'is_verified' => true,
+                'verified_by' => Auth::id(),
+                'verified_at' => Carbon::now(),
+                'incoming_item_id' => $incoming->id,
+                'satuan_barang' => $request->satuan_barang,
+                'kondisi_fisik' => $request->kondisi_fisik,
+                'catatan_verifikasi' => $request->catatan_verifikasi,
+            ]);
+
+            \Log::info('verify: Verification completed successfully', [
+                'verification_id' => $item->id,
+                'incoming_id' => $incoming->id
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Barang berhasil diverifikasi.',
+                'data' => [
+                    'verification' => $item,
+                    'incoming' => $incoming
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in verify: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memverifikasi barang: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

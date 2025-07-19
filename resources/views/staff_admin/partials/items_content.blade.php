@@ -47,10 +47,8 @@
                     <i class="fas fa-arrow-up"></i> Barang Keluar
                 </button>
             </li>
-            {{-- Tab Tambah Barang dihapus --}}
         </ul>
         <div class="d-flex align-items-center gap-2">
-            {{-- Tombol Tambah Barang Masuk Baru dipindahkan ke sini --}}
             <button type="button" class="btn btn-primary btn-sm" onclick="window.addNewIncomingItem()">
                 <i class="fas fa-plus"></i> Tambah Barang Masuk Baru
             </button>
@@ -63,46 +61,38 @@
         <div class="tab-content" id="itemTabsContent">
             {{-- Tab Barang Masuk --}}
             <div class="tab-pane fade show active" id="incoming-items" role="tabpanel">
-                {{-- Form Verifikasi Barang Masuk (dipindahkan ke dalam tab Barang Masuk) --}}
+                {{-- Form Verifikasi Barang Masuk --}}
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-white">
                         <h5 class="mb-0"><i class="fas fa-clipboard-check"></i> Verifikasi Barang Masuk</h5>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3">
-                            <table class="table table-bordered" id="pendingVerificationTable">
-                                <thead>
-                                    <tr>
-                                        <th>Pilih</th>
-                                        <th>Nama Barang</th>
-                                        <th>Jumlah</th>
-                                        <th>Satuan</th>
-                                        <th>Kondisi</th>
-                                        <th>Produsen</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="pendingVerificationTbody">
-                                    <!-- Akan diisi JS -->
-                                </tbody>
-                            </table>
-                        </div>
                         <form id="verificationForm">
                             @csrf {{-- Tambahkan CSRF token untuk form ini --}}
+                            <input type="hidden" id="verify_item_id" name="item_id"> {{-- Input tersembunyi untuk menyimpan ID barang --}}
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="verify_nama_produsen" class="form-label">Nama Produsen</label>
-                                        <input type="text" class="form-control" id="verify_nama_produsen" name="nama_produsen" placeholder="Masukkan Nama Produsen">
-                                    </div>
+                                <div class="form-group mb-3">
+                                <label for="verify_producer_id" class="form-label">Nama Produsen</label>
+                                <select class="form-select" id="verify_producer_id" name="producer_id" required>
+                                    <option value="">Pilih Produsen</option>
+                                    @foreach($producers as $producer)
+                                        <option value="{{ $producer->id }}">{{ $producer->nama_produsen_supplier }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                                     <div class="mb-3">
                                         <label for="verify_nama_barang" class="form-label">Nama Barang</label>
-                                        <input type="text" class="form-control" id="verify_nama_barang" name="nama_barang" placeholder="Masukkan Nama Barang" required>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="verify_nama_barang" name="nama_barang" placeholder="Pilih Barang untuk Verifikasi" required readonly>
+                                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#selectItemModal">Pilih Barang</button>
+                                        </div>
                                     </div>
                                     <div class="mb-3">
                                         <label for="verify_jumlah_barang" class="form-label">Jumlah Barang</label>
                                         <div class="input-group">
-                                            <input type="number" class="form-control" id="verify_jumlah_barang" name="jumlah_barang" min="1" step="1" placeholder="0" required>
-                                            <select class="form-select" id="verify_satuan_barang" name="satuan_barang" required>
+                                            <input type="number" class="form-control" id="verify_jumlah_barang" name="jumlah_barang" min="1" step="1" placeholder="0" required readonly>
+                                            <select class="form-select" id="verify_satuan_barang" name="satuan_barang" required disabled>
                                                 <option value="">Pilih Satuan Barang</option>
                                                 <option value="Unit">Unit</option>
                                                 <option value="Pcs">Pcs</option>
@@ -119,7 +109,7 @@
                                         <div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="radio" name="kondisi_fisik" id="kondisi_tidak_rusak" value="Baik" checked>
-                                                <label class="form-check-label" for="kondisi_tidak_rusak">Tidak Rusak</label>
+                                                <label class="form-check-label" for="kondisi_tidak_rusak">Baik</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="radio" name="kondisi_fisik" id="kondisi_rusak" value="Rusak Ringan">
@@ -142,8 +132,9 @@
                                     </div>
                                 </div>
                             </div>
+                            
                             <div class="d-flex justify-content-end">
-                                <button type="submit" class="btn btn-primary">Lanjut --></button>
+                                <button type="submit" class="btn btn-primary">Lanjut >></button>
                             </div>
                         </form>
                     </div>
@@ -318,7 +309,6 @@
                                     <td colspan="12" class="text-center py-4"> {{-- Updated colspan --}}
                                         <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                                         <p class="text-muted">Tidak ada data barang masuk.</p>
-                                        {{-- Tombol Tambah Barang Masuk Baru dipindahkan ke header --}}
                                     </td>
                                 </tr>
                             @endif
@@ -565,116 +555,39 @@
                     </div>
                 </div>
             </div>
-
-            {{-- Tab Tambah Barang (dihapus) --}}
-            {{-- <div class="tab-pane fade" id="add-items" role="tabpanel">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card border-primary">
-                            <div class="card-header bg-primary text-white">
-                                <h6 class="mb-0"><i class="fas fa-plus"></i> Tambah Barang Masuk</h6>
-                            </div>
-                            <div class="card-body text-center py-5">
-                                <p class="text-muted">Klik tombol di bawah untuk menambahkan barang baru ke gudang.</p>
-                                <button type="button" class="btn btn-primary btn-lg" onclick="window.addNewIncomingItem()">
-                                    <i class="fas fa-box-open"></i> Tambah Barang Masuk
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="card border-danger">
-                            <div class="card-header bg-danger text-white">
-                                <h6 class="mb-0"><i class="fas fa-arrow-up"></i> Tambah Barang Keluar</h6>
-                            </div>
-                            <div class="card-body text-center py-5">
-                                <p class="text-muted">Klik tombol di bawah untuk memproses pengeluaran barang dari gudang.</p>
-                                <button type="button" class="btn btn-danger btn-lg" onclick="window.addNewOutgoingItem()">
-                                    <i class="fas fa-shipping-fast"></i> Proses Barang Keluar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <div class="card border-info">
-                            <div class="card-header bg-info text-white">
-                                <h6 class="mb-0"><i class="fas fa-bolt"></i> Aksi Cepat</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <button class="btn btn-outline-primary w-100 mb-2" onclick="window.importFromCSV()">
-                                            <i class="fas fa-file-csv"></i> Import dari CSV
-                                        </button>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <button class="btn btn-outline-info w-100 mb-2" onclick="window.viewWarehouse()">
-                                            <i class="fas fa-warehouse"></i> Lihat Gudang
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div> --}}
         </div>
     </div>
 </div>
 
-{{-- Modal Form Tambah Barang Masuk (Verifikasi) --}}
-<div class="modal fade" id="verificationFormModal" tabindex="-1">
-    <div class="modal-dialog">
+<!-- Modal Pilih Barang -->
+<div class="modal fade" id="selectItemModal" tabindex="-1" aria-labelledby="selectItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form id="verificationForm">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Ajukan Barang Masuk (Verifikasi)</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header">
+                <h5 class="modal-title" id="selectItemModalLabel">Pilih Barang untuk Verifikasi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nama Barang</th>
+                                <th>Kategori</th>
+                                <th>Jumlah</th>
+                                <th>Produsen</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingItemsTableBody">
+                            <!-- Data will be populated here -->
+                        </tbody>
+                    </table>
                 </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="verify_nama_barang" class="form-label">Nama Barang *</label>
-                        <input type="text" class="form-control" id="verify_nama_barang" name="nama_barang" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="verify_jumlah_barang" class="form-label">Jumlah Barang *</label>
-                        <input type="number" class="form-control" id="verify_jumlah_barang" name="jumlah_barang" min="1" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="verify_satuan_barang" class="form-label">Satuan Barang *</label>
-                        <select class="form-select" id="verify_satuan_barang" name="satuan_barang" required>
-                            <option value="">Pilih Satuan</option>
-                            <option value="Unit">Unit</option>
-                            <option value="Pcs">Pcs</option>
-                            <option value="Dus">Dus</option>
-                            <option value="Kg">Kg</option>
-                            <option value="Liter">Liter</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="verify_nama_produsen" class="form-label">Nama Produsen</label>
-                        <input type="text" class="form-control" id="verify_nama_produsen" name="nama_produsen">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Kondisi Fisik *</label>
-                        <select class="form-select" id="verify_kondisi_fisik" name="kondisi_fisik" required>
-                            <option value="Baik">Baik</option>
-                            <option value="Rusak Ringan">Rusak Ringan</option>
-                            <option value="Tidak Sesuai">Tidak Sesuai</option>
-                            <option value="Kadaluarsa">Kadaluarsa</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary">Ajukan</button>
-                </div>
-            </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
         </div>
     </div>
 </div>
@@ -1157,11 +1070,6 @@ window.viewItemDetails = async function(itemId, itemType = 'incoming') {
         const modalContent = document.getElementById('itemDetailContent');
         let htmlContent = '';
 
-        // --- DEBUGGING: Check the actual value and type of pembayaran_transaksi ---
-        console.log('Debugging item.pembayaran_transaksi:', item.pembayaran_transaksi);
-        console.log('Type of item.pembayaran_transaksi:', typeof item.pembayaran_transaksi);
-        // --- END DEBUGGING ---
-
         const fotoBarangHtml = item.foto_barang
             ? `<img src="{{ asset('storage') }}/${item.foto_barang}" alt="Foto Barang" class="img-fluid rounded mb-3" style="max-width: 200px; height: auto;">`
             : `<img src="https://placehold.co/200x200/e0e0e0/ffffff?text=No+Image" alt="No Image" class="img-fluid rounded mb-3">`;
@@ -1423,68 +1331,58 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                 </div>
                 <div class="mb-3">
                     <label for="crud_kategori_barang" class="form-label">Kategori Barang *</label>
-                    <select class="form-select" id="crud_kategori_barang" name="kategori_barang" required>
+                    <select class="form-select" id="crud_kategori_barang" name="category_id" required>
                         <option value="">Pilih Kategori</option>
-                        <option value="Makanan">Makanan</option>
-                        <option value="Minuman">Minuman</option>
-                        <option value="Elektronik">Elektronik</option>
-                        <option value="Pakaian">Pakaian</option>
-                        <option value="Alat Tulis">Alat Tulis</option>
-                        <option value="Lainnya">Lainnya</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}">{{ $category->nama_kategori }}</option>
+                        @endforeach
                     </select>
                 </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="crud_jumlah_barang" class="form-label">Jumlah Barang *</label>
-                            <input type="number" class="form-control" id="crud_jumlah_barang" name="jumlah_barang" required min="1" placeholder="0">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="crud_tanggal_masuk" class="form-label">Tanggal Masuk *</label>
-                            <input type="date" class="form-control" id="crud_tanggal_masuk" name="tanggal_masuk_barang" required value="${new Date().toISOString().split('T')[0]}">
-                        </div>
-                    </div>
+                <div class="mb-3">
+                    <label for="crud_producer_id" class="form-label">Produsen *</label>
+                    <select class="form-select" id="crud_producer_id" name="producer_id" required>
+                        <option value="">Pilih Produsen</option>
+                        @foreach($producers as $producer)
+                            <option value="{{ $producer->id }}">{{ $producer->nama_produsen_supplier }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="crud_jumlah_barang" class="form-label">Jumlah Barang *</label>
+                    <input type="number" class="form-control" id="crud_jumlah_barang" name="jumlah_barang" required min="1">
+                </div>
+                <div class="mb-3">
+                    <label for="crud_tanggal_masuk" class="form-label">Tanggal Masuk *</label>
+                    <input type="date" class="form-control" id="crud_tanggal_masuk" name="tanggal_masuk_barang" required>
                 </div>
                 <div class="mb-3">
                     <label for="crud_lokasi_rak" class="form-label">Lokasi Rak</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="crud_lokasi_rak" name="lokasi_rak_barang" pattern="R[1-8]-[1-4]-[1-6]" placeholder="R1-1-1 (opsional)">
-                        <button type="button" class="btn btn-outline-secondary" onclick="window.showRackSelector('crud_lokasi_rak')">
-                            <i class="fas fa-map"></i> Pilih
-                        </button>
-                    </div>
-                    <small class="form-text text-muted">Format: R[1-8]-[1-4]-[1-6]</small>
+                    <input type="text" class="form-control" id="crud_lokasi_rak" name="lokasi_rak_barang" placeholder="Format: R1-1-1">
+                    <small class="text-muted">Format: R[1-8]-[1-4]-[1-6], contoh: R1-1-1</small>
                 </div>
                 <div class="mb-3">
-                    <label for="crud_nama_produsen" class="form-label">Nama Produsen</label>
-                    <input type="text" class="form-control" id="crud_nama_produsen" name="nama_produsen" placeholder="Nama Produsen (opsional)">
-                </div>
-                <div class="mb-3">
-                    <label for="crud_metode_bayar" class="form-label">Metode Bayar</label>
+                    <label for="crud_metode_bayar" class="form-label">Metode Pembayaran</label>
                     <select class="form-select" id="crud_metode_bayar" name="metode_bayar">
-                        <option value="">Pilih Metode</option>
+                        <option value="">Pilih Metode Pembayaran</option>
                         <option value="Cash">Cash</option>
                         <option value="Transfer Bank">Transfer Bank</option>
-                        <option value="Kartu Kredit">Kartu Kredit</option>
-                        <option value="Debit">Debit</option>
+                        <option value="Kredit">Kredit</option>
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label for="crud_pembayaran_transaksi" class="form-label">Bukti Pembayaran Transaksi</label>
+                    <label for="crud_pembayaran_transaksi" class="form-label">Bukti Pembayaran</label>
                     <input type="file" class="form-control" id="crud_pembayaran_transaksi" name="pembayaran_transaksi" accept="image/*,application/pdf">
-                    <small class="form-text text-muted">Unggah gambar atau PDF bukti pembayaran (opsional).</small>
+                    <small class="text-muted">Format: JPG, PNG, PDF (max 2MB)</small>
                 </div>
                 <div class="mb-3">
                     <label for="crud_nota_transaksi" class="form-label">Nota Transaksi</label>
                     <input type="file" class="form-control" id="crud_nota_transaksi" name="nota_transaksi" accept="image/*,application/pdf">
-                    <small class="form-text text-muted">Unggah gambar atau PDF nota transaksi (opsional).</small>
+                    <small class="text-muted">Format: JPG, PNG, PDF (max 2MB)</small>
                 </div>
                 <div class="mb-3">
                     <label for="crud_foto_barang" class="form-label">Foto Barang</label>
                     <input type="file" class="form-control" id="crud_foto_barang" name="foto_barang" accept="image/*">
-                    <small class="form-text text-muted">Unggah gambar barang (opsional).</small>
+                    <small class="text-muted">Format: JPG, PNG (max 2MB)</small>
                 </div>
             `;
         } else { // outgoing - add mode (e.g., from "Pindah ke Barang Keluar" or "Proses Barang Keluar")
@@ -1609,58 +1507,51 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                 </div>
                 <div class="mb-3">
                     <label for="crud_kategori_barang" class="form-label">Kategori Barang *</label>
-                    <select class="form-select" id="crud_kategori_barang" name="kategori_barang" required>
+                    <select class="form-select" id="crud_kategori_barang" name="category_id" required>
                         <option value="">Pilih Kategori</option>
-                        <option value="Makanan" ${itemData.kategori_barang === 'Makanan' ? 'selected' : ''}>Makanan</option>
-                        <option value="Minuman" ${itemData.kategori_barang === 'Minuman' ? 'selected' : ''}>Minuman</option>
-                        <option value="Elektronik" ${itemData.kategori_barang === 'Elektronik' ? 'selected' : ''}>Elektronik</option>
-                        <option value="Pakaian" ${itemData.kategori_barang === 'Pakaian' ? 'selected' : ''}>Pakaian</option>
-                        <option value="Alat Tulis" ${itemData.kategori_barang === 'Alat Tulis' ? 'selected' : ''}>Alat Tulis</option>
-                        <option value="Lainnya" ${itemData.kategori_barang === 'Lainnya' ? 'selected' : ''}>Lainnya</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}">{{ $category->nama_kategori }}</option>
+                        @endforeach
                     </select>
                 </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="crud_jumlah_barang" class="form-label">Jumlah Barang *</label>
-                            <input type="number" class="form-control" id="crud_jumlah_barang" name="jumlah_barang" value="${itemData.jumlah_barang}" required min="0">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="crud_tanggal_masuk" class="form-label">Tanggal Masuk *</label>
-                            <input type="date" class="form-control" id="crud_tanggal_masuk" name="tanggal_masuk_barang" value="${new Date(itemData.tanggal_masuk_barang).toISOString().split('T')[0]}" required>
-                        </div>
-                    </div>
+                <div class="mb-3">
+                    <label for="crud_producer_id" class="form-label">Produsen *</label>
+                    <select class="form-select" id="crud_producer_id" name="producer_id" required>
+                        <option value="">Pilih Produsen</option>
+                        @foreach($producers as $producer)
+                            <option value="{{ $producer->id }}">{{ $producer->nama_produsen_supplier }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="crud_jumlah_barang" class="form-label">Jumlah Barang *</label>
+                    <input type="number" class="form-control" id="crud_jumlah_barang" name="jumlah_barang" value="${itemData.jumlah_barang}" required min="0">
+                </div>
+                <div class="mb-3">
+                    <label for="crud_tanggal_masuk" class="form-label">Tanggal Masuk *</label>
+                    <input type="date" class="form-control" id="crud_tanggal_masuk" name="tanggal_masuk_barang" value="${new Date(itemData.tanggal_masuk_barang).toISOString().split('T')[0]}" required>
                 </div>
                 <div class="mb-3">
                     <label for="crud_lokasi_rak" class="form-label">Lokasi Rak</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="crud_lokasi_rak" name="lokasi_rak_barang" value="${itemData.lokasi_rak_barang || ''}" pattern="R[1-8]-[1-4]-[1-6]" placeholder="R1-1-1 (opsional)">
-                        <button type="button" class="btn btn-outline-secondary" onclick="window.showRackSelector('crud_lokasi_rak')">
-                            <i class="fas fa-map"></i> Pilih
-                        </button>
-                    </div>
+                    <input type="text" class="form-control" id="crud_lokasi_rak" name="lokasi_rak_barang" value="${itemData.lokasi_rak_barang || ''}" pattern="R[1-8]-[1-4]-[1-6]" placeholder="R1-1-1 (opsional)">
+                    <button type="button" class="btn btn-outline-secondary" onclick="window.showRackSelector('crud_lokasi_rak')">
+                        <i class="fas fa-map"></i> Pilih
+                    </button>
                     <small class="form-text text-muted">Format: R[1-8]-[1-4]-[1-6]</small>
                 </div>
                 <div class="mb-3">
-                    <label for="crud_nama_produsen" class="form-label">Nama Produsen</label>
-                    <input type="text" class="form-control" id="crud_nama_produsen" name="nama_produsen" value="${itemData.nama_produsen || ''}" placeholder="Nama Produsen (opsional)">
-                </div>
-                <div class="mb-3">
-                    <label for="crud_metode_bayar" class="form-label">Metode Bayar</label>
+                    <label for="crud_metode_bayar" class="form-label">Metode Pembayaran</label>
                     <select class="form-select" id="crud_metode_bayar" name="metode_bayar">
-                        <option value="">Pilih Metode</option>
+                        <option value="">Pilih Metode Pembayaran</option>
                         <option value="Cash" ${itemData.metode_bayar === 'Cash' ? 'selected' : ''}>Cash</option>
                         <option value="Transfer Bank" ${itemData.metode_bayar === 'Transfer Bank' ? 'selected' : ''}>Transfer Bank</option>
-                        <option value="Kartu Kredit" ${itemData.metode_bayar === 'Kartu Kredit' ? 'selected' : ''}>Kartu Kredit</option>
-                        <option value="Debit" ${itemData.metode_bayar === 'Debit' ? 'selected' : ''}>Debit</option>
+                        <option value="Kredit" ${itemData.metode_bayar === 'Kredit' ? 'selected' : ''}>Kredit</option>
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label for="crud_pembayaran_transaksi" class="form-label">Bukti Pembayaran Transaksi</label>
+                    <label for="crud_pembayaran_transaksi" class="form-label">Bukti Pembayaran</label>
                     <input type="file" class="form-control" id="crud_pembayaran_transaksi" name="pembayaran_transaksi" accept="image/*,application/pdf">
-                    <small class="form-text text-muted">Unggah gambar atau PDF bukti pembayaran (biarkan kosong untuk tidak mengubah).</small>
+                    <small class="text-muted">Unggah gambar atau PDF bukti pembayaran (biarkan kosong untuk tidak mengubah).</small>
                     <div id="current_pembayaran_transaksi" class="mt-2">
                         ${itemData.pembayaran_transaksi ? (window.isPdf(itemData.pembayaran_transaksi) ? `<a href="{{ asset('storage') }}/${itemData.pembayaran_transaksi}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="{{ asset('storage') }}/${itemData.pembayaran_transaksi}" alt="Current Payment" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
                     </div>
@@ -1672,7 +1563,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                 <div class="mb-3">
                     <label for="crud_nota_transaksi" class="form-label">Nota Transaksi</label>
                     <input type="file" class="form-control" id="crud_nota_transaksi" name="nota_transaksi" accept="image/*,application/pdf">
-                    <small class="form-text text-muted">Unggah gambar atau PDF nota transaksi (biarkan kosong untuk tidak mengubah).</small>
+                    <small class="text-muted">Unggah gambar atau PDF nota transaksi (biarkan kosong untuk tidak mengubah).</small>
                     <div id="current_nota_transaksi" class="mt-2">
                         ${itemData.nota_transaksi ? (window.isPdf(itemData.nota_transaksi) ? `<a href="{{ asset('storage') }}/${itemData.nota_transaksi}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="{{ asset('storage') }}/${itemData.nota_transaksi}" alt="Current Nota" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
                     </div>
@@ -1684,7 +1575,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                 <div class="mb-3">
                     <label for="crud_foto_barang" class="form-label">Foto Barang</label>
                     <input type="file" class="form-control" id="crud_foto_barang" name="foto_barang" accept="image/*">
-                    <small class="form-text text-muted">Unggah gambar barang (biarkan kosong untuk tidak mengubah).</small>
+                    <small class="text-muted">Unggah gambar barang (biarkan kosong untuk tidak mengubah).</small>
                     <div id="current_foto_barang" class="mt-2">
                         ${itemData.foto_barang ? `<img src="{{ asset('storage') }}/${itemData.foto_barang}" alt="Current Photo" style="width: 100px; height: auto; border-radius: 5px;">` : ''}
                     </div>
@@ -1841,10 +1732,6 @@ window.handleItemCrudSubmit = async function(event, itemType, mode) {
             formData.append('_method', 'PUT'); // Spoof PUT method
         }
     }
-
-    // --- DEBUGGING: Log FormData before sending ---
-    console.log('Data to be sent:', Object.fromEntries(formData.entries()));
-    // --- END DEBUGGING ---
 
     // Show loading state
     submitBtn.disabled = true;
@@ -2091,7 +1978,7 @@ window.generateWarehouseSelector = async function() {
     const warehouseSelector = document.getElementById('warehouseSelector');
     if (!warehouseSelector) return;
     
-    window.showAlert('info', 'Loading warehouse location data...');
+    window.showAlert('info', 'Memuat data lokasi gudang...');
 
     try {
         const response = await fetch('{{ route("staff.locations.available") }}', {
@@ -2114,7 +2001,7 @@ window.generateWarehouseSelector = async function() {
                 errorText += ` (Failed to parse response: ${parseError.message})`;
             }
             console.error('Server response for generateWarehouseSelector was not OK:', errorText);
-            window.showAlert('error', `Failed to load warehouse location data. Status: ${response.status}. Details in console.`);
+            window.showAlert('error', `Gagal memuat data lokasi gudang. Status: ${response.status}. Detail di konsol.`);
             return;
         }
 
@@ -2163,13 +2050,13 @@ window.generateWarehouseSelector = async function() {
                 html += '</div></div>';
             }
             warehouseSelector.innerHTML = html;
-            window.showAlert('success', 'Warehouse location data loaded successfully.');
+            window.showAlert('success', 'Data lokasi gudang berhasil dimuat.');
         } else {
-            window.showAlert('error', result.message || 'Failed to load warehouse location data.');
+            window.showAlert('error', result.message || 'Gagal memuat data lokasi gudang.');
         }
     } catch (error) {
         console.error('Error fetching available locations:', error);
-        window.showAlert('error', 'Network error while loading warehouse locations.');
+        window.showAlert('error', 'Kesalahan jaringan saat memuat lokasi gudang.');
     }
 }
 
@@ -2180,7 +2067,7 @@ window.generateWarehouseSelector = async function() {
  */
 window.selectRackPosition = function(position, isOccupied) {
     if (isOccupied) {
-        window.showAlert('warning', 'This location is already occupied by another item.');
+        window.showAlert('warning', 'Lokasi ini sudah ditempati oleh barang lain.');
         return;
     }
     
@@ -2205,7 +2092,7 @@ window.selectRackPosition = function(position, isOccupied) {
         const confirmBtn = document.getElementById('confirmRackBtn');
         if (confirmBtn) {
             confirmBtn.disabled = false;
-            confirmBtn.textContent = `Select ${position}`;
+            confirmBtn.textContent = `Pilih ${position}`;
         }
     }
 }
@@ -2225,20 +2112,20 @@ window.confirmRackSelection = async function() {
                 const newLocation = window.selectedRackPosition;
                 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 
-                window.showAlert('info', `Updating item #${itemId} location to ${newLocation}...`);
+                window.showAlert('info', `Memperbarui lokasi item #${itemId} ke ${newLocation}...`);
 
                 try {
                     const itemResponse = await fetch(`/staff/incoming-items/${itemId}`);
                     if (!itemResponse.ok) {
                         const errorText = await itemResponse.text();
                         console.error('Server response for updateItemLocationToClickedRack (fetch existing) was not OK:', errorText);
-                        window.showAlert('error', `Failed to load item data for location update. Status: ${itemResponse.status}. Details in console.`);
+                        window.showAlert('error', `Gagal memuat data item untuk pembaruan lokasi. Status: ${itemResponse.status}. Detail di konsol.`);
                         return;
                     }
                     const existingItemData = await itemResponse.json();
 
                     if (!existingItemData.success) {
-                        window.showAlert('error', existingItemData.message || 'Failed to load item data for location update.');
+                        window.showAlert('error', existingItemData.message || 'Gagal memuat data item untuk pembaruan lokasi.');
                         return;
                     }
                     
@@ -2283,7 +2170,7 @@ window.confirmRackSelection = async function() {
                             errorText += ` (Failed to parse response: ${parseError.message})`;
                         }
                         console.error('Server response for updateItemLocationToClickedRack (update) was not OK:', errorText);
-                        window.showAlert('error', `Failed to update item location. Status: ${response.status}. Details in console.`);
+                        window.showAlert('error', `Gagal memperbarui lokasi item. Status: ${response.status}. Detail di konsol.`);
                         return;
                     }
 
@@ -2293,11 +2180,11 @@ window.confirmRackSelection = async function() {
                         window.showAlert('success', data.message);
                         location.reload(); // Reload to reflect changes
                     } else {
-                        window.showAlert('error', data.message || 'Failed to update item location.');
+                        window.showAlert('error', data.message || 'Gagal memperbarui lokasi item.');
                     }
                 } catch (error) {
                     console.error('Error updating item location:', error);
-                    window.showAlert('error', 'Network error while updating item location.');
+                    window.showAlert('error', 'Kesalahan jaringan saat memperbarui lokasi item.');
                 }
             }
         }
@@ -2320,7 +2207,7 @@ window.showRackLocation = function(rackPosition) {
     @if(Route::has('staff.item.management'))
         window.location.href = `{{ route('staff.item.management') }}?highlight=${rackPosition}`;
     @else
-        window.showAlert('info', `Item location: ${rackPosition}. Warehouse management page is not available.`);
+        window.showAlert('info', `Lokasi item: ${rackPosition}. Halaman manajemen gudang tidak tersedia.`);
     @endif
 }
 
@@ -2329,22 +2216,22 @@ window.showRackLocation = function(rackPosition) {
  * @param {number} itemId - Incoming item ID.
  */
 window.quickAssignLocation = function(itemId) {
-    window.showCustomConfirm('Are you sure you want to automatically assign a rack location for this item?', async () => {
+    window.showCustomConfirm('Apakah Anda yakin ingin secara otomatis menetapkan lokasi rak untuk item ini?', async () => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        window.showAlert('info', 'Assigning location automatically...');
+        window.showAlert('info', 'Menetapkan lokasi secara otomatis...');
 
         try {
             const itemResponse = await fetch(`/staff/incoming-items/${itemId}`);
             if (!itemResponse.ok) {
                 const errorText = await itemResponse.text();
                 console.error('Server response for quickAssignLocation (fetch existing) was not OK:', errorText);
-                window.showAlert('error', `Failed to load item data for automatic location assignment. Status: ${itemResponse.status}. Details in console.`);
+                window.showAlert('error', `Gagal memuat data item untuk penetapan lokasi otomatis. Status: ${itemResponse.status}. Detail di konsol.`);
                 return;
             }
             const itemResult = await itemResponse.json();
 
             if (!itemResult.success) {
-                window.showAlert('error', itemResult.message || 'Failed to load item data for automatic location assignment.');
+                window.showAlert('error', itemResult.message || 'Gagal memuat data item untuk penetapan lokasi otomatis.');
                 return;
             }
             const existingItemData = itemResult.data;
@@ -2380,7 +2267,7 @@ window.quickAssignLocation = function(itemId) {
                     errorText += ` (Failed to parse response: ${parseError.message})`;
                 }
                 console.error('Server response for auto_assign_locations was not OK:', errorText);
-                window.showAlert('error', `Failed to automatically assign location. Status: ${response.status}. Details in console.`);
+                window.showAlert('error', `Gagal menetapkan lokasi secara otomatis. Status: ${response.status}. Detail di konsol.`);
                 return;
             }
 
@@ -2390,11 +2277,11 @@ window.quickAssignLocation = function(itemId) {
                 window.showAlert('success', data.message);
                 location.reload();
             } else {
-                window.showAlert('error', data.message || 'Failed to automatically assign location.');
+                window.showAlert('error', data.message || 'Gagal menetapkan lokasi secara otomatis.');
             }
         } catch (error) {
             console.error('Quick assign error:', error);
-            window.showAlert('error', 'Network error while assigning location.');
+            window.showAlert('error', 'Kesalahan jaringan saat menetapkan lokasi.');
         }
     });
 }
@@ -2404,13 +2291,13 @@ window.quickAssignLocation = function(itemId) {
  * @param {number} itemId - Incoming item ID.
  */
 window.moveToOutgoing = function(itemId) {
-    window.showCustomConfirm('Are you sure you want to move this item to the outgoing items list? This will reduce incoming item stock and add it to outgoing items.', async () => {
+    window.showCustomConfirm('Apakah Anda yakin ingin memindahkan item ini ke daftar barang keluar? Ini akan mengurangi stok barang masuk dan menambahkannya ke barang keluar.', async () => {
         try {
             const response = await fetch(`/staff/incoming-items/${itemId}`);
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('Server response for moveToOutgoing (fetch incoming) was not OK:', errorText);
-                window.showAlert('error', `Failed to load item data for moving. Status: ${response.status}. Details in console.`);
+                window.showAlert('error', `Gagal memuat data item untuk dipindahkan. Status: ${response.status}. Detail di konsol.`);
                 return;
             }
             const result = await response.json();
@@ -2437,13 +2324,13 @@ window.moveToOutgoing = function(itemId) {
                         }
                     }
                 }
-                window.showAlert('info', `Please complete the details to process outgoing item "${itemData.nama_barang}".`);
+                window.showAlert('info', `Harap lengkapi detail untuk memproses barang keluar "${itemData.nama_barang}".`);
             } else {
-                window.showAlert('error', result.message || 'Failed to load item data for moving.');
+                window.showAlert('error', result.message || 'Gagal memuat data item untuk dipindahkan.');
             }
         } catch (error) {
             console.error('Error fetching item for move to outgoing:', error);
-            window.showAlert('error', 'Network error while loading item data.');
+            window.showAlert('error', 'Kesalahan jaringan saat memuat data item.');
         }
     });
 }
@@ -2456,18 +2343,18 @@ window.bulkEditLocation = function() {
     const itemIds = Array.from(checkedBoxes).map(cb => cb.value);
     
     if (itemIds.length === 0) {
-        window.showAlert('warning', 'Please select at least one item to edit.');
+        window.showAlert('warning', 'Harap pilih setidaknya satu item untuk diedit.');
         return;
     }
     
-    window.showCustomConfirm(`Are you sure you want to edit the location of ${itemIds.length} selected items?`, () => {
-        const newLocation = prompt('Enter new rack location (Format: R[1-8]-[1-4]-[1-6]):');
+    window.showCustomConfirm(`Apakah Anda yakin ingin mengedit lokasi ${itemIds.length} item yang dipilih?`, () => {
+        const newLocation = prompt('Masukkan lokasi rak baru (Format: R[1-8]-[1-4]-[1-6]):');
         if (newLocation) {
             const pattern = /^R[1-8]-[1-4]-[1-6]$/;
             if (pattern.test(newLocation)) {
                 window.sendBulkAction(itemIds, 'update_location', { location: newLocation });
             } else {
-                window.showAlert('error', 'Invalid location format! Use format: R[1-8]-[1-4]-[1-6]');
+                window.showAlert('error', 'Format lokasi tidak valid! Gunakan format: R[1-8]-[1-4]-[1-6]');
             }
         }
     });
@@ -2478,11 +2365,11 @@ window.bulkDelete = function() {
     const itemIds = Array.from(checkedBoxes).map(cb => cb.value);
     
     if (itemIds.length === 0) {
-        window.showAlert('warning', 'Please select at least one item to delete.');
+        window.showAlert('warning', 'Harap pilih setidaknya satu item untuk dihapus.');
         return;
     }
     
-    window.showCustomConfirm(`Are you sure you want to delete ${itemIds.length} selected items? This action cannot be undone.`, () => {
+    window.showCustomConfirm(`Apakah Anda yakin ingin menghapus ${itemIds.length} item yang dipilih? Tindakan ini tidak dapat dibatalkan.`, () => {
         window.sendBulkAction(itemIds, 'delete');
     });
 }
@@ -2495,7 +2382,7 @@ window.bulkDelete = function() {
  */
 window.sendBulkAction = async function(itemIds, action, payload = {}) {
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    window.showAlert('info', `Processing bulk action (${action})...`);
+    window.showAlert('info', `Memproses aksi massal (${action})...`);
 
     try {
         const response = await fetch('{{ route("staff.items.bulk_update") }}', {
@@ -2529,7 +2416,7 @@ window.sendBulkAction = async function(itemIds, action, payload = {}) {
                 errorText += ` (Failed to parse response: ${parseError.message})`;
             }
             console.error('Server response for bulk_update was not OK:', errorText);
-            window.showAlert('error', `Failed to perform bulk action. Status: ${response.status}. Details in console.`);
+            window.showAlert('error', `Gagal melakukan aksi massal. Status: ${response.status}. Detail di konsol.`);
             return;
         }
 
@@ -2539,7 +2426,7 @@ window.sendBulkAction = async function(itemIds, action, payload = {}) {
             window.showAlert('success', data.message);
             location.reload();
         } else {
-            let errorMessage = data.message || 'Failed to perform bulk action.';
+            let errorMessage = data.message || 'Gagal melakukan aksi massal.';
             if (data.errors) {
                 for (const key in data.errors) {
                     errorMessage += `\n- ${data.errors[key][0]}`;
@@ -2549,28 +2436,28 @@ window.sendBulkAction = async function(itemIds, action, payload = {}) {
         }
     } catch (error) {
         console.error('Bulk action error:', error);
-        window.showAlert('error', 'Network error while performing bulk action.');
+        window.showAlert('error', 'Kesalahan jaringan saat melakukan aksi massal.');
     }
 }
 
 // Placeholder functions for other actions
 window.printDeliveryNote = function(itemId) {
-    window.showAlert('info', 'Preparing delivery note for printing...');
+    window.showAlert('info', 'Menyiapkan surat jalan untuk dicetak...');
     // Implement actual print logic or API call here
     setTimeout(() => {
-        window.showAlert('success', 'Delivery note printed successfully!');
+        window.showAlert('success', 'Surat jalan berhasil dicetak!');
     }, 1500);
 }
 
 window.trackDelivery = function(itemId) {
-    window.showAlert('info', 'Delivery tracking feature coming soon!');
+    window.showAlert('info', 'Fitur pelacakan pengiriman segera hadir!');
 }
 
 window.updateDeliveryStatus = function(itemId) {
-    window.showCustomConfirm('Do you want to update the delivery status?', () => {
-        const newStatus = prompt('Enter new status (Pending, In Transit, Completed):');
+    window.showCustomConfirm('Apakah Anda ingin memperbarui status pengiriman?', () => {
+        const newStatus = prompt('Masukkan status baru (Pending, In Transit, Completed):');
         if (newStatus) {
-            window.showAlert('success', `Delivery status successfully changed to: ${newStatus}`);
+            window.showAlert('success', `Status pengiriman berhasil diubah menjadi: ${newStatus}`);
             // Implement AJAX call to update outgoing item status
             // location.reload();
         }
@@ -2579,18 +2466,18 @@ window.updateDeliveryStatus = function(itemId) {
 
 window.exportData = function(format) {
     const activeTab = document.querySelector('.nav-link.active').textContent.trim();
-    window.showAlert('info', `Exporting ${activeTab} data to ${format.toUpperCase()}...`);
+    window.showAlert('info', `Mengekspor data ${activeTab} ke ${format.toUpperCase()}...`);
     
     // Implement actual export logic or redirect to export route
     // Example: window.location.href = `{{ route('staff.items.export_csv') }}?type=incoming&format=${format}`;
     
     setTimeout(() => {
-        window.showAlert('success', `Data exported successfully to ${format.toUpperCase()}!`);
+        window.showAlert('success', `Data berhasil diekspor ke ${format.toUpperCase()}!`);
     }, 2000);
 }
 
 window.refreshData = function() {
-    window.showAlert('info', 'Reloading data...');
+    window.showAlert('info', 'Memuat ulang data...');
     setTimeout(() => {
         location.reload();
     }, 1000);
@@ -2604,7 +2491,7 @@ window.importFromCSV = function() {
 window.processCSVImport = async function() {
     const csvFile = document.getElementById('csvFile');
     if (!csvFile.files[0]) {
-        window.showAlert('error', 'Please select a CSV file first.');
+        window.showAlert('error', 'Harap pilih file CSV terlebih dahulu.');
         return;
     }
     
@@ -2620,7 +2507,7 @@ window.processCSVImport = async function() {
     formData.append('type', importType);
     formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
 
-    window.showAlert('info', 'Processing data import...');
+    window.showAlert('info', 'Memproses impor data...');
     
     try {
         const response = await fetch('{{ route("staff.items.import_csv") }}', {
@@ -2648,7 +2535,7 @@ window.processCSVImport = async function() {
                 errorText += ` (Failed to parse response: ${parseError.message})`;
             }
             console.error('Server response for import_csv was not OK:', errorText);
-            window.showAlert('error', `Failed to import data. Status: ${response.status}. Details in console.`);
+            window.showAlert('error', `Gagal mengimpor data. Status: ${response.status}. Detail di konsol.`);
             return;
         }
 
@@ -2657,10 +2544,10 @@ window.processCSVImport = async function() {
         if (data.success) {
             const modal = bootstrap.Modal.getInstance(document.getElementById('importCSVModal'));
             if (modal) modal.hide();
-            window.showAlert('success', data.message + (data.errors.length > 0 ? ` Some errors occurred: ${data.errors.join(', ')}` : ''));
+            window.showAlert('success', data.message + (data.errors.length > 0 ? ` Beberapa kesalahan terjadi: ${data.errors.join(', ')}` : ''));
             location.reload();
         } else {
-            let errorMessage = data.message || 'Failed to import data.';
+            let errorMessage = data.message || 'Gagal mengimpor data.';
             if (data.errors) {
                 errorMessage += `\n- ${data.errors.join('\n- ')}`;
             }
@@ -2668,7 +2555,7 @@ window.processCSVImport = async function() {
         }
     } catch (error) {
         console.error('Import CSV Error:', error);
-        window.showAlert('error', 'Network error while importing CSV.');
+        window.showAlert('error', 'Kesalahan jaringan saat mengimpor CSV.');
     }
 }
 
@@ -2685,22 +2572,22 @@ window.downloadCSVTemplate = function() {
     a.download = 'template_barang_masuk.csv';
     a.click();
     window.URL.revokeObjectURL(url);
-    window.showAlert('info', 'CSV template downloaded successfully.');
+    window.showAlert('info', 'Template CSV berhasil diunduh.');
 }
 
 window.generateBarcode = function() {
-    window.showAlert('info', 'Barcode generation feature coming soon!');
+    window.showAlert('info', 'Fitur pembuatan Barcode segera hadir!');
 }
 
 window.stockOpname = function() {
-    window.showAlert('info', 'Stock opname feature coming soon!');
+    window.showAlert('info', 'Fitur stock opname segera hadir!');
 }
 
 window.viewWarehouse = function() {
     @if(Route::has('staff.warehouse_monitor'))
         window.open('{{ route("staff.warehouse_monitor") }}', '_blank');
     @else
-        window.showAlert('info', 'Warehouse monitor page is not available.');
+        window.showAlert('info', 'Halaman monitor gudang tidak tersedia.');
     @endif
 }
 
@@ -2820,9 +2707,9 @@ window.printItemDetails = function() {
 }
 
 window.duplicateItem = async function(itemId) {
-    window.showCustomConfirm('Are you sure you want to duplicate this item?', async () => {
+    window.showCustomConfirm('Apakah Anda yakin ingin menduplikasi item ini?', async () => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        window.showAlert('info', 'Duplicating item...');
+        window.showAlert('info', 'Menduplikasi item...');
 
         try {
             const response = await fetch(`/staff/items/${itemId}/duplicate`, {
@@ -2849,7 +2736,7 @@ window.duplicateItem = async function(itemId) {
                     errorText += ` (Failed to parse response: ${parseError.message})`;
                 }
                 console.error('Server response for duplicateItem was not OK:', errorText);
-                window.showAlert('error', `Failed to duplicate item. Status: ${response.status}. Details in console.`);
+                window.showAlert('error', `Gagal menduplikasi item. Status: ${response.status}. Detail di konsol.`);
                 return;
             }
 
@@ -2859,20 +2746,20 @@ window.duplicateItem = async function(itemId) {
                 window.showAlert('success', data.message);
                 location.reload();
             } else {
-                window.showAlert('error', data.message || 'Failed to duplicate item.');
+                window.showAlert('error', data.message || 'Gagal menduplikasi item.');
             }
         } catch (error) {
             console.error('Duplicate item error:', error);
-            window.showAlert('error', 'Network error while duplicating item.');
+            window.showAlert('error', 'Kesalahan jaringan saat menduplikasi item.');
         }
     });
 }
 
 window.generateQR = function(itemId) {
-    window.showAlert('info', 'Generating QR Code...');
+    window.showAlert('info', 'Membuat Kode QR...');
     // Implement actual QR code generation logic or API call here
     setTimeout(() => {
-        window.showAlert('success', 'QR Code generated successfully!');
+        window.showAlert('success', 'Kode QR berhasil dibuat!');
     }, 1500);
 }
 
@@ -2889,346 +2776,146 @@ window.moveItem = function(itemId) {
  * Placeholder for "Ajukan Pergantian Barang" action.
  */
 window.ajukanPergantianBarang = function() {
-    window.showAlert('info', '"Item Replacement Request" feature coming soon!');
+    window.showAlert('info', 'Fitur "Permintaan Penggantian Barang" segera hadir!');
     // Implement logic for "Ajukan Pergantian Barang" here
 };
 
-// Removed functions related to the old verification table
-// window.fetchPendingVerificationItems is no longer needed
-// window.renderVerificationTable is no longer needed
-// window.verifyItem is no longer needed
-// window.getConditionBadgeClass is no longer needed for a separate table, but keep for other uses if any
-// window.updateVerificationStats is no longer needed
+// --- NEW VERIFICATION LOGIC ---
 
-// Ensure this code runs after the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize page
-    window.initializePage();
-    
-    // Set default dates for forms
-    const incomingTanggalMasuk = document.getElementById('crud_tanggal_masuk');
-    if (incomingTanggalMasuk) {
-        incomingTanggalMasuk.value = new Date().toISOString().split('T')[0];
+// Fungsi untuk mengambil data barang yang belum diverifikasi untuk modal
+function fetchPendingVerificationItemsForModal() {
+    const tableBody = document.getElementById('pendingItemsTableBody');
+    if (!tableBody) {
+        console.error('Table body element not found!');
+        return;
     }
-    const outgoingTanggalKeluar = document.getElementById('crud_tanggal_keluar');
-    if (outgoingTanggalKeluar) {
-        outgoingTanggalKeluar.value = new Date().toISOString().split('T')[0];
-    }
-    
-    // Auto dismiss alerts after 5 seconds (already global, but safe to re-run for new alerts)
-    const alerts = document.querySelectorAll('.alert-dismissible');
-    alerts.forEach(function(alert) {
-        setTimeout(function() {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        }, 5000);
-    });
-    
-    // Add smooth fade-in animation for alerts (already global, but safe to re-run for new alerts)
-    alerts.forEach(function(alert) {
-        alert.style.opacity = '0';
-        alert.style.transform = 'translateY(-20px)';
-        setTimeout(function() {
-            alert.style.transition = 'all 0.5s ease';
-            alert.style.opacity = '1';
-            alert.style.transform = 'translateY(0)';
-        }, 100);
-    });
 
-    // Attach event listener for the new verification form
-    const verificationForm = document.getElementById('verificationForm');
-    if (verificationForm) {
-        verificationForm.onsubmit = async function(e) {
-            e.preventDefault();
-            const formData = new FormData(verificationForm);
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            try {
-                const response = await fetch('/staff/verification-items', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json'
-                    },
-                    body: formData
-                });
-                const data = await response.json();
-                if (data.success) {
-                    window.showAlert('success', data.message);
-                    verificationForm.reset();
-                    // bootstrap.Modal.getInstance(document.getElementById('verificationFormModal')).hide();
-                } else {
-                    window.showAlert('error', data.message);
+    // Show loading state
+    tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
+
+    fetch('/staff/items/pending-verification')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                if (data.data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Tidak ada barang yang perlu diverifikasi</td></tr>';
+                    return;
                 }
-            } catch (e) {
-                window.showAlert('error', 'Gagal mengajukan barang.');
+
+                tableBody.innerHTML = '';
+                data.data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.nama_barang}</td>
+                        <td>${item.kategori_barang || '-'}</td>
+                        <td>${item.jumlah_barang}</td>
+                        <td>${item.nama_produsen || '-'}</td>
+                        <td>
+                            <button class="btn btn-success btn-sm" onclick="selectItemForVerification(${item.id}, '${item.nama_barang}', '${item.producer_id || ''}', ${item.jumlah_barang})">
+                                Pilih
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                throw new Error(data.message || 'Failed to fetch data');
             }
-        };
-    }
+        })
+        .catch(error => {
+            console.error('Error fetching pending verification items:', error);
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error: ${error.message}</td></tr>`;
+        });
+}
+
+// Add event listener to modal show
+document.getElementById('selectItemModal').addEventListener('show.bs.modal', function (event) {
+    fetchPendingVerificationItemsForModal();
 });
 
-window.handleVerificationFormSubmit = async function(event) {
-    event.preventDefault();
-    const form = event.target;
-    const formData = new FormData(form);
-    const verificationId = formData.get('verification_id');
-    if (!verificationId) {
-        window.showAlert('error', 'Silakan pilih barang yang akan diverifikasi.');
-        return;
-    }
-    const kategori = prompt('Masukkan kategori barang:');
-    if (!kategori) {
-        window.showAlert('warning', 'Kategori barang wajib diisi.');
-        return;
-    }
-    const lokasi = prompt('Masukkan lokasi rak (opsional):');
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalBtnHtml = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<div class="loading-spinner"></div> Processing...';
+// Handle form submission for verification
+const verificationForm = document.getElementById('verificationForm');
+if (verificationForm) {
+    verificationForm.addEventListener('submit', function(e) {
+        e.preventDefault();
 
-    try {
-        const payload = {
-            kategori_barang: kategori,
-            lokasi_rak_barang: lokasi,
-        };
-        const res = await fetch(`/staff/verification-items/${verificationId}/verify`, {
+        const itemId = document.getElementById('verify_item_id').value;
+        if (!itemId) {
+            window.showAlert('error', 'Silakan pilih barang yang akan diverifikasi terlebih dahulu.');
+            return;
+        }
+
+        const formData = new FormData(this);
+        
+        // Show loading state
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+
+        fetch(`/verify-incoming-item/${itemId}`, {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
-            body: JSON.stringify(payload)
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                window.showAlert('success', 'Verifikasi barang berhasil.');
+                
+                // Reset form
+                document.getElementById('verificationForm').reset();
+                document.getElementById('verify_item_id').value = '';
+                document.getElementById('verify_producer_id').value = '';
+                document.getElementById('verify_nama_barang').value = '';
+                document.getElementById('verify_jumlah_barang').value = '';
+                document.getElementById('verify_satuan_barang').value = '';
+                document.getElementById('verify_satuan_barang').disabled = true;
+                document.getElementById('kondisi_tidak_rusak').checked = true;
+                
+                // Refresh data
+                location.reload();
+            } else {
+                throw new Error(data.message || 'Gagal memverifikasi barang');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            window.showAlert('error', 'Error: ' + error.message);
+        })
+        .finally(() => {
+            // Restore button state
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalButtonText;
         });
-        const data = await res.json();
-        if (data.success) {
-            window.showAlert('success', data.message);
-            window.loadPendingVerificationItems();
-            form.reset();
-        } else {
-            window.showAlert('error', data.message || 'Gagal verifikasi');
-        }
-    } catch (e) {
-        window.showAlert('error', 'Gagal submit verifikasi');
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnHtml;
-    }
-};
-
-window.fillVerificationForm = async function(id) {
-    try {
-        const res = await fetch(`/staff/verification-items`);
-        const data = await res.json();
-        if (data.success) {
-            const item = data.data.find(i => i.id === id);
-            if (!item) return;
-            document.getElementById('verify_nama_produsen').value = item.nama_produsen ?? '';
-            document.getElementById('verify_nama_barang').value = item.nama_barang;
-            document.getElementById('verify_jumlah_barang').value = item.jumlah_barang;
-            document.getElementById('verify_satuan_barang').value = item.satuan_barang;
-            // Set radio kondisi
-            if (item.kondisi_fisik) {
-                const radios = document.getElementsByName('kondisi_barang');
-                radios.forEach(r => { r.checked = (r.value === item.kondisi_fisik); });
-            }
-            // Simpan id verifikasi di form (hidden)
-            let hidden = document.getElementById('verify_verification_id');
-            if (!hidden) {
-                hidden = document.createElement('input');
-                hidden.type = 'hidden';
-                hidden.id = 'verify_verification_id';
-                hidden.name = 'verification_id';
-                document.getElementById('verificationForm').appendChild(hidden);
-            }
-            hidden.value = item.id;
-        }
-    } catch (e) {
-        window.showAlert('error', 'Gagal mengambil data barang');
-    }
-};
-window.loadPendingVerificationItems = async function() {
-    try {
-        const res = await fetch('{{ route("staff.verification_items.index") }}');
-        const data = await res.json();
-        if (data.success) {
-            const tbody = document.getElementById('pendingVerificationTbody');
-            tbody.innerHTML = '';
-            data.data.forEach(item => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>
-                            <button type="button" class="btn btn-sm btn-outline-success" onclick="window.fillVerificationForm(${item.id})">Pilih</button>
-                        </td>
-                        <td>${item.nama_barang}</td>
-                        <td>${item.jumlah_barang}</td>
-                        <td>${item.satuan_barang}</td>
-                        <td>${item.kondisi_fisik}</td>
-                        <td>${item.nama_produsen ?? '-'}</td>
-                    </tr>
-                `;
-            });
-        }
-    } catch (e) {
-        window.showAlert('error', 'Gagal memuat data verifikasi');
-    }
-};
-
-// Panggil saat halaman siap
-document.addEventListener('DOMContentLoaded', function() {
-    window.loadPendingVerificationItems();
-});
-
-window.showVerificationForm = function() {
-    const modal = new bootstrap.Modal(document.getElementById('verificationFormModal'));
-    modal.show();
-};
-
-
-window.showVerificationModal = async function() {
-    const modal = new bootstrap.Modal(document.getElementById('verificationItemsModal'));
-    const wrapper = document.getElementById('verificationItemsTableWrapper');
-    wrapper.innerHTML = '<div class="text-center py-3"><div class="loading-spinner"></div> Memuat data...</div>';
-    modal.show();
-
-    try {
-        // Ganti fetch ke endpoint yang sudah pasti ada, misal: /staff/verification-items
-        const response = await fetch('/staff/verification-items');
-        const data = await response.json();
-        if (data.success) {
-            if (data.data.length === 0) {
-                wrapper.innerHTML = '<div class="text-center text-muted py-4">Tidak ada barang yang perlu diverifikasi.</div>';
-                return;
-            }
-            let html = `<table class="table table-bordered table-hover">
-                <thead>
-                    <tr>
-                        <th>Nama Barang</th>
-                        <th>Jumlah</th>
-                        <th>Satuan</th>
-                        <th>Kondisi</th>
-                        <th>Produsen</th>
-                        <th>Tanggal Masuk</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-            data.data.forEach(item => {
-                html += `<tr>
-                    <td>${item.nama_barang}</td>
-                    <td>${item.jumlah_barang}</td>
-                    <td>${item.satuan_barang || '-'}</td>
-                    <td><span class="badge bg-${item.kondisi_fisik === 'Baik' ? 'success' : 'warning'}">${item.kondisi_fisik}</span></td>
-                    <td>${item.nama_produsen || '-'}</td>
-                    <td>${item.tanggal_masuk_barang}</td>
-                    <td>
-                        <button class="btn btn-sm btn-success" onclick="window.showVerifyItemModal(${item.id})">Verifikasi</button>
-                    </td>
-                </tr>`;
-            });
-            html += '</tbody></table>';
-            wrapper.innerHTML = html;
-        } else {
-            wrapper.innerHTML = '<div class="alert alert-danger">Gagal memuat data.</div>';
-        }
-    } catch (e) {
-        wrapper.innerHTML = '<div class="alert alert-danger">Terjadi kesalahan jaringan.</div>';
-    }
-};
-
-window.selectVerificationRow = function(row, itemId) {
-    // Hilangkan highlight dari semua baris
-    document.querySelectorAll('#pendingVerificationTable tbody tr').forEach(tr => {
-        tr.classList.remove('table-primary');
     });
-    // Highlight baris yang dipilih
-    row.classList.add('table-primary');
+}
 
-    // Sembunyikan tabel, tampilkan form
-    document.getElementById('pendingVerificationTable').style.display = 'none';
-    document.getElementById('verificationForm').style.display = '';
-
-    // Isi form otomatis
-    window.fillVerificationForm(itemId);
-};
-
-// Modifikasi loadPendingVerificationItems agar tombol "Pilih" memanggil fungsi di atas
-window.loadPendingVerificationItems = async function() {
-    try {
-        const res = await fetch('{{ route("staff.verification_items.index") }}');
-        const data = await res.json();
-        if (data.success) {
-            const tbody = document.getElementById('pendingVerificationTbody');
-            tbody.innerHTML = '';
-            data.data.forEach(item => {
-                tbody.innerHTML += `
-                    <tr onclick="window.selectVerificationRow(this, ${item.id})" style="cursor:pointer;">
-                        <td>
-                            <button type="button" class="btn btn-sm btn-outline-success" onclick="event.stopPropagation();window.selectVerificationRow(this.closest('tr'), ${item.id})">Pilih</button>
-                        </td>
-                        <td>${item.nama_barang}</td>
-                        <td>${item.jumlah_barang}</td>
-                        <td>${item.satuan_barang}</td>
-                        <td>${item.kondisi_fisik}</td>
-                        <td>${item.nama_produsen ?? '-'}</td>
-                    </tr>
-                `;
-            });
-            // Tampilkan tabel, sembunyikan form
-            document.getElementById('pendingVerificationTable').style.display = '';
-            document.getElementById('verificationForm').style.display = 'none';
-        }
-    } catch (e) {
-        window.showAlert('error', 'Gagal memuat data verifikasi');
-    }
-};
-
-// Panggil saat halaman siap
-document.addEventListener('DOMContentLoaded', function() {
-    window.loadPendingVerificationItems();
-    // Pastikan form verifikasi tersembunyi saat awal
-    document.getElementById('verificationForm').style.display = 'none';
-});
-
-
-window.showVerifyItemModal = function(id) {
-    const kategori = prompt('Masukkan kategori barang:');
-    if (!kategori) return;
-    const lokasi = prompt('Masukkan lokasi rak (opsional):');
-    window.processVerifyItem(id, kategori, lokasi);
-};
-
-window.processVerifyItem = async function(id, kategori, lokasi) {
-    try {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        // Ganti fetch ke endpoint yang sudah pasti ada, misal: /staff/verification-items/{id}/verify
-        const response = await fetch(`/staff/verification-items/${id}/verify`, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                kategori_barang: kategori,
-                lokasi_rak_barang: lokasi
-            })
-        });
-        const data = await response.json();
-        if (data.success) {
-            window.showAlert('success', data.message);
-            window.showVerificationModal();verificationForm.reset();
-            window.loadPendingVerificationItems();
-            document.getElementById('pendingVerificationTable').style.display = '';
-            document.getElementById('verificationForm').style.display = 'none';
-        } else {
-            window.showAlert('error', data.message);
-        }
-    } catch (e) {
-        window.showAlert('error', 'Gagal memproses verifikasi.');
-    }
-};
-
+function selectItemForVerification(id, namaBarang, producerId, jumlahBarang) {
+    // Fill the verification form
+    document.getElementById('verify_item_id').value = id;
+    document.getElementById('verify_producer_id').value = producerId || '';
+    document.getElementById('verify_nama_barang').value = namaBarang;
+    document.getElementById('verify_jumlah_barang').value = jumlahBarang;
+    
+    // Enable satuan_barang select
+    document.getElementById('verify_satuan_barang').disabled = false;
+    
+    // Close the modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('selectItemModal'));
+    modal.hide();
+}
 </script>
 @endpush

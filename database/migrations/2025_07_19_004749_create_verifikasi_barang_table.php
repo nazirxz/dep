@@ -6,32 +6,31 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-     public function up(): void
+    public function up(): void
     {
         Schema::create('verifikasi_barang', function (Blueprint $table) {
             $table->id();
             $table->string('nama_barang');
-            $table->string('kategori_barang')->nullable(); // Kategori bisa null jika belum ditentukan saat verifikasi awal
+            $table->string('kategori_barang')->nullable();
             $table->date('tanggal_masuk_barang');
             $table->integer('jumlah_barang');
-            $table->string('satuan_barang')->nullable(); // Tambah field satuan_barang
-            $table->string('lokasi_rak_barang')->nullable(); // Lokasi rak bisa null, ditetapkan setelah verifikasi
-            $table->string('nama_produsen')->nullable();
+            $table->string('satuan_barang')->nullable();
+            $table->string('lokasi_rak_barang')->nullable();
+            $table->foreignId('producer_id')->nullable()->constrained('producers')->onDelete('set null');
             $table->string('metode_bayar')->nullable();
-            $table->string('pembayaran_transaksi')->nullable(); // Path gambar/PDF
-            $table->string('nota_transaksi')->nullable();     // Path gambar/PDF
-            $table->string('foto_barang')->nullable();        // Path gambar barang
-            $table->string('kondisi_fisik')->default('Baik'); // Baik, Rusak Ringan, Tidak Sesuai, Kadaluarsa
+            $table->string('pembayaran_transaksi')->nullable();
+            $table->string('nota_transaksi')->nullable();
+            $table->string('foto_barang')->nullable();
+            $table->string('kondisi_fisik')->default('Baik');
             $table->text('catatan_verifikasi')->nullable();
-            $table->string('verified_by')->nullable(); // User yang memverifikasi
-            $table->timestamp('verified_at')->nullable(); // Waktu verifikasi
+            $table->boolean('is_verified')->default(false);
+            $table->foreignId('verified_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->timestamp('verified_at')->nullable();
+            $table->foreignId('incoming_item_id')->nullable()->constrained('incoming_items')->onDelete('set null');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('verifikasi_barang');
