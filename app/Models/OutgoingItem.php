@@ -11,13 +11,14 @@ class OutgoingItem extends Model
     use HasFactory;
 
     protected $fillable = [
+        'incoming_item_id',
         'nama_barang',
         'kategori_barang',
         'category_id',
         'tanggal_keluar_barang',
         'jumlah_barang',
-        'tujuan_distribusi',
         'lokasi_rak_barang',
+        'tujuan_distribusi',
         'producer_id',
         'metode_bayar',
         'pembayaran_transaksi',
@@ -43,5 +44,10 @@ class OutgoingItem extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function incomingItem()
+    {
+        return $this->belongsTo(IncomingItem::class);
     }
 }

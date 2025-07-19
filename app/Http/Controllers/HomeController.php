@@ -17,6 +17,7 @@ use App\Exports\ItemReportExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Facades\DB; // Added this import
 
 class HomeController extends Controller
 {
@@ -42,33 +43,46 @@ class HomeController extends Controller
         $stockItemLabels = $lowStockItems->pluck('nama_barang');
         $stockItemData = $lowStockItems->pluck('jumlah_barang');
         
-        // Data for Sales and Purchase Trend Chart (Last 7 Days)
-        $startDate = Carbon::now()->subDays(6)->startOfDay();
-        $endDate = Carbon::now()->endOfDay();
+        // Data for Sales and Purchase Trend Chart (Last 7 Days based on latest data)
+        $latestIncomingDate = IncomingItem::max('tanggal_masuk_barang');
+        $latestOutgoingDate = OutgoingItem::max('tanggal_keluar_barang');
+        $latestDateString = max($latestIncomingDate, $latestOutgoingDate);
 
-        $daysOfWeek = [];
+        $endDate = $latestDateString ? Carbon::parse($latestDateString)->endOfDay() : Carbon::now()->endOfDay();
+        $startDate = $endDate->copy()->subDays(6)->startOfDay();
+
+        // Generate all dates for the last 7 days to use as keys
+        $dateRange = collect();
         for ($i = 0; $i < 7; $i++) {
-            $daysOfWeek[] = $startDate->copy()->addDays($i)->isoFormat('dddd');
+            $date = $startDate->copy()->addDays($i);
+            $dateRange->put($date->toDateString(), 0);
         }
 
-        $purchaseData = array_fill(0, 7, 0);
-        $salesData = array_fill(0, 7, 0);
+        $daysOfWeek = $dateRange->keys()->map(function ($date) {
+            return Carbon::parse($date)->isoFormat('dddd');
+        })->values()->all();
 
-        $incomingItemsForChart = IncomingItem::whereBetween('tanggal_masuk_barang', [$startDate, $endDate])->get();
-        foreach ($incomingItemsForChart as $item) {
-            $dayIndex = $item->tanggal_masuk_barang->diffInDays($startDate);
-            if ($dayIndex >= 0 && $dayIndex < 7) {
-                $purchaseData[$dayIndex] += $item->jumlah_barang;
-            }
-        }
+        // Query for incoming items, grouped by day
+        $incomingData = IncomingItem::select(
+            DB::raw('DATE(tanggal_masuk_barang) as date'),
+            DB::raw('SUM(jumlah_barang) as total')
+        )
+            ->whereBetween('tanggal_masuk_barang', [$startDate, $endDate])
+            ->groupBy('date')
+            ->pluck('total', 'date');
 
-        $outgoingItemsForChart = OutgoingItem::whereBetween('tanggal_keluar_barang', [$startDate, $endDate])->get();
-        foreach ($outgoingItemsForChart as $item) {
-            $dayIndex = $item->tanggal_keluar_barang->diffInDays($startDate);
-            if ($dayIndex >= 0 && $dayIndex < 7) {
-                $salesData[$dayIndex] += $item->jumlah_barang;
-            }
-        }
+        // Query for outgoing items, grouped by day
+        $outgoingData = OutgoingItem::select(
+            DB::raw('DATE(tanggal_keluar_barang) as date'),
+            DB::raw('SUM(jumlah_barang) as total')
+        )
+            ->whereBetween('tanggal_keluar_barang', [$startDate, $endDate])
+            ->groupBy('date')
+            ->pluck('total', 'date');
+
+        // Merge the queried data with the full date range, ensuring days with no activity are 0
+        $purchaseData = $dateRange->merge($incomingData)->values()->all();
+        $salesData = $dateRange->merge($outgoingData)->values()->all();
 
 
         if ($user->role === 'manager') {
@@ -85,12 +99,15 @@ class HomeController extends Controller
                 'chartPeriod' => $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y'),
             ]);
         } elseif ($user->role === 'admin') {
-            $incomingItems = IncomingItem::orderBy('tanggal_masuk_barang', 'desc')->get();
-            $outgoingItems = OutgoingItem::orderBy('tanggal_keluar_barang', 'desc')->get();
-            return view('home', [
-                'dashboardView' => 'dashboard.staff_admin_dashboard',
-                'incomingItems' => $incomingItems,
-                'outgoingItems' => $outgoingItems,
+            return view('dashboard.staff_admin_dashboard', [
+                'incomingToday' => $incomingToday,
+                'outgoingToday' => $outgoingToday,
+                'salesTransactionsToday' => $salesTransactionsToday,
+                'purchaseTransactionsToday' => $purchaseTransactionsToday,
+                'chartLabels' => $daysOfWeek,
+                'purchaseTrendData' => $purchaseData,
+                'salesTrendData' => $salesData,
+                'chartPeriod' => $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y'),
             ]);
         }
         

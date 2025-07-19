@@ -180,10 +180,7 @@
                         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                             <h6 class="m-0 font-weight-bold text-primary">Grafik Tren Penjualan dan Pembelian</h6>
                             <div class="d-flex align-items-center">
-                                <button id="prevWeekSales" class="btn btn-sm btn-outline-secondary me-2"><i class="fas fa-chevron-left"></i></button>
                                 <span id="currentWeekPeriodSales" class="text-muted me-2">{{ $chartPeriod }}</span>
-                                <button id="nextWeekSales" class="btn btn-sm btn-outline-secondary me-2"><i class="fas fa-chevron-right"></i></button>
-                                <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-calendar-alt"></i></button>
                             </div>
                         </div>
                         <div class="card-body">
@@ -301,6 +298,10 @@
         // Data from Laravel Controller for Stock Condition Chart
         const stockItemLabels = @json($stockItemLabels);
         const stockItemData = @json($stockItemData);
+        const itemColors = [
+            '#e74c3c', '#e67e22', '#f1c40f', '#f39c12', '#3498db',
+            '#9b59b6', '#1abc9c', '#2ecc71', '#34495e', '#795548'
+        ];
 
         // Sales and Purchase Bar Chart
         const salesPurchaseCtx = document.getElementById('salesPurchaseBarChart');

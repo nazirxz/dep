@@ -102,16 +102,16 @@
 
                 {{-- Card: Jumlah Total Barang Masuk Hari Ini --}}
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-left-primary shadow h-100 py-2">
+                    <div class="card bg-white shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
                                         Barang Masuk Hari Ini</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">250 Pcs</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $incomingToday }} Pcs</div>
                                 </div>
                                 <div class="col-auto">
-                                    <i class="fas fa-box fa-2x text-gray-300"></i>
+                                    <i class="fas fa-box fa-2x" style="color: #adb5bd;"></i>
                                 </div>
                             </div>
                         </div>
@@ -120,16 +120,16 @@
 
                 {{-- Card: Jumlah Total Barang Keluar Hari Ini --}}
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-left-success shadow h-100 py-2">
+                    <div class="card bg-white shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
                                         Barang Keluar Hari Ini</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">200 Pcs</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $outgoingToday }} Pcs</div>
                                 </div>
                                 <div class="col-auto">
-                                    <i class="fas fa-truck-loading fa-2x text-gray-300"></i>
+                                    <i class="fas fa-truck-loading fa-2x" style="color: #adb5bd;"></i>
                                 </div>
                             </div>
                         </div>
@@ -138,16 +138,16 @@
 
                 {{-- Card: Jumlah Transaksi Penjualan Hari Ini --}}
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-left-info shadow h-100 py-2">
+                    <div class="card bg-white shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
                                         Transaksi Penjualan Hari Ini</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">10 Nota</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $salesTransactionsToday }} Nota</div>
                                 </div>
                                 <div class="col-auto">
-                                    <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
+                                    <i class="fas fa-money-bill-wave fa-2x" style="color: #adb5bd;"></i>
                                 </div>
                             </div>
                         </div>
@@ -156,16 +156,16 @@
 
                 {{-- Card: Jumlah Transaksi Pembelian Hari Ini --}}
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card bg-white shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
                                         Transaksi Pembelian Hari Ini</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">3 Produk</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $purchaseTransactionsToday }} Produk</div>
                                 </div>
                                 <div class="col-auto">
-                                    <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                                    <i class="fas fa-shopping-cart fa-2x" style="color: #adb5bd;"></i>
                                 </div>
                             </div>
                         </div>
@@ -180,9 +180,7 @@
                         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                             <h6 class="m-0 font-weight-bold text-primary">Statistik Barang Masuk dan Keluar Mingguan</h6>
                             <div class="d-flex align-items-center">
-                                <button id="prevWeek" class="btn btn-sm btn-outline-secondary me-2"><i class="fas fa-chevron-left"></i> Sebelumnya</button>
-                                <span id="currentWeekPeriod" class="text-muted me-2">1 - 7 Juli 2025</span>
-                                <button id="nextWeek" class="btn btn-sm btn-outline-secondary">Berikutnya <i class="fas fa-chevron-right"></i></button>
+                                <span id="currentWeekPeriod" class="text-muted me-2">{{ $chartPeriod }}</span>
                             </div>
                         </div>
                         <div class="card-body">
@@ -272,7 +270,7 @@
 
 @push('scripts')
 {{-- Chart.js CDN --}}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Auto dismiss alerts after 5 seconds
@@ -295,130 +293,44 @@
             }, 100);
         });
 
-        // Weekly Bar Chart
-        const ctx = document.getElementById('weeklyBarChart').getContext('2d');
-        let currentWeekStart = new Date();
-        // Set to the most recent Monday
-        currentWeekStart.setDate(currentWeekStart.getDate() - (currentWeekStart.getDay() + 6) % 7);
+        // Data from Laravel Controller
+        const chartLabels = @json($chartLabels);
+        const purchaseData = @json($purchaseTrendData);
+        const salesData = @json($salesTrendData);
 
-        const weeklyData = {
-            labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
-            datasets: [{
-                label: 'Barang Masuk',
-                backgroundColor: 'rgba(54, 162, 235, 0.8)', // Biru terang
-                borderColor: 'rgba(54, 162, 235, 1)',
-                data: [150, 180, 160, 200, 170, 190, 140], // Dummy data
-                borderRadius: 5,
-            }, {
-                label: 'Barang Keluar',
-                backgroundColor: 'rgba(255, 99, 132, 0.8)', // Merah muda
-                borderColor: 'rgba(255, 99, 132, 1)',
-                data: [120, 150, 130, 170, 140, 160, 110], // Dummy data
-                borderRadius: 5,
-            }]
-        };
-
-        const weeklyBarChart = new Chart(ctx, {
-            type: 'bar',
-            data: weeklyData,
-            options: {
-                maintainAspectRatio: false,
-                layout: {
-                    padding: {
-                        left: 10,
-                        right: 25,
-                        top: 25,
-                        bottom: 0
+        const weeklyBarChartCtx = document.getElementById('weeklyBarChart');
+        if (weeklyBarChartCtx) {
+            new Chart(weeklyBarChartCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: 'Barang Masuk',
+                        data: purchaseData,
+                        backgroundColor: '#4e73df',
+                    }, {
+                        label: 'Barang Keluar',
+                        data: salesData,
+                        backgroundColor: '#1cc88a',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Jumlah Unit' }
+                        },
+                        x: {
+                            title: { display: true, text: 'Hari' }
+                        }
                     }
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            display: false,
-                            drawBorder: false
-                        },
-                        ticks: {
-                            maxTicksLimit: 7
-                        }
-                    },
-                    y: {
-                        ticks: {
-                            min: 0,
-                            max: 300, // Max value for Y-axis
-                            maxTicksLimit: 5,
-                            padding: 10,
-                            callback: function(value, index, values) {
-                                return value + ' Pcs'; // Add 'Pcs' to Y-axis labels
-                            }
-                        },
-                        grid: {
-                            color: "rgb(234, 236, 244)",
-                            zeroLineColor: "rgb(234, 236, 244)",
-                            drawBorder: false,
-                            borderDash: [2],
-                            zeroLineBorderDash: [2]
-                        }
-                    },
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'bottom',
-                        labels: {
-                            fontColor: '#858796'
-                        }
-                    },
-                    tooltip: {
-                        titleMarginBottom: 10,
-                        titleFontColor: '#ffffff',
-                        titleFontSize: 14,
-                        backgroundColor: "rgb(0,0,0)",
-                        bodyFontColor: "#ffffff",
-                        borderColor: '#dddfeb',
-                        borderWidth: 1,
-                        xPadding: 15,
-                        yPadding: 15,
-                        displayColors: false,
-                        caretPadding: 10,
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                label += context.raw + ' Pcs';
-                                return label;
-                            }
-                        }
-                    },
-                },
-                responsive: true
-            }
-        });
-
-        function updateChartPeriod() {
-            const options = { day: 'numeric', month: 'long', year: 'numeric' };
-            const endDate = new Date(currentWeekStart);
-            endDate.setDate(currentWeekStart.getDate() + 6);
-            document.getElementById('currentWeekPeriod').innerText =
-                `${currentWeekStart.toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })} - ${endDate.toLocaleDateString('id-ID', options)}`;
+                }
+            });
         }
-
-        document.getElementById('prevWeek').addEventListener('click', function() {
-            currentWeekStart.setDate(currentWeekStart.getDate() - 7);
-            updateChartPeriod();
-            // In a real application, you would fetch new data here
-            // For now, we'll just update the period display
-        });
-
-        document.getElementById('nextWeek').addEventListener('click', function() {
-            currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-            updateChartPeriod();
-            // In a real application, you would fetch new data here
-            // For now, we'll just update the period display
-        });
-
-        updateChartPeriod(); // Initial update
     });
 </script>
 @endpush
+
+@endsection

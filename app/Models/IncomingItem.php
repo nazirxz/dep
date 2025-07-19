@@ -4,13 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
 
 class IncomingItem extends Model
 {
     use HasFactory;
-
-    protected $table = 'incoming_items';
 
     protected $fillable = [
         'nama_barang',
@@ -25,34 +22,25 @@ class IncomingItem extends Model
         'nota_transaksi',
         'foto_barang',
         'kondisi_fisik',
-        'catatan'
+        'catatan',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
     protected $casts = [
         'tanggal_masuk_barang' => 'date',
     ];
 
-    /**
-     * Get the producer that owns this item.
-     */
-    public function producer()
-    {
-        return $this->belongsTo(Producer::class);
-    }
-
-    /**
-     * Get the category that owns this item.
-     */
     public function category()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class, 'category_id');
     }
 
-    /**
-     * Get the verification record associated with this item.
-     */
-    public function verificationItem()
+    public function producer()
     {
-        return $this->hasOne(VerificationItem::class);
+        return $this->belongsTo(Producer::class, 'producer_id');
     }
 }
