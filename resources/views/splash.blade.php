@@ -6,13 +6,23 @@
     <title>Usaha Distributor Keluarga Sehati</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        /* Pastikan html dan body mengisi seluruh tinggi viewport dan tidak ada overflow global */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Mencegah scrollbar pada level html/body */
+        }
+
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* Warna latar belakang diubah menjadi #A41524 */
+            background: #A41524;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             font-family: 'Arial', sans-serif;
+            overflow: hidden; /* Pastikan body juga tidak memiliki scrollbar */
         }
         
         .splash-container {
@@ -26,6 +36,14 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             max-width: 500px;
             width: 90%;
+            /* Menambahkan overflow hidden agar konten di dalam container tidak menyebabkan scroll */
+            overflow: hidden; 
+            /* Menyesuaikan tinggi agar tidak melebihi viewport */
+            max-height: calc(100vh - 2rem); /* 2rem untuk padding body */
+            display: flex; /* Menggunakan flexbox untuk menengahkan konten */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
         
         .company-title {
@@ -64,7 +82,8 @@
         }
         
         .enter-btn {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            /* Warna tombol disesuaikan dengan tema #A41524 */
+            background: #A41524; 
             border: none;
             padding: 15px 40px;
             font-size: 1.1rem;
@@ -79,7 +98,8 @@
         
         .enter-btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
+            /* Warna shadow tombol disesuaikan */
+            box-shadow: 0 10px 25px rgba(164, 21, 36, 0.4); 
             color: white;
         }
         
@@ -153,6 +173,27 @@
             
             .splash-container {
                 padding: 2rem 1.5rem;
+                max-height: calc(100vh - 1rem); /* Menyesuaikan untuk padding body di mobile */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .company-title {
+                font-size: 1.5rem;
+            }
+            
+            .company-subtitle {
+                font-size: 1.3rem;
+            }
+            
+            .logo-image {
+                max-width: 100px;
+                max-height: 100px;
+            }
+            
+            .splash-container {
+                padding: 1.5rem 1rem;
+                max-height: calc(100vh - 0.5rem); /* Menyesuaikan untuk padding body di mobile */
             }
         }
     </style>
