@@ -29,9 +29,7 @@ class DatabaseSeeder extends Seeder
             UserTableSeeder::class,
             CategorySeeder::class,
             ProducerSeeder::class,
-            IncomingItemSeeder::class,
-            OutgoingItemSeeder::class,
-            VerificationItemSeeder::class
+            JsonDataSeeder::class,
         ]);
 
         // Re-enable foreign key checks

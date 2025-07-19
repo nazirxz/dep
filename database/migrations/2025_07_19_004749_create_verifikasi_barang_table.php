@@ -12,11 +12,12 @@ return new class extends Migration
             $table->id();
             $table->string('nama_barang');
             $table->string('kategori_barang')->nullable();
+            $table->foreignId('category_id')->nullable()->constrained()->onDelete('set null');
             $table->date('tanggal_masuk_barang');
             $table->integer('jumlah_barang');
             $table->string('satuan_barang')->nullable();
             $table->string('lokasi_rak_barang')->nullable();
-            $table->foreignId('producer_id')->nullable()->constrained('producers')->onDelete('set null');
+            $table->foreignId('producer_id')->nullable()->constrained()->onDelete('set null');
             $table->string('metode_bayar')->nullable();
             $table->string('pembayaran_transaksi')->nullable();
             $table->string('nota_transaksi')->nullable();

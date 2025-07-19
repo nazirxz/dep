@@ -15,6 +15,7 @@ class VerificationItem extends Model
     protected $fillable = [
         'nama_barang',
         'kategori_barang',
+        'category_id',
         'tanggal_masuk_barang',
         'jumlah_barang',
         'satuan_barang',
@@ -50,11 +51,11 @@ class VerificationItem extends Model
     }
 
     /**
-     * Get the user who verified this item.
+     * Get the category that owns this verification item.
      */
-    public function verifier()
+    public function category()
     {
-        return $this->belongsTo(User::class, 'verified_by');
+        return $this->belongsTo(Category::class);
     }
 
     /**
@@ -63,5 +64,13 @@ class VerificationItem extends Model
     public function incomingItem()
     {
         return $this->belongsTo(IncomingItem::class);
+    }
+
+    /**
+     * Get the user who verified this item.
+     */
+    public function verifier()
+    {
+        return $this->belongsTo(User::class, 'verified_by');
     }
 }
