@@ -126,25 +126,35 @@ class ItemManagementController extends Controller
             // Get category name from category_id
             $category = Category::findOrFail($request->category_id);
             
-            $incomingItem = IncomingItem::create([
+            // Create verification item instead of incoming item
+            $verificationItem = VerificationItem::create([
                 'nama_barang' => $request->nama_barang,
                 'kategori_barang' => $category->nama_kategori,
-                'jumlah_barang' => $request->jumlah_barang,
+                'category_id' => $category->id,
                 'tanggal_masuk_barang' => $request->tanggal_masuk_barang,
+                'jumlah_barang' => $request->jumlah_barang,
                 'lokasi_rak_barang' => $request->lokasi_rak_barang,
                 'producer_id' => $request->producer_id,
                 'metode_bayar' => $request->metode_bayar,
                 'pembayaran_transaksi' => $pembayaranTransaksiPath,
                 'nota_transaksi' => $notaTransaksiPath,
                 'foto_barang' => $fotoPath,
+                'is_verified' => false,
+                'kondisi_fisik' => 'Baik', // Default value
+                'catatan_verifikasi' => null,
             ]);
-            \Log::info('storeIncomingItem: New item created successfully', ['item_id' => $incomingItem->id, 'data' => $incomingItem->toArray()]);
+
+            \Log::info('storeIncomingItem: Verification item created successfully', [
+                'item_id' => $verificationItem->id,
+                'data' => $verificationItem->toArray()
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Barang berhasil ditambahkan.',
-                'data' => $incomingItem
+                'message' => 'Barang berhasil ditambahkan dan menunggu verifikasi.',
+                'data' => $verificationItem
             ]);
+
         } catch (\Exception $e) {
             // If an error occurs after file upload, delete the uploaded files
             if ($fotoPath) {

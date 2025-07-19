@@ -2917,5 +2917,84 @@ function selectItemForVerification(id, namaBarang, producerId, jumlahBarang) {
     const modal = bootstrap.Modal.getInstance(document.getElementById('selectItemModal'));
     modal.hide();
 }
+
+function submitIncomingItemForm(formData) {
+    const submitButton = document.querySelector('#incomingItemForm button[type="submit"]');
+    const originalButtonText = submitButton.innerHTML;
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+
+    fetch('/staff/incoming-items', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => Promise.reject(err));
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            window.showAlert('success', data.message);
+            
+            // Reset form
+            document.getElementById('incomingItemForm').reset();
+            
+            // Clear any previous error messages
+            clearFormErrors();
+            
+            // Refresh the page after a short delay to show the updated list
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            throw new Error(data.message || 'Terjadi kesalahan saat menyimpan data.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        if (error.errors) {
+            // Show validation errors
+            showFormErrors(error.errors);
+        } else {
+            // Show general error message
+            window.showAlert('error', error.message || 'Terjadi kesalahan saat menyimpan data.');
+        }
+    })
+    .finally(() => {
+        // Restore button state
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+    });
+}
+
+function showFormErrors(errors) {
+    clearFormErrors();
+    Object.keys(errors).forEach(field => {
+        const input = document.querySelector(`[name="${field}"]`);
+        if (input) {
+            input.classList.add('is-invalid');
+            const feedback = document.createElement('div');
+            feedback.className = 'invalid-feedback';
+            feedback.textContent = errors[field][0];
+            input.parentNode.appendChild(feedback);
+        }
+    });
+}
+
+function clearFormErrors() {
+    document.querySelectorAll('.is-invalid').forEach(input => {
+        input.classList.remove('is-invalid');
+    });
+    document.querySelectorAll('.invalid-feedback').forEach(feedback => {
+        feedback.remove();
+    });
+}
 </script>
 @endpush
