@@ -54,9 +54,6 @@
             <button type="button" class="btn btn-primary btn-sm" onclick="window.addNewIncomingItem()">
                 <i class="fas fa-plus"></i> Tambah Barang Masuk Baru
             </button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.showVerificationModal()">
-                <i class="fas fa-clipboard-check"></i> Barang Perlu Verifikasi
-            </button>
             <button class="btn btn-primary btn-sm" onclick="window.refreshData()">
                 <i class="fas fa-sync-alt"></i> Refresh
             </button>
@@ -72,6 +69,23 @@
                         <h5 class="mb-0"><i class="fas fa-clipboard-check"></i> Verifikasi Barang Masuk</h5>
                     </div>
                     <div class="card-body">
+                        <div class="mb-3">
+                            <table class="table table-bordered" id="pendingVerificationTable">
+                                <thead>
+                                    <tr>
+                                        <th>Pilih</th>
+                                        <th>Nama Barang</th>
+                                        <th>Jumlah</th>
+                                        <th>Satuan</th>
+                                        <th>Kondisi</th>
+                                        <th>Produsen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pendingVerificationTbody">
+                                    <!-- Akan diisi JS -->
+                                </tbody>
+                            </table>
+                        </div>
                         <form id="verificationForm">
                             @csrf {{-- Tambahkan CSRF token untuk form ini --}}
                             <div class="row">
@@ -104,19 +118,19 @@
                                         <label class="form-label">Kondisi Fisik Barang</label>
                                         <div>
                                             <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="kondisi_barang" id="kondisi_tidak_rusak" value="Baik" checked>
+                                                <input class="form-check-input" type="radio" name="kondisi_fisik" id="kondisi_tidak_rusak" value="Baik" checked>
                                                 <label class="form-check-label" for="kondisi_tidak_rusak">Tidak Rusak</label>
                                             </div>
                                             <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="kondisi_barang" id="kondisi_rusak" value="Rusak Ringan">
+                                                <input class="form-check-input" type="radio" name="kondisi_fisik" id="kondisi_rusak" value="Rusak Ringan">
                                                 <label class="form-check-label" for="kondisi_rusak">Rusak Ringan</label>
                                             </div>
                                             <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="kondisi_barang" id="kondisi_tidak_sesuai" value="Tidak Sesuai">
+                                                <input class="form-check-input" type="radio" name="kondisi_fisik" id="kondisi_tidak_sesuai" value="Tidak Sesuai">
                                                 <label class="form-check-label" for="kondisi_tidak_sesuai">Tidak Sesuai</label>
                                             </div>
                                             <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="kondisi_barang" id="kondisi_kadaluarsa" value="Kadaluarsa">
+                                                <input class="form-check-input" type="radio" name="kondisi_fisik" id="kondisi_kadaluarsa" value="Kadaluarsa">
                                                 <label class="form-check-label" for="kondisi_kadaluarsa">Kadaluarsa</label>
                                             </div>
                                         </div>
@@ -661,23 +675,6 @@
                     <button type="submit" class="btn btn-primary">Ajukan</button>
                 </div>
             </form>
-        </div>
-    </div>
-</div>
-
-{{-- Modal Daftar Barang Perlu Verifikasi --}}
-<div class="modal fade" id="verificationItemsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Barang Perlu Verifikasi</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="verificationItemsTableWrapper">
-                    <div class="text-center py-3"><div class="loading-spinner"></div> Memuat data...</div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -2888,114 +2885,6 @@ window.moveItem = function(itemId) {
     window.showRackSelector('crud_lokasi_rak', itemId); // Pass item ID to rack selector
 }
 
-// ====================================================================================
-// NEW FUNCTIONS FOR VERIFICATION TAB (MODIFIED FOR NEW LAYOUT)
-// ====================================================================================
-
-/**
- * Handles the submission of the verification form.
- * This function now sends data directly to the backend for processing.
- */
-window.handleVerificationFormSubmit = async function(event) {
-    event.preventDefault();
-    const form = event.target;
-    const formData = new FormData(form);
-
-    const namaProdusen = formData.get('nama_produsen');
-    const namaBarang = formData.get('nama_barang');
-    const jumlahBarang = parseInt(formData.get('jumlah_barang'));
-    const satuanBarang = formData.get('satuan_barang'); 
-    const kondisiBarang = formData.get('kondisi_barang');
-
-    // Basic validation
-    if (!namaBarang || isNaN(jumlahBarang) || jumlahBarang <= 0 || !satuanBarang || !kondisiBarang) {
-        window.showAlert('error', 'Nama Barang, Jumlah Barang (harus angka positif), Satuan Barang, dan Kondisi Fisik Barang harus diisi.');
-        return;
-    }
-
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalBtnHtml = submitBtn.innerHTML;
-
-    // Show loading state
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<div class="loading-spinner"></div> Processing...';
-
-    try {
-        // Prepare data for backend API call
-        const payload = {
-            nama_barang: namaBarang,
-            kategori_barang: 'Umum', // Category is not in this form, set to default
-            jumlah_barang: jumlahBarang,
-            satuan_barang: satuanBarang, 
-            tanggal_masuk_barang: new Date().toISOString().split('T')[0], // Today's date
-            nama_produsen: namaProdusen,
-            metode_bayar: null, // Not in this form
-            pembayaran_transaksi: null, // Not in this form
-            nota_transaksi: null, // Not in this form
-            is_damaged: (kondisiBarang !== 'Baik'), // True if damaged/mismatched/expired
-            kondisi_fisik: kondisiBarang // Send the specific condition
-        };
-
-        // --- DEBUGGING: Log payload before sending ---
-        console.log('Payload to be sent:', payload);
-        // --- END DEBUGGING ---
-
-        const response = await fetch('{{ route("staff.items.verify") }}', { // Route to process verification
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-            let errorText = `HTTP error! status: ${response.status}`;
-            try {
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    const errorData = await response.json();
-                    errorText = errorData.message || JSON.stringify(errorData);
-                } else {
-                    errorText = await response.text();
-                }
-            }
-            catch (parseError) {
-                console.error('Error parsing response for non-OK status:', parseError);
-                errorText += ` (Failed to parse response: ${parseError.message})`;
-            }
-            console.error('Server response for verification form submission was not OK:', errorText);
-            window.showAlert('error', `Failed to process verification: ${errorText.substring(0, 150)}... (See console for details)`);
-            return;
-        }
-
-        const data = await response.json();
-
-        if (data.success) {
-            window.showAlert('success', data.message);
-            form.reset(); // Reset the form after successful submission
-            document.getElementById('kondisi_tidak_rusak').checked = true; // Set default radio button
-            location.reload(); // Reload the page to show updated incoming items
-        } else {
-            let errorMessage = data.message || 'An error occurred while processing verification.';
-            if (data.errors) {
-                for (const key in data.errors) {
-                    errorMessage += `\n- ${data.errors[key][0]}`;
-                }
-            }
-            window.showAlert('error', errorMessage);
-        }
-    } catch (error) {
-        console.error('Verification form submission error:', error);
-        window.showAlert('error', 'Network error while processing verification.');
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnHtml;
-    }
-};
-
 /**
  * Placeholder for "Ajukan Pergantian Barang" action.
  */
@@ -3054,7 +2943,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData(verificationForm);
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             try {
-                // Ganti fetch ke endpoint yang sudah pasti ada, misal: /staff/verification-items
                 const response = await fetch('/staff/verification-items', {
                     method: 'POST',
                     headers: {
@@ -3067,7 +2955,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     window.showAlert('success', data.message);
                     verificationForm.reset();
-                    bootstrap.Modal.getInstance(document.getElementById('verificationFormModal')).hide();
+                    // bootstrap.Modal.getInstance(document.getElementById('verificationFormModal')).hide();
                 } else {
                     window.showAlert('error', data.message);
                 }
@@ -3078,6 +2966,119 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+window.handleVerificationFormSubmit = async function(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const verificationId = formData.get('verification_id');
+    if (!verificationId) {
+        window.showAlert('error', 'Silakan pilih barang yang akan diverifikasi.');
+        return;
+    }
+    const kategori = prompt('Masukkan kategori barang:');
+    if (!kategori) {
+        window.showAlert('warning', 'Kategori barang wajib diisi.');
+        return;
+    }
+    const lokasi = prompt('Masukkan lokasi rak (opsional):');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalBtnHtml = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="loading-spinner"></div> Processing...';
+
+    try {
+        const payload = {
+            kategori_barang: kategori,
+            lokasi_rak_barang: lokasi,
+        };
+        const res = await fetch(`/staff/verification-items/${verificationId}/verify`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+            window.showAlert('success', data.message);
+            window.loadPendingVerificationItems();
+            form.reset();
+        } else {
+            window.showAlert('error', data.message || 'Gagal verifikasi');
+        }
+    } catch (e) {
+        window.showAlert('error', 'Gagal submit verifikasi');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
+    }
+};
+
+window.fillVerificationForm = async function(id) {
+    try {
+        const res = await fetch(`/staff/verification-items`);
+        const data = await res.json();
+        if (data.success) {
+            const item = data.data.find(i => i.id === id);
+            if (!item) return;
+            document.getElementById('verify_nama_produsen').value = item.nama_produsen ?? '';
+            document.getElementById('verify_nama_barang').value = item.nama_barang;
+            document.getElementById('verify_jumlah_barang').value = item.jumlah_barang;
+            document.getElementById('verify_satuan_barang').value = item.satuan_barang;
+            // Set radio kondisi
+            if (item.kondisi_fisik) {
+                const radios = document.getElementsByName('kondisi_barang');
+                radios.forEach(r => { r.checked = (r.value === item.kondisi_fisik); });
+            }
+            // Simpan id verifikasi di form (hidden)
+            let hidden = document.getElementById('verify_verification_id');
+            if (!hidden) {
+                hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.id = 'verify_verification_id';
+                hidden.name = 'verification_id';
+                document.getElementById('verificationForm').appendChild(hidden);
+            }
+            hidden.value = item.id;
+        }
+    } catch (e) {
+        window.showAlert('error', 'Gagal mengambil data barang');
+    }
+};
+window.loadPendingVerificationItems = async function() {
+    try {
+        const res = await fetch('{{ route("staff.verification_items.index") }}');
+        const data = await res.json();
+        if (data.success) {
+            const tbody = document.getElementById('pendingVerificationTbody');
+            tbody.innerHTML = '';
+            data.data.forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-success" onclick="window.fillVerificationForm(${item.id})">Pilih</button>
+                        </td>
+                        <td>${item.nama_barang}</td>
+                        <td>${item.jumlah_barang}</td>
+                        <td>${item.satuan_barang}</td>
+                        <td>${item.kondisi_fisik}</td>
+                        <td>${item.nama_produsen ?? '-'}</td>
+                    </tr>
+                `;
+            });
+        }
+    } catch (e) {
+        window.showAlert('error', 'Gagal memuat data verifikasi');
+    }
+};
+
+// Panggil saat halaman siap
+document.addEventListener('DOMContentLoaded', function() {
+    window.loadPendingVerificationItems();
+});
 
 window.showVerificationForm = function() {
     const modal = new bootstrap.Modal(document.getElementById('verificationFormModal'));
@@ -3136,6 +3137,61 @@ window.showVerificationModal = async function() {
     }
 };
 
+window.selectVerificationRow = function(row, itemId) {
+    // Hilangkan highlight dari semua baris
+    document.querySelectorAll('#pendingVerificationTable tbody tr').forEach(tr => {
+        tr.classList.remove('table-primary');
+    });
+    // Highlight baris yang dipilih
+    row.classList.add('table-primary');
+
+    // Sembunyikan tabel, tampilkan form
+    document.getElementById('pendingVerificationTable').style.display = 'none';
+    document.getElementById('verificationForm').style.display = '';
+
+    // Isi form otomatis
+    window.fillVerificationForm(itemId);
+};
+
+// Modifikasi loadPendingVerificationItems agar tombol "Pilih" memanggil fungsi di atas
+window.loadPendingVerificationItems = async function() {
+    try {
+        const res = await fetch('{{ route("staff.verification_items.index") }}');
+        const data = await res.json();
+        if (data.success) {
+            const tbody = document.getElementById('pendingVerificationTbody');
+            tbody.innerHTML = '';
+            data.data.forEach(item => {
+                tbody.innerHTML += `
+                    <tr onclick="window.selectVerificationRow(this, ${item.id})" style="cursor:pointer;">
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-success" onclick="event.stopPropagation();window.selectVerificationRow(this.closest('tr'), ${item.id})">Pilih</button>
+                        </td>
+                        <td>${item.nama_barang}</td>
+                        <td>${item.jumlah_barang}</td>
+                        <td>${item.satuan_barang}</td>
+                        <td>${item.kondisi_fisik}</td>
+                        <td>${item.nama_produsen ?? '-'}</td>
+                    </tr>
+                `;
+            });
+            // Tampilkan tabel, sembunyikan form
+            document.getElementById('pendingVerificationTable').style.display = '';
+            document.getElementById('verificationForm').style.display = 'none';
+        }
+    } catch (e) {
+        window.showAlert('error', 'Gagal memuat data verifikasi');
+    }
+};
+
+// Panggil saat halaman siap
+document.addEventListener('DOMContentLoaded', function() {
+    window.loadPendingVerificationItems();
+    // Pastikan form verifikasi tersembunyi saat awal
+    document.getElementById('verificationForm').style.display = 'none';
+});
+
+
 window.showVerifyItemModal = function(id) {
     const kategori = prompt('Masukkan kategori barang:');
     if (!kategori) return;
@@ -3162,7 +3218,10 @@ window.processVerifyItem = async function(id, kategori, lokasi) {
         const data = await response.json();
         if (data.success) {
             window.showAlert('success', data.message);
-            window.showVerificationModal();
+            window.showVerificationModal();verificationForm.reset();
+            window.loadPendingVerificationItems();
+            document.getElementById('pendingVerificationTable').style.display = '';
+            document.getElementById('verificationForm').style.display = 'none';
         } else {
             window.showAlert('error', data.message);
         }
