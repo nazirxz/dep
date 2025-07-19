@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('kategori_barang')->nullable(); // Kategori bisa null jika belum ditentukan saat verifikasi awal
             $table->date('tanggal_masuk_barang');
             $table->integer('jumlah_barang');
+            $table->string('satuan_barang')->nullable(); // Tambah field satuan_barang
             $table->string('lokasi_rak_barang')->nullable(); // Lokasi rak bisa null, ditetapkan setelah verifikasi
             $table->string('nama_produsen')->nullable();
             $table->string('metode_bayar')->nullable();

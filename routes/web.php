@@ -6,6 +6,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ItemManagementController;
 use App\Http\Controllers\EmployeeAccountController; // Import controller baru
+use App\Http\Controllers\VerificationItemController;
 use App\Http\Middleware\RoleMiddleware;
 
 // Route untuk splash screen
@@ -61,6 +62,11 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/staff/outgoing-items/{id}', [ItemManagementController::class, 'updateOutgoingItem'])->name('staff.outgoing_items.update');
         Route::delete('/staff/outgoing-items/{id}', [ItemManagementController::class, 'deleteOutgoingItem'])->name('staff.outgoing_items.delete');
         Route::get('/staff/outgoing-items/{id}', [ItemManagementController::class, 'getOutgoingItem'])->name('staff.outgoing_items.show'); // Untuk mendapatkan detail item keluar
+
+        // Rute baru untuk proses verifikasi barang
+        Route::get('/staff/verification-items', [VerificationItemController::class, 'index'])->name('staff.verification_items.index');
+        Route::post('/staff/verification-items', [VerificationItemController::class, 'store'])->name('staff.verification_items.store');
+        Route::post('/staff/verification-items/{id}/verify', [VerificationItemController::class, 'verify'])->name('staff.verification_items.verify');
 
         // Fungsi Lainnya
         Route::get('/staff/items/search', [ItemManagementController::class, 'searchItems'])->name('staff.items.search');

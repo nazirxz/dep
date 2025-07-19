@@ -17,6 +17,7 @@ class VerificationItem extends Model
         'kategori_barang',
         'tanggal_masuk_barang',
         'jumlah_barang',
+        'satuan_barang',
         'lokasi_rak_barang',
         'nama_produsen',
         'metode_bayar',

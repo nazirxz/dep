@@ -54,6 +54,9 @@
             <button type="button" class="btn btn-primary btn-sm" onclick="window.addNewIncomingItem()">
                 <i class="fas fa-plus"></i> Tambah Barang Masuk Baru
             </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.showVerificationModal()">
+                <i class="fas fa-clipboard-check"></i> Barang Perlu Verifikasi
+            </button>
             <button class="btn btn-primary btn-sm" onclick="window.refreshData()">
                 <i class="fas fa-sync-alt"></i> Refresh
             </button>
@@ -605,6 +608,76 @@
                     </div>
                 </div>
             </div> --}}
+        </div>
+    </div>
+</div>
+
+{{-- Modal Form Tambah Barang Masuk (Verifikasi) --}}
+<div class="modal fade" id="verificationFormModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="verificationForm">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Ajukan Barang Masuk (Verifikasi)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="verify_nama_barang" class="form-label">Nama Barang *</label>
+                        <input type="text" class="form-control" id="verify_nama_barang" name="nama_barang" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="verify_jumlah_barang" class="form-label">Jumlah Barang *</label>
+                        <input type="number" class="form-control" id="verify_jumlah_barang" name="jumlah_barang" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="verify_satuan_barang" class="form-label">Satuan Barang *</label>
+                        <select class="form-select" id="verify_satuan_barang" name="satuan_barang" required>
+                            <option value="">Pilih Satuan</option>
+                            <option value="Unit">Unit</option>
+                            <option value="Pcs">Pcs</option>
+                            <option value="Dus">Dus</option>
+                            <option value="Kg">Kg</option>
+                            <option value="Liter">Liter</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="verify_nama_produsen" class="form-label">Nama Produsen</label>
+                        <input type="text" class="form-control" id="verify_nama_produsen" name="nama_produsen">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kondisi Fisik *</label>
+                        <select class="form-select" id="verify_kondisi_fisik" name="kondisi_fisik" required>
+                            <option value="Baik">Baik</option>
+                            <option value="Rusak Ringan">Rusak Ringan</option>
+                            <option value="Tidak Sesuai">Tidak Sesuai</option>
+                            <option value="Kadaluarsa">Kadaluarsa</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Ajukan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Daftar Barang Perlu Verifikasi --}}
+<div class="modal fade" id="verificationItemsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Barang Perlu Verifikasi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="verificationItemsTableWrapper">
+                    <div class="text-center py-3"><div class="loading-spinner"></div> Memuat data...</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -2976,8 +3049,127 @@ document.addEventListener('DOMContentLoaded', function() {
     // Attach event listener for the new verification form
     const verificationForm = document.getElementById('verificationForm');
     if (verificationForm) {
-        verificationForm.addEventListener('submit', window.handleVerificationFormSubmit);
+        verificationForm.onsubmit = async function(e) {
+            e.preventDefault();
+            const formData = new FormData(verificationForm);
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            try {
+                // Ganti fetch ke endpoint yang sudah pasti ada, misal: /staff/verification-items
+                const response = await fetch('/staff/verification-items', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    window.showAlert('success', data.message);
+                    verificationForm.reset();
+                    bootstrap.Modal.getInstance(document.getElementById('verificationFormModal')).hide();
+                } else {
+                    window.showAlert('error', data.message);
+                }
+            } catch (e) {
+                window.showAlert('error', 'Gagal mengajukan barang.');
+            }
+        };
     }
 });
+
+
+window.showVerificationForm = function() {
+    const modal = new bootstrap.Modal(document.getElementById('verificationFormModal'));
+    modal.show();
+};
+
+
+window.showVerificationModal = async function() {
+    const modal = new bootstrap.Modal(document.getElementById('verificationItemsModal'));
+    const wrapper = document.getElementById('verificationItemsTableWrapper');
+    wrapper.innerHTML = '<div class="text-center py-3"><div class="loading-spinner"></div> Memuat data...</div>';
+    modal.show();
+
+    try {
+        // Ganti fetch ke endpoint yang sudah pasti ada, misal: /staff/verification-items
+        const response = await fetch('/staff/verification-items');
+        const data = await response.json();
+        if (data.success) {
+            if (data.data.length === 0) {
+                wrapper.innerHTML = '<div class="text-center text-muted py-4">Tidak ada barang yang perlu diverifikasi.</div>';
+                return;
+            }
+            let html = `<table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Nama Barang</th>
+                        <th>Jumlah</th>
+                        <th>Satuan</th>
+                        <th>Kondisi</th>
+                        <th>Produsen</th>
+                        <th>Tanggal Masuk</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            data.data.forEach(item => {
+                html += `<tr>
+                    <td>${item.nama_barang}</td>
+                    <td>${item.jumlah_barang}</td>
+                    <td>${item.satuan_barang || '-'}</td>
+                    <td><span class="badge bg-${item.kondisi_fisik === 'Baik' ? 'success' : 'warning'}">${item.kondisi_fisik}</span></td>
+                    <td>${item.nama_produsen || '-'}</td>
+                    <td>${item.tanggal_masuk_barang}</td>
+                    <td>
+                        <button class="btn btn-sm btn-success" onclick="window.showVerifyItemModal(${item.id})">Verifikasi</button>
+                    </td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            wrapper.innerHTML = html;
+        } else {
+            wrapper.innerHTML = '<div class="alert alert-danger">Gagal memuat data.</div>';
+        }
+    } catch (e) {
+        wrapper.innerHTML = '<div class="alert alert-danger">Terjadi kesalahan jaringan.</div>';
+    }
+};
+
+window.showVerifyItemModal = function(id) {
+    const kategori = prompt('Masukkan kategori barang:');
+    if (!kategori) return;
+    const lokasi = prompt('Masukkan lokasi rak (opsional):');
+    window.processVerifyItem(id, kategori, lokasi);
+};
+
+window.processVerifyItem = async function(id, kategori, lokasi) {
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        // Ganti fetch ke endpoint yang sudah pasti ada, misal: /staff/verification-items/{id}/verify
+        const response = await fetch(`/staff/verification-items/${id}/verify`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                kategori_barang: kategori,
+                lokasi_rak_barang: lokasi
+            })
+        });
+        const data = await response.json();
+        if (data.success) {
+            window.showAlert('success', data.message);
+            window.showVerificationModal();
+        } else {
+            window.showAlert('error', data.message);
+        }
+    } catch (e) {
+        window.showAlert('error', 'Gagal memproses verifikasi.');
+    }
+};
+
 </script>
 @endpush
