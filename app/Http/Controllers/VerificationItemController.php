@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use App\Models\VerificationItem;
 use App\Models\IncomingItem;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class VerificationItemController extends Controller
@@ -52,80 +53,92 @@ class VerificationItemController extends Controller
     public function verify(Request $request, $id)
     {
         try {
-            \Log::info('verify: Starting verification process', ['item_id' => $id, 'request_data' => $request->all()]);
-            
-            $item = VerificationItem::findOrFail($id);
-            
-            if ($item->is_verified) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Barang ini sudah diverifikasi sebelumnya.'
-                ], 422);
-            }
-            
-            // Validasi input verifikasi
-            $validator = Validator::make($request->all(), [
-                'producer_id' => 'required|exists:producers,id',
-                'satuan_barang' => 'required|string|max:50',
-                'kondisi_fisik' => 'required|string|in:Baik,Rusak Ringan,Tidak Sesuai',
+            DB::beginTransaction();
+
+            $verificationItem = VerificationItem::findOrFail($id);
+
+            // Validate request
+            $request->validate([
+                'kondisi_fisik' => 'required|in:Baik,Rusak Ringan,Tidak Sesuai,Kadaluarsa',
                 'catatan_verifikasi' => 'nullable|string|max:1000',
+            ], [
+                'kondisi_fisik.required' => 'Kondisi fisik barang wajib diisi.',
+                'kondisi_fisik.in' => 'Kondisi fisik harus berupa: Baik, Rusak Ringan, Tidak Sesuai, atau Kadaluarsa.',
+                'catatan_verifikasi.max' => 'Catatan verifikasi maksimal 1000 karakter.',
             ]);
 
-            if ($validator->fails()) {
-                \Log::warning('verify: Validation failed', ['errors' => $validator->errors()]);
+            // If condition is not "Baik", delete the item and return
+            if ($request->kondisi_fisik !== 'Baik') {
+                // Store the item details for the response
+                $itemDetails = [
+                    'nama_barang' => $verificationItem->nama_barang,
+                    'kondisi_fisik' => $request->kondisi_fisik,
+                    'catatan_verifikasi' => $request->catatan_verifikasi
+                ];
+
+                // Delete any uploaded files
+                if ($verificationItem->foto_barang) {
+                    Storage::disk('public')->delete($verificationItem->foto_barang);
+                }
+                if ($verificationItem->pembayaran_transaksi) {
+                    Storage::disk('public')->delete($verificationItem->pembayaran_transaksi);
+                }
+                if ($verificationItem->nota_transaksi) {
+                    Storage::disk('public')->delete($verificationItem->nota_transaksi);
+                }
+
+                // Delete the verification item
+                $verificationItem->delete();
+
+                DB::commit();
+
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Validasi gagal',
-                    'errors' => $validator->errors()
-                ], 422);
+                    'success' => true,
+                    'message' => 'Barang telah dihapus karena kondisi ' . strtolower($request->kondisi_fisik),
+                    'data' => $itemDetails,
+                    'status' => 'deleted'
+                ]);
             }
 
-            // Create new incoming item
-            $incoming = IncomingItem::create([
-                'nama_barang' => $item->nama_barang,
-                'kategori_barang' => $item->kategori_barang,
-                'tanggal_masuk_barang' => $item->tanggal_masuk_barang,
-                'jumlah_barang' => $item->jumlah_barang,
-                'satuan_barang' => $request->satuan_barang,
-                'lokasi_rak_barang' => null, // Will be assigned later
-                'producer_id' => $request->producer_id,
-                'metode_bayar' => $item->metode_bayar,
-                'pembayaran_transaksi' => $item->pembayaran_transaksi,
-                'nota_transaksi' => $item->nota_transaksi,
-                'foto_barang' => $item->foto_barang,
+            // If condition is "Baik", proceed with verification and move to incoming items
+            $incomingItem = IncomingItem::create([
+                'nama_barang' => $verificationItem->nama_barang,
+                'kategori_barang' => $verificationItem->kategori_barang,
+                'category_id' => $verificationItem->category_id,
+                'tanggal_masuk_barang' => $verificationItem->tanggal_masuk_barang,
+                'jumlah_barang' => $verificationItem->jumlah_barang,
+                'lokasi_rak_barang' => $verificationItem->lokasi_rak_barang,
+                'producer_id' => $verificationItem->producer_id,
+                'metode_bayar' => $verificationItem->metode_bayar,
+                'pembayaran_transaksi' => $verificationItem->pembayaran_transaksi,
+                'nota_transaksi' => $verificationItem->nota_transaksi,
+                'foto_barang' => $verificationItem->foto_barang,
+                'kondisi_fisik' => 'Baik',
+                'catatan' => $request->catatan_verifikasi
             ]);
 
-            // Update verification item
-            $item->update([
+            // Update verification item status
+            $verificationItem->update([
                 'is_verified' => true,
                 'verified_by' => Auth::id(),
                 'verified_at' => Carbon::now(),
-                'incoming_item_id' => $incoming->id,
-                'satuan_barang' => $request->satuan_barang,
-                'kondisi_fisik' => $request->kondisi_fisik,
+                'kondisi_fisik' => 'Baik',
                 'catatan_verifikasi' => $request->catatan_verifikasi,
+                'incoming_item_id' => $incomingItem->id
             ]);
 
-            \Log::info('verify: Verification completed successfully', [
-                'verification_id' => $item->id,
-                'incoming_id' => $incoming->id
-            ]);
+            DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Barang berhasil diverifikasi.',
-                'data' => [
-                    'verification' => $item,
-                    'incoming' => $incoming
-                ]
+                'message' => 'Barang berhasil diverifikasi dan dipindahkan ke daftar barang masuk',
+                'data' => $incomingItem,
+                'status' => 'verified'
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error in verify: ' . $e->getMessage(), [
-                'exception' => $e,
-                'trace' => $e->getTraceAsString()
-            ]);
-            
+            DB::rollback();
+            \Log::error('Error in verifyItem: ' . $e->getMessage(), ['exception' => $e]);
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat memverifikasi barang: ' . $e->getMessage()

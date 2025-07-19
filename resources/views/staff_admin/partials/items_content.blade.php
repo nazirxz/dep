@@ -105,25 +105,20 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label">Kondisi Fisik Barang</label>
-                                        <div>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="kondisi_fisik" id="kondisi_tidak_rusak" value="Baik" checked>
-                                                <label class="form-check-label" for="kondisi_tidak_rusak">Baik</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="kondisi_fisik" id="kondisi_rusak" value="Rusak Ringan">
-                                                <label class="form-check-label" for="kondisi_rusak">Rusak Ringan</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="kondisi_fisik" id="kondisi_tidak_sesuai" value="Tidak Sesuai">
-                                                <label class="form-check-label" for="kondisi_tidak_sesuai">Tidak Sesuai</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="kondisi_fisik" id="kondisi_kadaluarsa" value="Kadaluarsa">
-                                                <label class="form-check-label" for="kondisi_kadaluarsa">Kadaluarsa</label>
-                                            </div>
-                                        </div>
+                                        <label for="kondisi_fisik" class="form-label">Kondisi Fisik *</label>
+                                        <select class="form-select" id="kondisi_fisik" name="kondisi_fisik" required>
+                                            <option value="">Pilih Kondisi Fisik</option>
+                                            <option value="Baik">Baik</option>
+                                            <option value="Rusak Ringan">Rusak Ringan</option>
+                                            <option value="Tidak Sesuai">Tidak Sesuai</option>
+                                            <option value="Kadaluarsa">Kadaluarsa</option>
+                                        </select>
+                                        <div class="form-text">Pilih kondisi fisik barang setelah diperiksa.</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="catatan_verifikasi" class="form-label">Catatan Verifikasi</label>
+                                        <textarea class="form-control" id="catatan_verifikasi" name="catatan_verifikasi" rows="3" 
+                                            placeholder="Tambahkan catatan verifikasi jika diperlukan"></textarea>
                                     </div>
                                     <div class="mb-3">
                                         <button type="button" class="btn btn-outline-info w-100 mb-2" onclick="window.ajukanPergantianBarang()">
@@ -633,29 +628,6 @@
     </div>
 </div>
 
-{{-- Modal untuk Pemilihan Lokasi Rak --}}
-<div class="modal fade" id="rackSelectorModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Pilih Lokasi Rak</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="warehouse-selector-grid" id="warehouseSelector">
-                    <!-- Warehouse grid will be generated here -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" onclick="window.confirmRackSelection()" disabled id="confirmRackBtn">
-                    <i class="fas fa-check"></i> Pilih Lokasi
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 {{-- Modal untuk Import CSV --}}
 <div class="modal fade" id="importCSVModal" tabindex="-1">
     <div class="modal-dialog">
@@ -1110,18 +1082,9 @@ window.viewItemDetails = async function(itemId, itemType = 'incoming') {
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <div class="d-grid gap-2">
+                                        <div class="d-grid">
                                             <button class="btn btn-warning btn-sm" onclick="window.editIncomingItem(${item.id})">
                                                 <i class="fas fa-edit"></i> Edit Barang
-                                            </button>
-                                            <button class="btn btn-info btn-sm" onclick="window.showRackSelector('crud_lokasi_rak', ${item.id})">
-                                                <i class="fas fa-arrows-alt"></i> Pindah Lokasi
-                                            </button>
-                                            <button class="btn btn-primary btn-sm" onclick="window.duplicateItem(${item.id})">
-                                                <i class="fas fa-copy"></i> Duplikat Barang
-                                            </button>
-                                            <button class="btn btn-success btn-sm" onclick="window.generateQR(${item.id})">
-                                                <i class="fas fa-qrcode"></i> QR Code
                                             </button>
                                         </div>
                                     </div>
@@ -1129,11 +1092,11 @@ window.viewItemDetails = async function(itemId, itemType = 'incoming') {
                                         <small class="text-muted">
                                             <div class="mb-2">
                                                 <i class="fas fa-plus text-success"></i>
-                                                Ditambahkan ${new Date(item.created_at || item.tanggal_masuk_barang).toLocaleDateString('id-ID')}
+                                                Dibuat ${new Date(item.created_at || item.tanggal_masuk_barang).toLocaleDateString('id-ID')}
                                             </div>
                                             <div class="mb-2">
-                                                <i class="fas fa-edit text-warning"></i>
-                                                Terakhir diubah ${new Date(item.updated_at || item.tanggal_masuk_barang).toLocaleDateString('id-ID')}
+                                                <i class="fas fa-check text-success"></i>
+                                                Status: <span class="badge bg-success">Aktif</span>
                                             </div>
                                         </small>
                                     </div>
@@ -2777,15 +2740,6 @@ window.generateQR = function(itemId) {
     }, 1500);
 }
 
-// Function to handle moving item (calls showRackSelector with item ID)
-window.moveItem = function(itemId) {
-    // Note: The input field 'crud_lokasi_rak' is part of the itemCrudModal.
-    // If you call this from viewItemDetails, ensure the itemCrudModal is not open
-    // or handle the context properly. For simplicity, we assume this is for
-    // assigning a location to an item that's not in the main table.
-    window.showRackSelector('crud_lokasi_rak', itemId); // Pass item ID to rack selector
-}
-
 /**
  * Placeholder for "Ajukan Pergantian Barang" action.
  */
@@ -2881,33 +2835,37 @@ if (verificationForm) {
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                return response.json().then(err => Promise.reject(err));
             }
             return response.json();
         })
         .then(data => {
             if (data.success) {
-                window.showAlert('success', 'Verifikasi barang berhasil.');
-                
+                // Close verification modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('selectItemModal'));
+                if (modal) modal.hide();
+
+                // Show appropriate message based on status
+                if (data.status === 'deleted') {
+                    window.showAlert('warning', data.message);
+                } else {
+                    window.showAlert('success', data.message);
+                }
+
                 // Reset form
-                document.getElementById('verificationForm').reset();
-                document.getElementById('verify_item_id').value = '';
-                document.getElementById('verify_producer_id').value = '';
-                document.getElementById('verify_nama_barang').value = '';
-                document.getElementById('verify_jumlah_barang').value = '';
-                document.getElementById('verify_satuan_barang').value = '';
-                document.getElementById('verify_satuan_barang').disabled = true;
-                document.getElementById('kondisi_tidak_rusak').checked = true;
+                this.reset();
                 
-                // Refresh data
-                location.reload();
+                // Refresh the page after a short delay
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
             } else {
-                throw new Error(data.message || 'Gagal memverifikasi barang');
+                throw new Error(data.message || 'Terjadi kesalahan saat verifikasi barang.');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            window.showAlert('error', 'Error: ' + error.message);
+            window.showAlert('error', error.message || 'Terjadi kesalahan saat verifikasi barang.');
         })
         .finally(() => {
             // Restore button state

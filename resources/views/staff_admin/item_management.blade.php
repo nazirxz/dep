@@ -512,9 +512,6 @@
                     <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                     <h6 class="text-muted">Rak Kosong</h6>
                     <p class="text-muted small">Lokasi ini belum digunakan</p>
-                    <button class="btn btn-sm btn-success" onclick="assignItemToRack('${position}')">
-                        <i class="fas fa-plus"></i> Tempatkan Barang
-                    </button>
                 </div>
             `;
         }
