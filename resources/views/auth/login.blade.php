@@ -16,7 +16,8 @@
                     </div>
                     <h2 class="brand-title">Usaha Distributor</h2>
                     <h3 class="brand-subtitle">Keluarga Sehati</h3>
-                    <p class="brand-description">
+                    {{-- Slogan dan fitur dihapus sesuai permintaan --}}
+                    {{-- <p class="brand-description">
                         Solusi terpercaya untuk kebutuhan distribusi Anda. 
                         Bergabunglah dengan keluarga besar kami dan rasakan kemudahan berbisnis.
                     </p>
@@ -30,10 +31,10 @@
                             <span>Laporan real-time</span>
                         </div>
                         <div class="feature-item">
-                            <i class="fas fa-check-circle"></i>
+                            <i class="fas fa-check-circle"></i></i>
                             <span>Support 24/7</span>
                         </div>
-                    </div>
+                    </div> --}}
                 </div>
             </div>
 
@@ -116,7 +117,7 @@
                             @endif
                         </div>
 
-                        <button type="submit" class="btn-primary btn-login" id="loginBtn">
+                        <button type="submit" class="btn-login" id="loginBtn">
                             <span class="btn-text">Masuk</span>
                             <span class="btn-loading" style="display: none;">
                                 <i class="fas fa-spinner fa-spin"></i>
@@ -132,17 +133,24 @@
 </div>
 
 <style>
+/* Pastikan html dan body mengisi seluruh tinggi viewport dan tidak ada overflow global */
+html, body {
+    height: 100%;
+    overflow: hidden; /* Mencegah scrollbar pada level html/body */
+    margin: 0;
+    padding: 0;
+}
+
 /* Auth Container */
 .auth-container {
-    height: 100vh;
-    max-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    height: 100vh; /* Memastikan mengisi seluruh tinggi viewport */
+    background: #A41524; 
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 1rem;
     position: relative;
-    overflow: hidden;
+    overflow: hidden; /* Pastikan tidak ada scroll pada container utama */
 }
 
 .auth-container::before {
@@ -164,35 +172,40 @@
 .auth-wrapper {
     max-width: 1200px;
     width: 100%;
-    max-height: calc(100vh - 2rem);
+    height: calc(100vh - 2rem); /* Mengisi tinggi dari auth-container dikurangi padding */
     position: relative;
     z-index: 1;
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden; /* Pastikan tidak ada scroll pada wrapper */
 }
 
 .auth-card {
     background: white;
     border-radius: 20px;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
+    overflow: hidden; /* Pastikan konten di dalam card tidak overflow */
     display: grid;
     grid-template-columns: 1fr 1fr;
-    min-height: 500px;
-    max-height: calc(100vh - 4rem);
+    /* Mengembalikan ke min-height dan max-height untuk card */
+    min-height: 500px; 
+    max-height: calc(100vh - 4rem); /* Memberi ruang untuk padding auth-container */
     width: 100%;
 }
 
 /* Brand Side */
 .auth-brand-side {
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    background: #B8202D; /* Warna merah yang lebih muda dari #A41524 */
     color: white;
     padding: 2rem 1.5rem;
     display: flex;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
     position: relative;
-    overflow-y: auto;
+    overflow: hidden; /* Pastikan tidak ada scroll di sisi merek */
+    height: 100%; /* Mengisi tinggi dari auth-card */
 }
 
 .auth-brand-side::before {
@@ -210,6 +223,12 @@
     position: relative;
     z-index: 1;
     text-align: center;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%; /* Memastikan konten mengisi tinggi yang tersedia */
 }
 
 .brand-logo {
@@ -274,7 +293,7 @@
 }
 
 .feature-item i {
-    color: #3498db;
+    color: #FFFFFF;
     font-size: 1.1rem;
 }
 
@@ -282,14 +301,22 @@
 .auth-form-side {
     padding: 2rem 1.5rem;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    overflow-y: auto;
+    justify-content: center;
+    overflow-y: auto; /* Memungkinkan scroll hanya di sisi form jika kontennya melebihi tinggi */
+    height: 100%; /* Mengisi tinggi dari auth-card */
 }
 
 .form-content {
     width: 100%;
     max-width: 400px;
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    /* height: 100%; -- Ini bisa menyebabkan masalah jika konten form terlalu tinggi */
+    /* Biarkan form-content menyesuaikan tingginya secara alami, dan overflow-y: auto pada parent akan menangani scroll */
 }
 
 .form-header {
@@ -330,7 +357,7 @@
 }
 
 .form-label i {
-    color: #3498db;
+    color: #A41524; 
     font-size: 0.9rem;
 }
 
@@ -350,7 +377,7 @@
 }
 
 .form-input:focus {
-    border-bottom-color: #3498db;
+    border-bottom-color: #A41524;
 }
 
 .form-input::placeholder {
@@ -363,7 +390,7 @@
     left: 0;
     width: 0;
     height: 2px;
-    background: linear-gradient(135deg, #3498db, #2980b9);
+    background: linear-gradient(135deg, #A41524, #8F1220); 
     transition: width 0.3s ease;
 }
 
@@ -386,7 +413,7 @@
 }
 
 .password-toggle:hover {
-    color: #3498db;
+    color: #A41524; 
 }
 
 .error-message {
@@ -416,7 +443,7 @@
 .remember-me input[type="checkbox"] {
     width: 18px;
     height: 18px;
-    accent-color: #3498db;
+    accent-color: #A41524; 
 }
 
 .remember-me label {
@@ -426,21 +453,22 @@
 }
 
 .forgot-password {
-    color: #3498db;
+    color: #A41524; 
     text-decoration: none;
     font-size: 0.9rem;
     transition: color 0.3s ease;
 }
 
 .forgot-password:hover {
-    color: #2980b9;
+    color: #8F1220; 
     text-decoration: underline;
 }
 
-.btn-primary {
+/* Mengubah .btn-primary menjadi .btn-login untuk spesifisitas */
+.btn-login { /* Menggunakan .btn-login untuk menargetkan tombol spesifik ini */
     width: 100%;
     padding: 0.8rem 2rem;
-    background: linear-gradient(135deg, #3498db, #2980b9);
+    background: #A41524; 
     color: white;
     border: none;
     border-radius: 50px;
@@ -452,20 +480,23 @@
     overflow: hidden;
 }
 
-.btn-primary:hover {
+.btn-login:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 10px 25px rgba(164, 21, 36, 0.5); 
 }
 
-.btn-primary:active {
+.btn-login:active {
     transform: translateY(0);
 }
 
-.btn-primary:disabled {
+.btn-login:disabled {
     opacity: 0.7;
     cursor: not-allowed;
     transform: none;
 }
+
+/* Menghapus aturan .btn-primary yang tidak relevan lagi */
+/* .btn-primary { ... } */
 
 .auth-divider {
     text-align: center;
@@ -501,14 +532,14 @@
 }
 
 .switch-link {
-    color: #3498db;
+    color: #A41524; 
     text-decoration: none;
     font-weight: 600;
     transition: color 0.3s ease;
 }
 
 .switch-link:hover {
-    color: #2980b9;
+    color: #8F1220; 
     text-decoration: underline;
 }
 
@@ -539,7 +570,8 @@
     
     .auth-card {
         grid-template-columns: 1fr;
-        min-height: calc(100vh - 1rem);
+        /* Mengembalikan min-height dan max-height untuk responsivitas */
+        min-height: auto; 
         max-height: calc(100vh - 1rem);
     }
     
@@ -587,7 +619,8 @@
     }
     
     .auth-card {
-        min-height: calc(100vh - 0.5rem);
+        /* Mengembalikan min-height dan max-height untuk responsivitas */
+        min-height: auto; 
         max-height: calc(100vh - 0.5rem);
         border-radius: 10px;
     }
@@ -657,4 +690,3 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-@endsection
