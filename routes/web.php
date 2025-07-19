@@ -33,6 +33,8 @@ Route::middleware(['auth'])->group(function () {
     // Routes untuk Manager (role: manager)
     Route::middleware([RoleMiddleware::class.':manager'])->group(function () {
         Route::get('/report/stock', [HomeController::class, 'showStockReport'])->name('report.stock');
+        Route::get('/report/stock/csv', [HomeController::class, 'exportCsv'])->name('report.stock.csv');
+        Route::get('/report/stock/print', [HomeController::class, 'printStockReport'])->name('report.stock.print');
         Route::get('/order/items', [HomeController::class, 'showOrderItems'])->name('order.items');
         
         // Routes untuk Akun Pegawai (sekarang di EmployeeAccountController)

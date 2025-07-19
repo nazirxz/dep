@@ -218,8 +218,8 @@
                             </div>
                             {{-- Tombol Laporan --}}
                             <div class="mt-3 text-start">
-                                <button class="btn btn-danger me-2"><i class="fas fa-file-pdf"></i> Cetak PDF</button>
-                                <button class="btn btn-success me-2"><i class="fas fa-file-excel"></i> Cetak Excel</button>
+                                <a href="{{ route('report.stock.print') }}" target="_blank" class="btn btn-primary me-2"><i class="fas fa-print"></i> Cetak</a>
+                                <a href="{{ route('report.stock.csv') }}" class="btn btn-success me-2"><i class="fas fa-file-excel"></i> Cetak CSV</a>
                                 {{-- Tombol untuk melihat kondisi distribusi gudang --}}
                                 <button class="btn btn-info" onclick="showWarehouseView()"><i class="fas fa-warehouse"></i> Lihat Kondisi Distribusi Barang Gudang</button>
                             </div>

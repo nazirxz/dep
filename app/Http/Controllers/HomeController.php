@@ -12,6 +12,10 @@ use App\Models\Producer;
 use App\Models\User;
 use App\Models\Category; // Added this import
 use Carbon\Carbon;
+use App\Exports\ItemReportExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class HomeController extends Controller
 {
@@ -230,5 +234,59 @@ class HomeController extends Controller
         ]);
 
         return redirect()->route('employee.accounts')->with('success', 'Akun pegawai berhasil ditambahkan!');
+    }
+
+    public function exportCsv()
+    {
+        $fileName = 'stock_report.csv';
+        $items = IncomingItem::all();
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = ['ID', 'Nama Barang', 'Kategori', 'Tanggal Masuk', 'Jumlah', 'Nama Produsen', 'Total Bayar'];
+
+        $callback = function() use($items, $columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+
+            foreach ($items as $item) {
+                $row['ID']  = $item->id;
+                $row['Nama Barang']    = $item->nama_barang;
+                $row['Kategori']    = $item->kategori_barang;
+                $row['Tanggal Masuk']  = $item->tanggal_masuk_barang->format('d M Y');
+                $row['Jumlah']  = $item->jumlah_barang;
+                $row['Nama Produsen'] = $item->nama_produsen;
+                $row['Total Bayar'] = (float) preg_replace('/[^\d.]/', '', $item->pembayaran_transaksi);
+
+
+                fputcsv($file, [
+                    $row['ID'],
+                    $row['Nama Barang'],
+                    $row['Kategori'],
+                    $row['Tanggal Masuk'],
+                    $row['Jumlah'],
+                    $row['Nama Produsen'],
+                    $row['Total Bayar']
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return new StreamedResponse($callback, 200, $headers);
+    }
+
+    public function printStockReport()
+    {
+        $incomingItems = IncomingItem::all();
+        // For the print view, we just need the data.
+        // The view itself will handle the presentation.
+        return view('exports.stock_report_print', ['incomingItems' => $incomingItems]);
     }
 }
