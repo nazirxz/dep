@@ -173,7 +173,7 @@
                                                 <td>{{ $item->lokasi_rak_barang ?? '-' }}</td>
                                                 <td>{{ $item->nama_produsen ?? '-' }}</td>
                                                 <td>{{ $item->metode_bayar ?? '-' }}</td>
-                                                <td>Rp{{ number_format($item->pembayaran_transaksi, 2, ',', '.') }}</td>
+                                                <td>Rp{{ number_format((float) preg_replace('/[^\d.]/', '', $item->pembayaran_transaksi), 2, ',', '.') }}</td>
                                                 <td>{{ $item->nota_transaksi ?? '-' }}</td>
                                                 <td>
                                                     @php
@@ -284,7 +284,7 @@
                                                 <td>{{ $item->lokasi_rak_barang ?? '-' }}</td>
                                                 <td>{{ $item->nama_produsen ?? '-' }}</td>
                                                 <td>{{ $item->metode_bayar ?? '-' }}</td>
-                                                <td>Rp{{ number_format($item->pembayaran_transaksi, 2, ',', '.') }}</td>
+                                                <td>Rp{{ number_format((float) preg_replace('/[^\d.]/', '', $item->pembayaran_transaksi), 2, ',', '.') }}</td>
                                                 <td>{{ $item->nota_transaksi ?? '-' }}</td>
                                                 <td>
                                                     <button class="btn btn-sm btn-info me-1" onclick="viewOutgoingDetails({{ $item->id }})"><i class="fas fa-eye"></i> Lihat Detail</button>
