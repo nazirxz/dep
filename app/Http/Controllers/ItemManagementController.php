@@ -23,8 +23,12 @@ class ItemManagementController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $incomingItems = IncomingItem::orderBy('tanggal_masuk_barang', 'desc')->get();
-        $outgoingItems = OutgoingItem::orderBy('tanggal_keluar_barang', 'desc')->get();
+        $incomingItems = IncomingItem::with(['producer', 'category'])
+            ->orderBy('tanggal_masuk_barang', 'desc')
+            ->get();
+        $outgoingItems = OutgoingItem::with(['producer', 'category'])
+            ->orderBy('tanggal_keluar_barang', 'desc')
+            ->get();
         $producers = Producer::orderBy('nama_produsen_supplier')->get();
         $categories = Category::orderBy('nama_kategori')->get();
 
@@ -42,8 +46,12 @@ class ItemManagementController extends Controller
     public function itemManagement()
     {
         $user = Auth::user();
-        $incomingItems = IncomingItem::orderBy('tanggal_masuk_barang', 'desc')->get();
-        $outgoingItems = OutgoingItem::orderBy('tanggal_keluar_barang', 'desc')->get();
+        $incomingItems = IncomingItem::with(['producer', 'category'])
+            ->orderBy('tanggal_masuk_barang', 'desc')
+            ->get();
+        $outgoingItems = OutgoingItem::with(['producer', 'category'])
+            ->orderBy('tanggal_keluar_barang', 'desc')
+            ->get();
         $producers = Producer::orderBy('nama_produsen_supplier')->get();
         $categories = Category::orderBy('nama_kategori')->get();
 
@@ -70,8 +78,8 @@ class ItemManagementController extends Controller
             'tanggal_masuk_barang' => 'required|date',
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
             'metode_bayar' => 'nullable|string|max:50',
-            'pembayaran_transaksi' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048',
-            'nota_transaksi' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048',
+            'pembayaran_transaksi' => 'nullable|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048',
+            'nota_transaksi' => 'nullable|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048',
             'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ], [
             'nama_barang.required' => 'Nama barang wajib diisi.',
@@ -83,10 +91,8 @@ class ItemManagementController extends Controller
             'jumlah_barang.min' => 'Jumlah barang minimal 1.',
             'tanggal_masuk_barang.required' => 'Tanggal masuk wajib diisi.',
             'lokasi_rak_barang.regex' => 'Format lokasi rak tidak valid. Gunakan format R[1-8]-[1-4]-[1-6].',
-            'pembayaran_transaksi.image' => 'Bukti pembayaran harus berupa gambar atau PDF.',
             'pembayaran_transaksi.mimes' => 'Format file bukti pembayaran yang diizinkan: jpeg, png, jpg, gif, svg, pdf.',
             'pembayaran_transaksi.max' => 'Ukuran file bukti pembayaran maksimal 2MB.',
-            'nota_transaksi.image' => 'Nota transaksi harus berupa gambar atau PDF.',
             'nota_transaksi.mimes' => 'Format file nota transaksi yang diizinkan: jpeg, png, jpg, gif, svg, pdf.',
             'nota_transaksi.max' => 'Ukuran file nota transaksi maksimal 2MB.',
             'foto_barang.image' => 'File harus berupa gambar.',
@@ -129,7 +135,7 @@ class ItemManagementController extends Controller
             // Create verification item instead of incoming item
             $verificationItem = VerificationItem::create([
                 'nama_barang' => $request->nama_barang,
-                'kategori_barang' => $category->nama_kategori,
+                'kategori_barang' => $category->nama_kategori, // This comes from the category relationship
                 'category_id' => $category->id,
                 'tanggal_masuk_barang' => $request->tanggal_masuk_barang,
                 'jumlah_barang' => $request->jumlah_barang,
@@ -358,23 +364,40 @@ class ItemManagementController extends Controller
      */
     public function updateIncomingItem(Request $request, $id)
     {
-        \Log::info('updateIncomingItem: Request received', ['item_id' => $id, 'request_data' => $request->all()]);
+        \Log::info('updateIncomingItem: Request received', ['request_data' => $request->all()]);
 
         $validator = Validator::make($request->all(), [
             'nama_barang' => 'required|string|max:255',
-            'kategori_barang' => 'required|string|max:100',
-            'jumlah_barang' => 'required|integer|min:0',
+            'category_id' => 'required|exists:categories,id',
+            'producer_id' => 'required|exists:producers,id',
+            'jumlah_barang' => 'required|integer|min:1',
             'tanggal_masuk_barang' => 'required|date',
             'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
-            'nama_produsen' => 'nullable|string|max:255',
             'metode_bayar' => 'nullable|string|max:50',
-            'pembayaran_transaksi' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048', // Changed to image
-            'nota_transaksi' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048', // Changed to image
+            'pembayaran_transaksi' => 'nullable|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048',
+            'nota_transaksi' => 'nullable|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048',
             'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ], [
+            'nama_barang.required' => 'Nama barang wajib diisi.',
+            'category_id.required' => 'Kategori barang wajib diisi.',
+            'category_id.exists' => 'Kategori barang tidak valid.',
+            'producer_id.required' => 'Produsen wajib diisi.',
+            'producer_id.exists' => 'Produsen tidak valid.',
+            'jumlah_barang.required' => 'Jumlah barang wajib diisi.',
+            'jumlah_barang.min' => 'Jumlah barang minimal 1.',
+            'tanggal_masuk_barang.required' => 'Tanggal masuk wajib diisi.',
+            'lokasi_rak_barang.regex' => 'Format lokasi rak tidak valid. Gunakan format R[1-8]-[1-4]-[1-6].',
+            'pembayaran_transaksi.mimes' => 'Format file bukti pembayaran yang diizinkan: jpeg, png, jpg, gif, svg, pdf.',
+            'pembayaran_transaksi.max' => 'Ukuran file bukti pembayaran maksimal 2MB.',
+            'nota_transaksi.mimes' => 'Format file nota transaksi yang diizinkan: jpeg, png, jpg, gif, svg, pdf.',
+            'nota_transaksi.max' => 'Ukuran file nota transaksi maksimal 2MB.',
+            'foto_barang.image' => 'File harus berupa gambar.',
+            'foto_barang.mimes' => 'Format gambar yang diizinkan: jpeg, png, jpg, gif, svg.',
+            'foto_barang.max' => 'Ukuran gambar maksimal 2MB.',
         ]);
 
         if ($validator->fails()) {
-            \Log::warning('updateIncomingItem: Validation failed', ['item_id' => $id, 'errors' => $validator->errors()]);
+            \Log::warning('updateIncomingItem: Validation failed', ['errors' => $validator->errors()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Validasi gagal.',
@@ -383,122 +406,64 @@ class ItemManagementController extends Controller
         }
 
         try {
-            $incomingItem = IncomingItem::findOrFail($id);
-            $oldLocation = $incomingItem->lokasi_rak_barang;
-            $newLocation = $request->lokasi_rak_barang;
-
-            $oldFotoPath = $incomingItem->foto_barang;
-            $fotoPathToSave = $oldFotoPath;
-
-            $oldPembayaranTransaksiPath = $incomingItem->pembayaran_transaksi;
-            $pembayaranTransaksiPathToSave = $oldPembayaranTransaksiPath;
-
-            $oldNotaTransaksiPath = $incomingItem->nota_transaksi;
-            $notaTransaksiPathToSave = $oldNotaTransaksiPath;
-
-            \Log::info('updateIncomingItem: Found item', ['item_id' => $incomingItem->id, 'current_data' => $incomingItem->toArray()]);
-
-            // Handle foto_barang upload
-            if ($request->hasFile('foto_barang')) {
-                $fotoPathToSave = $request->file('foto_barang')->store('images', 'public');
-                if ($oldFotoPath) {
-                    Storage::disk('public')->delete($oldFotoPath);
-                }
-            } else if ($request->input('foto_barang_removed', false)) {
-                if ($oldFotoPath) {
-                    Storage::disk('public')->delete($oldFotoPath);
-                }
-                $fotoPathToSave = null;
-            } else {
-                $fotoPathToSave = $oldFotoPath;
-            }
-
-            // Handle pembayaran_transaksi upload
-            if ($request->hasFile('pembayaran_transaksi')) {
-                $pembayaranTransaksiPathToSave = $request->file('pembayaran_transaksi')->store('transactions', 'public');
-                if ($oldPembayaranTransaksiPath) {
-                    Storage::disk('public')->delete($oldPembayaranTransaksiPath);
-                }
-            } else if ($request->input('pembayaran_transaksi_removed', false)) {
-                if ($oldPembayaranTransaksiPath) {
-                    Storage::disk('public')->delete($oldPembayaranTransaksiPath);
-                }
-                $pembayaranTransaksiPathToSave = null;
-            } else {
-                $pembayaranTransaksiPathToSave = $oldPembayaranTransaksiPath;
-            }
-
-            // Handle nota_transaksi upload
-            if ($request->hasFile('nota_transaksi')) {
-                $notaTransaksiPathToSave = $request->file('nota_transaksi')->store('transactions', 'public');
-                if ($oldNotaTransaksiPath) {
-                    Storage::disk('public')->delete($oldNotaTransaksiPath);
-                }
-            } else if ($request->input('nota_transaksi_removed', false)) {
-                if ($oldNotaTransaksiPath) {
-                    Storage::disk('public')->delete($oldNotaTransaksiPath);
-                }
-                $notaTransaksiPathToSave = null;
-            } else {
-                $notaTransaksiPathToSave = $oldNotaTransaksiPath;
-            }
-
-
-            // Jika lokasi rak diubah dan lokasi baru tidak null
-            if ($newLocation && $newLocation !== $oldLocation) {
-                // Cek apakah lokasi baru sudah ditempati oleh barang lain (bukan item yang sedang diupdate)
-                $existingItemAtNewLocation = IncomingItem::where('lokasi_rak_barang', $newLocation)
-                                                           ->where('id', '!=', $id)
-                                                           ->where('jumlah_barang', '>', 0) // Hanya jika ada barang aktif di sana
-                                                           ->first();
-                if ($existingItemAtNewLocation) {
-                    \Log::warning('updateIncomingItem: New rack location occupied by different item', ['item_id' => $id, 'new_location' => $newLocation, 'occupying_item' => $existingItemAtNewLocation->nama_barang]);
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Lokasi rak ' . $newLocation . ' sudah ditempati oleh barang lain (' . $existingItemAtNewLocation->nama_barang . ').'
-                    ], 422);
-                }
-            }
+            $item = IncomingItem::findOrFail($id);
             
-            // Jika jumlah barang menjadi 0, set lokasi rak menjadi null
-            if ($request->jumlah_barang == 0) {
-                \Log::info('updateIncomingItem: Item quantity set to zero, clearing rack location', ['item_id' => $id, 'old_location' => $newLocation]);
-                $newLocation = null;
+            // Get category name from category_id
+            $category = Category::findOrFail($request->category_id);
+
+            // Handle file uploads
+            $updateData = [
+                'nama_barang' => $request->nama_barang,
+                'kategori_barang' => $category->nama_kategori,
+                'category_id' => $category->id,
+                'tanggal_masuk_barang' => $request->tanggal_masuk_barang,
+                'jumlah_barang' => $request->jumlah_barang,
+                'lokasi_rak_barang' => $request->lokasi_rak_barang,
+                'producer_id' => $request->producer_id,
+                'metode_bayar' => $request->metode_bayar,
+            ];
+
+            // Handle pembayaran_transaksi file
+            if ($request->hasFile('pembayaran_transaksi')) {
+                // Delete old file if exists
+                if ($item->pembayaran_transaksi) {
+                    Storage::disk('public')->delete($item->pembayaran_transaksi);
+                }
+                $updateData['pembayaran_transaksi'] = $request->file('pembayaran_transaksi')->store('transactions', 'public');
             }
 
+            // Handle nota_transaksi file
+            if ($request->hasFile('nota_transaksi')) {
+                // Delete old file if exists
+                if ($item->nota_transaksi) {
+                    Storage::disk('public')->delete($item->nota_transaksi);
+                }
+                $updateData['nota_transaksi'] = $request->file('nota_transaksi')->store('transactions', 'public');
+            }
 
-            $incomingItem->update([
-                'nama_barang' => $request->nama_barang,
-                'kategori_barang' => $request->kategori_barang,
-                'jumlah_barang' => $request->jumlah_barang,
-                'tanggal_masuk_barang' => $request->tanggal_masuk_barang,
-                'lokasi_rak_barang' => $newLocation, // Gunakan newLocation yang sudah disesuaikan
-                'nama_produsen' => $request->nama_produsen,
-                'metode_bayar' => $request->metode_bayar,
-                'pembayaran_transaksi' => $pembayaranTransaksiPathToSave, // Save the updated image path
-                'nota_transaksi' => $notaTransaksiPathToSave, // Save the updated image path
-                'foto_barang' => $fotoPathToSave, // Save the updated image path
+            // Handle foto_barang file
+            if ($request->hasFile('foto_barang')) {
+                // Delete old file if exists
+                if ($item->foto_barang) {
+                    Storage::disk('public')->delete($item->foto_barang);
+                }
+                $updateData['foto_barang'] = $request->file('foto_barang')->store('images', 'public');
+            }
+
+            $item->update($updateData);
+
+            \Log::info('updateIncomingItem: Item updated successfully', [
+                'item_id' => $item->id,
+                'data' => $updateData
             ]);
-            \Log::info('updateIncomingItem: Item updated successfully', ['item_id' => $incomingItem->id, 'updated_data' => $incomingItem->toArray()]);
-
 
             return response()->json([
                 'success' => true,
-                'message' => 'Barang berhasil diperbarui.',
-                'data' => $incomingItem
+                'message' => 'Data barang berhasil diperbarui.',
+                'data' => $item
             ]);
+
         } catch (\Exception $e) {
-            // If an error occurs after new file upload, delete the newly uploaded files to prevent orphans
-            if (isset($fotoPathToSave) && $request->hasFile('foto_barang')) {
-                Storage::disk('public')->delete($fotoPathToSave);
-            }
-            if (isset($pembayaranTransaksiPathToSave) && $request->hasFile('pembayaran_transaksi')) {
-                Storage::disk('public')->delete($pembayaranTransaksiPathToSave);
-            }
-            if (isset($notaTransaksiPathToSave) && $request->hasFile('nota_transaksi')) {
-                Storage::disk('public')->delete($notaTransaksiPathToSave);
-            }
-            // Log error for debugging
             \Log::error('Error in updateIncomingItem: ' . $e->getMessage(), ['exception' => $e]);
             return response()->json([
                 'success' => false,

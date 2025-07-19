@@ -197,6 +197,7 @@
                                 <th>Tanggal Masuk</th>
                                 <th>Lokasi Rak</th>
                                 <th>Nama Produsen</th>
+                                <th>Metode Bayar</th>
                                 <th>Pembayaran Transaksi</th>
                                 <th>Nota Transaksi</th>
                                 <th>Aksi</th>
@@ -241,29 +242,22 @@
                                         <td>
                                             @if($item->lokasi_rak_barang)
                                                 <span class="badge bg-info">{{ $item->lokasi_rak_barang }}</span>
-                                                <button class="btn btn-sm btn-outline-info ms-1" 
-                                                        onclick="window.showRackLocation('{{ $item->lokasi_rak_barang }}')"
-                                                        title="Lihat di Peta Gudang">
-                                                    <i class="fas fa-map-marker-alt"></i>
-                                                </button>
                                             @else
-                                                <span class="badge bg-secondary">Belum Ditempatkan</span>
-                                                <button class="btn btn-sm btn-outline-success ms-1" 
-                                                        onclick="window.quickAssignLocation({{ $item->id }})"
-                                                        title="Tetapkan Lokasi Cepat">
-                                                    <i class="fas fa-plus"></i>
-                                                </button>
+                                                <span class="badge bg-secondary">-</span>
                                             @endif
                                         </td>
-                                        <td>{{ $item->nama_produsen ?? '-' }}</td>
+                                        <td>
+                                            @if($item->producer)
+                                                {{ $item->producer->nama_produsen_supplier }}
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                        <td>{{ $item->metode_bayar ?? '-' }}</td>
                                         <td>
                                             @if($item->pembayaran_transaksi)
-                                                <a href="{{ asset('storage/' . $item->pembayaran_transaksi) }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Lihat Bukti Pembayaran">
-                                                    @if(Str::endsWith($item->pembayaran_transaksi, ['.pdf']))
-                                                        <i class="fas fa-file-pdf"></i> PDF
-                                                    @else
-                                                        <i class="fas fa-image"></i> Gambar
-                                                    @endif
+                                                <a href="{{ asset('storage/' . $item->pembayaran_transaksi) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-file"></i> Lihat
                                                 </a>
                                             @else
                                                 -
@@ -271,12 +265,8 @@
                                         </td>
                                         <td>
                                             @if($item->nota_transaksi)
-                                                <a href="{{ asset('storage/' . $item->nota_transaksi) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Lihat Nota Transaksi">
-                                                    @if(Str::endsWith($item->nota_transaksi, ['.pdf']))
-                                                        <i class="fas fa-file-pdf"></i> PDF
-                                                    @else
-                                                        <i class="fas fa-image"></i> Gambar
-                                                    @endif
+                                                <a href="{{ asset('storage/' . $item->nota_transaksi) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fas fa-receipt"></i> Lihat
                                                 </a>
                                             @else
                                                 -
@@ -463,15 +453,17 @@
                                                 <span class="badge bg-secondary">-</span>
                                             @endif
                                         </td>
-                                        <td>{{ $item->nama_produsen ?? '-' }}</td>
+                                        <td>
+                                            @if($item->producer)
+                                                {{ $item->producer->nama_produsen_supplier }}
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
                                         <td>
                                             @if($item->pembayaran_transaksi)
-                                                <a href="{{ asset('storage/' . $item->pembayaran_transaksi) }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Lihat Bukti Pembayaran">
-                                                    @if(Str::endsWith($item->pembayaran_transaksi, ['.pdf']))
-                                                        <i class="fas fa-file-pdf"></i> PDF
-                                                    @else
-                                                        <i class="fas fa-image"></i> Gambar
-                                                    @endif
+                                                <a href="{{ asset('storage/' . $item->pembayaran_transaksi) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-file"></i> Lihat
                                                 </a>
                                             @else
                                                 -
@@ -479,12 +471,8 @@
                                         </td>
                                         <td>
                                             @if($item->nota_transaksi)
-                                                <a href="{{ asset('storage/' . $item->nota_transaksi) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Lihat Nota Transaksi">
-                                                    @if(Str::endsWith($item->nota_transaksi, ['.pdf']))
-                                                        <i class="fas fa-file-pdf"></i> PDF
-                                                    @else
-                                                        <i class="fas fa-image"></i> Gambar
-                                                    @endif
+                                                <a href="{{ asset('storage/' . $item->nota_transaksi) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fas fa-receipt"></i> Lihat
                                                 </a>
                                             @else
                                                 -
@@ -1372,17 +1360,17 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                 <div class="mb-3">
                     <label for="crud_pembayaran_transaksi" class="form-label">Bukti Pembayaran</label>
                     <input type="file" class="form-control" id="crud_pembayaran_transaksi" name="pembayaran_transaksi" accept="image/*,application/pdf">
-                    <small class="text-muted">Format: JPG, PNG, PDF (max 2MB)</small>
+                    <small class="form-text text-muted">Format yang diizinkan: JPG, PNG, GIF, SVG, PDF. Maksimal 2MB.</small>
                 </div>
                 <div class="mb-3">
                     <label for="crud_nota_transaksi" class="form-label">Nota Transaksi</label>
                     <input type="file" class="form-control" id="crud_nota_transaksi" name="nota_transaksi" accept="image/*,application/pdf">
-                    <small class="text-muted">Format: JPG, PNG, PDF (max 2MB)</small>
+                    <small class="form-text text-muted">Format yang diizinkan: JPG, PNG, GIF, SVG, PDF. Maksimal 2MB.</small>
                 </div>
                 <div class="mb-3">
                     <label for="crud_foto_barang" class="form-label">Foto Barang</label>
                     <input type="file" class="form-control" id="crud_foto_barang" name="foto_barang" accept="image/*">
-                    <small class="text-muted">Format: JPG, PNG (max 2MB)</small>
+                    <small class="form-text text-muted">Format yang diizinkan: JPG, PNG, GIF, SVG. Maksimal 2MB.</small>
                 </div>
             `;
         } else { // outgoing - add mode (e.g., from "Pindah ke Barang Keluar" or "Proses Barang Keluar")
@@ -1551,7 +1539,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                 <div class="mb-3">
                     <label for="crud_pembayaran_transaksi" class="form-label">Bukti Pembayaran</label>
                     <input type="file" class="form-control" id="crud_pembayaran_transaksi" name="pembayaran_transaksi" accept="image/*,application/pdf">
-                    <small class="text-muted">Unggah gambar atau PDF bukti pembayaran (biarkan kosong untuk tidak mengubah).</small>
+                    <small class="form-text text-muted">Unggah gambar atau PDF bukti pembayaran (biarkan kosong untuk tidak mengubah).</small>
                     <div id="current_pembayaran_transaksi" class="mt-2">
                         ${itemData.pembayaran_transaksi ? (window.isPdf(itemData.pembayaran_transaksi) ? `<a href="{{ asset('storage') }}/${itemData.pembayaran_transaksi}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="{{ asset('storage') }}/${itemData.pembayaran_transaksi}" alt="Current Payment" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
                     </div>
@@ -1563,7 +1551,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                 <div class="mb-3">
                     <label for="crud_nota_transaksi" class="form-label">Nota Transaksi</label>
                     <input type="file" class="form-control" id="crud_nota_transaksi" name="nota_transaksi" accept="image/*,application/pdf">
-                    <small class="text-muted">Unggah gambar atau PDF nota transaksi (biarkan kosong untuk tidak mengubah).</small>
+                    <small class="form-text text-muted">Unggah gambar atau PDF nota transaksi (biarkan kosong untuk tidak mengubah).</small>
                     <div id="current_nota_transaksi" class="mt-2">
                         ${itemData.nota_transaksi ? (window.isPdf(itemData.nota_transaksi) ? `<a href="{{ asset('storage') }}/${itemData.nota_transaksi}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="{{ asset('storage') }}/${itemData.nota_transaksi}" alt="Current Nota" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
                     </div>
@@ -1575,7 +1563,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                 <div class="mb-3">
                     <label for="crud_foto_barang" class="form-label">Foto Barang</label>
                     <input type="file" class="form-control" id="crud_foto_barang" name="foto_barang" accept="image/*">
-                    <small class="text-muted">Unggah gambar barang (biarkan kosong untuk tidak mengubah).</small>
+                    <small class="form-text text-muted">Unggah gambar barang (biarkan kosong untuk tidak mengubah).</small>
                     <div id="current_foto_barang" class="mt-2">
                         ${itemData.foto_barang ? `<img src="{{ asset('storage') }}/${itemData.foto_barang}" alt="Current Photo" style="width: 100px; height: auto; border-radius: 5px;">` : ''}
                     </div>
@@ -1738,6 +1726,24 @@ window.handleItemCrudSubmit = async function(event, itemType, mode) {
     submitBtn.innerHTML = '<div class="loading-spinner"></div> Processing...';
 
     try {
+        // Get category name from category_id
+        const categorySelect = document.getElementById('crud_kategori_barang');
+        if (categorySelect) {
+            const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+            if (selectedOption) {
+                formData.append('kategori_barang', selectedOption.text);
+            }
+        }
+
+        // Handle file inputs
+        const fileInputs = ['pembayaran_transaksi', 'nota_transaksi', 'foto_barang'];
+        fileInputs.forEach(fieldName => {
+            const fileInput = document.querySelector(`input[name="${fieldName}"]`);
+            if (fileInput && fileInput.files.length === 0) {
+                formData.delete(fieldName); // Remove empty file fields
+            }
+        });
+
         const response = await fetch(url, {
             method: 'POST', // Always POST for Laravel with _method spoofing
             headers: {
@@ -1755,8 +1761,16 @@ window.handleItemCrudSubmit = async function(event, itemType, mode) {
                 if (contentType && contentType.includes('application/json')) {
                     const errorData = await response.json();
                     errorText = errorData.message || JSON.stringify(errorData);
+                    if (errorData.errors) {
+                        let errorMessage = 'Validation errors:';
+                        for (const key in errorData.errors) {
+                            errorMessage += `\n- ${errorData.errors[key][0]}`;
+                        }
+                        window.showAlert('error', errorMessage);
+                        return;
+                    }
                 } else {
-                    errorText = await response.text(); // Get raw text (likely HTML error page)
+                    errorText = await response.text();
                 }
             }
             catch (parseError) {
@@ -1765,7 +1779,7 @@ window.handleItemCrudSubmit = async function(event, itemType, mode) {
             }
             console.error('Server response was not OK:', errorText);
             window.showAlert('error', `Server error: ${errorText.substring(0, 150)}... (See console for details)`);
-            return; // Stop execution
+            return;
         }
 
         const data = await response.json();

@@ -24,6 +24,8 @@ class IncomingItem extends Model
         'pembayaran_transaksi',
         'nota_transaksi',
         'foto_barang',
+        'kondisi_fisik',
+        'catatan'
     ];
 
     protected $casts = [
