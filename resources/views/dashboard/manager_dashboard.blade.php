@@ -113,7 +113,7 @@
                                 <div class="col mr-2">
                                     <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
                                         Jumlah Barang Masuk Hari Ini</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">250 Pcs</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $incomingToday }} Pcs</div>
                                 </div>
                                 <div class="col-auto">
                                     <i class="fas fa-box fa-2x" style="color: #adb5bd;"></i>
@@ -130,7 +130,7 @@
                                 <div class="col mr-2">
                                     <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
                                         Jumlah Barang Keluar Hari Ini</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">200 Pcs</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $outgoingToday }} Pcs</div>
                                 </div>
                                 <div class="col-auto">
                                     <i class="fas fa-truck fa-2x" style="color: #adb5bd;"></i>
@@ -147,7 +147,7 @@
                                 <div class="col mr-2">
                                     <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
                                         Jumlah Transaksi Penjualan Hari Ini</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">10 Nota</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $salesTransactionsToday }} Nota</div>
                                 </div>
                                 <div class="col-auto">
                                     <i class="fas fa-money-bill-wave fa-2x" style="color: #adb5bd;"></i>
@@ -164,7 +164,7 @@
                                 <div class="col mr-2">
                                     <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
                                         Jumlah Transaksi Pembelian Hari Ini</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">3 Produk</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $purchaseTransactionsToday }} Produk</div>
                                 </div>
                                 <div class="col-auto">
                                     <i class="fas fa-shopping-cart fa-2x" style="color: #adb5bd;"></i>
@@ -181,7 +181,7 @@
                             <h6 class="m-0 font-weight-bold text-primary">Grafik Tren Penjualan dan Pembelian</h6>
                             <div class="d-flex align-items-center">
                                 <button id="prevWeekSales" class="btn btn-sm btn-outline-secondary me-2"><i class="fas fa-chevron-left"></i></button>
-                                <span id="currentWeekPeriodSales" class="text-muted me-2">1 – 7 Juli 2025</span>
+                                <span id="currentWeekPeriodSales" class="text-muted me-2">{{ $chartPeriod }}</span>
                                 <button id="nextWeekSales" class="btn btn-sm btn-outline-secondary me-2"><i class="fas fa-chevron-right"></i></button>
                                 <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-calendar-alt"></i></button>
                             </div>
@@ -197,8 +197,8 @@
                 <div class="col-lg-6 mb-4"> {{-- Menggunakan col-lg-6 untuk berdampingan di layar besar --}}
                     <div class="card shadow mb-4">
                         <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Kondisi Stok Barang</h6>
-                            <span class="text-muted">Stok Barang Saat Ini</span>
+                            <h6 class="m-0 font-weight-bold text-primary">Top 10 Barang Stok Terendah</h6>
+                            <span class="text-muted">Item yang perlu segera di-restock</span>
                         </div>
                         <div class="card-body">
                             <div class="chart-bar-horizontal" style="max-height: 60vh; min-height: 350px;"> {{-- Sesuaikan tinggi agar pas berdampingan --}}
@@ -293,213 +293,83 @@
             }, 100);
         });
 
-        // Chart 1: Grafik Tren Penjualan dan Pembelian (Weekly Bar Chart)
-        const salesPurchaseCtx = document.getElementById('salesPurchaseBarChart').getContext('2d');
-        let currentWeekStartSales = new Date();
-        currentWeekStartSales.setDate(currentWeekStartSales.getDate() - (currentWeekStartSales.getDay() + 6) % 7); // Set to most recent Monday
+        // Data from Laravel Controller for Sales and Purchase Chart
+        const salesPurchaseChartLabels = @json($chartLabels);
+        const purchaseData = @json($purchaseTrendData);
+        const salesData = @json($salesTrendData);
 
-        const salesPurchaseData = {
-            labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
-            datasets: [{
-                label: 'Penjualan',
-                backgroundColor: '#4CAF50', // Green
-                borderColor: '#4CAF50',
-                data: [20, 30, 25, 35, 28, 40, 22], // Dummy data
-                borderRadius: 5,
-            }, {
-                label: 'Pembelian',
-                backgroundColor: '#2196F3', // Blue
-                borderColor: '#2196F3',
-                data: [15, 20, 18, 25, 20, 30, 17], // Dummy data
-                borderRadius: 5,
-            }]
-        };
+        // Data from Laravel Controller for Stock Condition Chart
+        const stockItemLabels = @json($stockItemLabels);
+        const stockItemData = @json($stockItemData);
 
-        const salesPurchaseBarChart = new Chart(salesPurchaseCtx, {
-            type: 'bar',
-            data: salesPurchaseData,
-            options: {
-                maintainAspectRatio: false,
-                layout: {
-                    padding: {
-                        left: 10,
-                        right: 25,
-                        top: 25,
-                        bottom: 0
+        // Sales and Purchase Bar Chart
+        const salesPurchaseCtx = document.getElementById('salesPurchaseBarChart');
+        if (salesPurchaseCtx) {
+            new Chart(salesPurchaseCtx, {
+                type: 'bar',
+                data: {
+                    labels: salesPurchaseChartLabels,
+                    datasets: [{
+                        label: 'Pembelian',
+                        data: purchaseData,
+                        backgroundColor: '#3498db',
+                    }, {
+                        label: 'Penjualan',
+                        data: salesData,
+                        backgroundColor: '#27ae60',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Jumlah Unit' }
+                        },
+                        x: {
+                            title: { display: true, text: 'Hari' }
+                        }
                     }
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            display: false,
-                            drawBorder: false
-                        },
-                        ticks: {
-                            maxTicksLimit: 7
-                        }
-                    },
-                    y: {
-                        ticks: {
-                            min: 0,
-                            max: 50, // Max value for Y-axis
-                            maxTicksLimit: 5,
-                            padding: 10,
-                            callback: function(value, index, values) {
-                                return value + ' Transaksi'; // Add 'Transaksi' to Y-axis labels
-                            }
-                        },
-                        grid: {
-                            color: "rgb(234, 236, 244)",
-                            zeroLineColor: "rgb(234, 236, 244)",
-                            drawBorder: false,
-                            borderDash: [2],
-                            zeroLineBorderDash: [2]
-                        }
-                    },
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'bottom',
-                        labels: {
-                            fontColor: '#858796'
-                        }
-                    },
-                    tooltip: {
-                        titleMarginBottom: 10,
-                        titleFontColor: '#ffffff',
-                        titleFontSize: 14,
-                        backgroundColor: "rgb(0,0,0)",
-                        bodyFontColor: "#ffffff",
-                        borderColor: '#dddfeb',
-                        borderWidth: 1,
-                        xPadding: 15,
-                        yPadding: 15,
-                        displayColors: false,
-                        caretPadding: 10,
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                label += context.raw + ' Transaksi';
-                                return label;
-                            }
-                        }
-                    },
-                },
-                responsive: true
-            }
-        });
-
-        function updateSalesChartPeriod() {
-            const options = { day: 'numeric', month: 'long', year: 'numeric' };
-            const endDate = new Date(currentWeekStartSales);
-            endDate.setDate(currentWeekStartSales.getDate() + 6);
-            document.getElementById('currentWeekPeriodSales').innerText =
-                `${currentWeekStartSales.toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })} - ${endDate.toLocaleDateString('id-ID', options)}`;
+                }
+            });
         }
 
-        document.getElementById('prevWeekSales').addEventListener('click', function() {
-            currentWeekStartSales.setDate(currentWeekStartSales.getDate() - 7);
-            updateSalesChartPeriod();
-            // In a real application, you would fetch new data here
-        });
-
-        document.getElementById('nextWeekSales').addEventListener('click', function() {
-            currentWeekStartSales.setDate(currentWeekStartSales.getDate() + 7);
-            updateSalesChartPeriod();
-            // In a real application, you would fetch new data here
-        });
-
-        updateSalesChartPeriod(); // Initial update
-
-        // Chart 2: Kondisi Stok Barang (Horizontal Bar Chart)
-        const stockCtx = document.getElementById('stockHorizontalBarChart').getContext('2d');
-
-        const stockData = {
-            labels: ['Oreo', 'Taro', 'Torpedo', 'Coca-cola', 'Mizone', 'Ale-ale'],
-            datasets: [{
-                label: 'Jumlah Stok',
-                backgroundColor: '#FF9800', // Orange
-                borderColor: '#FF9800',
-                data: [350, 280, 450, 120, 300, 200], // Dummy data
-                borderRadius: 5,
-            }]
-        };
-
-        const stockHorizontalBarChart = new Chart(stockCtx, {
-            type: 'bar',
-            data: stockData,
-            options: {
-                indexAxis: 'y', // This makes it a horizontal bar chart
-                maintainAspectRatio: false,
-                layout: {
-                    padding: {
-                        left: 0,
-                        right: 25,
-                        top: 25,
-                        bottom: 0
+        // Stock Condition Horizontal Bar Chart
+        const stockHorizontalCtx = document.getElementById('stockHorizontalBarChart');
+        if (stockHorizontalCtx) {
+            const itemColors = [
+                '#e74c3c', '#e67e22', '#f1c40f', '#f39c12', '#3498db',
+                '#9b59b6', '#1abc9c', '#2ecc71', '#34495e', '#795548'
+            ];
+            new Chart(stockHorizontalCtx, {
+                type: 'bar',
+                data: {
+                    labels: stockItemLabels,
+                    datasets: [{
+                        label: 'Jumlah Stok',
+                        data: stockItemData,
+                        backgroundColor: itemColors,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Jumlah Unit (Pcs)' }
+                        }
                     }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            min: 0,
-                            max: 500, // Max value for X-axis
-                            maxTicksLimit: 5,
-                            padding: 10,
-                            callback: function(value, index, values) {
-                                return value + ' Pcs'; // Add 'Pcs' to X-axis labels
-                            }
-                        },
-                        grid: {
-                            color: "rgb(234, 236, 244)",
-                            zeroLineColor: "rgb(234, 236, 244)",
-                            drawBorder: false,
-                            borderDash: [2],
-                            zeroLineBorderDash: [2]
-                        }
-                    },
-                    y: {
-                        grid: {
-                            display: false,
-                            drawBorder: false
-                        }
-                    },
-                },
-                plugins: {
-                    legend: {
-                        display: false // No legend needed for single dataset
-                    },
-                    tooltip: {
-                        titleMarginBottom: 10,
-                        titleFontColor: '#ffffff',
-                        titleFontSize: 14,
-                        backgroundColor: "rgb(0,0,0)",
-                        bodyFontColor: "#ffffff",
-                        borderColor: '#dddfeb',
-                        borderWidth: 1,
-                        xPadding: 15,
-                        yPadding: 15,
-                        displayColors: false,
-                        caretPadding: 10,
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                label += context.raw + ' Pcs';
-                                return label;
-                            }
-                        }
-                    },
-                },
-                responsive: true
-            }
-        });
+                }
+            });
+        }
     });
 </script>
 @endpush
+
+@endsection

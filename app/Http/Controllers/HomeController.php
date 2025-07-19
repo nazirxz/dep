@@ -25,60 +25,76 @@ class HomeController extends Controller
      */
     public function index()
     {
-        // Mendapatkan user yang sedang login
         $user = Auth::user();
+        $today = Carbon::today();
 
-        // Mengambil data barang masuk dari database
-        $incomingItems = IncomingItem::orderBy('tanggal_masuk_barang', 'desc')->get();
+        // Data for Summary Cards
+        $incomingToday = IncomingItem::whereDate('tanggal_masuk_barang', $today)->sum('jumlah_barang');
+        $outgoingToday = OutgoingItem::whereDate('tanggal_keluar_barang', $today)->sum('jumlah_barang');
+        $salesTransactionsToday = OutgoingItem::whereDate('tanggal_keluar_barang', $today)->distinct('nota_transaksi')->count();
+        $purchaseTransactionsToday = IncomingItem::whereDate('tanggal_masuk_barang', $today)->distinct('nota_transaksi')->count();
 
-        // Mengambil data barang keluar dari database
-        $outgoingItems = OutgoingItem::orderBy('tanggal_keluar_barang', 'desc')->get();
+        // Data for Stock Condition Chart (Top 10 Lowest Stock Items)
+        $lowStockItems = IncomingItem::where('jumlah_barang', '>', 0)
+                                   ->orderBy('jumlah_barang', 'asc')
+                                   ->take(10)
+                                   ->get();
+        $stockItemLabels = $lowStockItems->pluck('nama_barang');
+        $stockItemData = $lowStockItems->pluck('jumlah_barang');
+        
+        // Data for Sales and Purchase Trend Chart (Last 7 Days)
+        $startDate = Carbon::now()->subDays(6)->startOfDay();
+        $endDate = Carbon::now()->endOfDay();
 
-        // --- Data untuk Status Stok (Banyak, Sedikit, Habis) ---
-        // Hitungan ini relevan untuk dashboard manajer juga
-        $plentyStockCount = 0;
-        $lowStockCount = 0;
-        $outOfStockCount = 0;
+        $daysOfWeek = [];
+        for ($i = 0; $i < 7; $i++) {
+            $daysOfWeek[] = $startDate->copy()->addDays($i)->isoFormat('dddd');
+        }
 
-        foreach ($incomingItems as $item) {
-            if ($item->jumlah_barang > 50) { // Asumsi: Banyak jika > 50 unit
-                $plentyStockCount++;
-            } elseif ($item->jumlah_barang > 0 && $item->jumlah_barang <= 50) { // Asumsi: Sedikit jika 1-50 unit
-                $lowStockCount++;
-            } else { // Asumsi: Habis jika 0 unit
-                $outOfStockCount++;
+        $purchaseData = array_fill(0, 7, 0);
+        $salesData = array_fill(0, 7, 0);
+
+        $incomingItemsForChart = IncomingItem::whereBetween('tanggal_masuk_barang', [$startDate, $endDate])->get();
+        foreach ($incomingItemsForChart as $item) {
+            $dayIndex = $item->tanggal_masuk_barang->diffInDays($startDate);
+            if ($dayIndex >= 0 && $dayIndex < 7) {
+                $purchaseData[$dayIndex] += $item->jumlah_barang;
             }
         }
-        // --- Akhir Data untuk Status Stok ---
 
-        // Memeriksa role user dan memuat tampilan yang sesuai
+        $outgoingItemsForChart = OutgoingItem::whereBetween('tanggal_keluar_barang', [$startDate, $endDate])->get();
+        foreach ($outgoingItemsForChart as $item) {
+            $dayIndex = $item->tanggal_keluar_barang->diffInDays($startDate);
+            if ($dayIndex >= 0 && $dayIndex < 7) {
+                $salesData[$dayIndex] += $item->jumlah_barang;
+            }
+        }
+
+
         if ($user->role === 'manager') {
-            return view('home', [
-                'dashboardView' => 'dashboard.manager_dashboard',
-                'incomingItems' => $incomingItems, // Tetap diperlukan untuk ringkasan total
-                'outgoingItems' => $outgoingItems, // Tetap diperlukan untuk ringkasan total
-                'plentyStockCount' => $plentyStockCount,
-                'lowStockCount' => $lowStockCount,
-                'outOfStockCount' => $outOfStockCount,
+            return view('dashboard.manager_dashboard', [
+                'incomingToday' => $incomingToday,
+                'outgoingToday' => $outgoingToday,
+                'salesTransactionsToday' => $salesTransactionsToday,
+                'purchaseTransactionsToday' => $purchaseTransactionsToday,
+                'stockItemLabels' => $stockItemLabels,
+                'stockItemData' => $stockItemData,
+                'chartLabels' => $daysOfWeek,
+                'purchaseTrendData' => $purchaseData,
+                'salesTrendData' => $salesData,
+                'chartPeriod' => $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y'),
             ]);
-        } elseif ($user->role === 'admin') { // Diubah dari 'staff_admin' menjadi 'admin'
+        } elseif ($user->role === 'admin') {
+            $incomingItems = IncomingItem::orderBy('tanggal_masuk_barang', 'desc')->get();
+            $outgoingItems = OutgoingItem::orderBy('tanggal_keluar_barang', 'desc')->get();
             return view('home', [
-                'dashboardView' => 'dashboard.staff_admin_dashboard', // Tetap menggunakan tampilan staff_admin_dashboard
+                'dashboardView' => 'dashboard.staff_admin_dashboard',
                 'incomingItems' => $incomingItems,
                 'outgoingItems' => $outgoingItems,
             ]);
         }
         
-        // Jika role tidak dikenali, arahkan ke dashboard manager sebagai fallback
-        // Atau Anda bisa mengarahkan ke halaman login dengan pesan error
-        return view('home', [
-            'dashboardView' => 'dashboard.manager_dashboard', // Fallback ke dashboard manager
-            'incomingItems' => $incomingItems,
-            'outgoingItems' => $outgoingItems,
-            'plentyStockCount' => $plentyStockCount,
-            'lowStockCount' => $lowStockCount,
-            'outOfStockCount' => $outOfStockCount,
-        ])->with('error', 'Role pengguna tidak dikenali atau tidak memiliki dashboard khusus. Anda diarahkan ke dashboard manager.');
+        return redirect()->route('login')->with('error', 'Role tidak dikenali.');
     }
 
     /**
