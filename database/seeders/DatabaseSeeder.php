@@ -16,7 +16,8 @@ class DatabaseSeeder extends Seeder
             UserTableSeeder::class,
             IncomingItemSeeder::class,
             OutgoingItemSeeder::class,
-            ProducerSeeder::class, // Tambahkan baris ini
+            ProducerSeeder::class,
+            VerificationItemSeeder::Class // Tambahkan baris ini
         ]);
     }
 }
