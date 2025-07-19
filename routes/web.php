@@ -98,3 +98,7 @@ Route::middleware(['auth'])->group(function () {
     // Verification routes
     Route::post('/verify-incoming-item/{id}', [VerificationItemController::class, 'verify'])->name('verify.incoming-item');
 });
+
+Route::middleware(['auth', 'role:manager'])->group(function () {
+    // Rute yang hanya bisa diakses oleh manajer
+});

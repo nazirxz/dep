@@ -201,7 +201,6 @@
                                                     <button class="btn btn-sm btn-danger me-1" onclick="deleteEmployee({{ $account->id }})">
                                                         <i class="fas fa-trash"></i> Hapus
                                                     </button>
-                                                    <button class="btn btn-sm btn-info"><i class="fas fa-history"></i> Histori</button>
                                                 </td>
                                             </tr>
                                         @empty

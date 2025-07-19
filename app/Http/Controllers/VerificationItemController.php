@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\VerificationItem;
 use App\Models\IncomingItem;
+use App\Models\ReturnedItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -69,6 +70,15 @@ class VerificationItemController extends Controller
 
             // If condition is not "Baik", delete the item and return
             if ($request->kondisi_fisik !== 'Baik') {
+                // Create a new returned item record
+                ReturnedItem::create([
+                    'nama_barang' => $verificationItem->nama_barang,
+                    'kategori_barang' => $verificationItem->kategori_barang,
+                    'jumlah_barang' => $verificationItem->jumlah_barang,
+                    'nama_produsen' => $verificationItem->producer->nama_produsen_supplier ?? 'Tidak Diketahui',
+                    'alasan_pengembalian' => $request->kondisi_fisik . ' - ' . $request->catatan_verifikasi,
+                ]);
+
                 // Store the item details for the response
                 $itemDetails = [
                     'nama_barang' => $verificationItem->nama_barang,
@@ -94,7 +104,7 @@ class VerificationItemController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Barang telah dihapus karena kondisi ' . strtolower($request->kondisi_fisik),
+                    'message' => 'Item tidak lolos verifikasi dan telah ditandai untuk pengembalian.',
                     'data' => $itemDetails,
                     'status' => 'deleted'
                 ]);

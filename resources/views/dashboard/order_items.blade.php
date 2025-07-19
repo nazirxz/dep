@@ -164,7 +164,38 @@
                             </div>
                         </div>
                         <div class="tab-pane fade" id="return-history" role="tabpanel" aria-labelledby="return-history-tab">
-                            <p>Konten untuk Riwayat Pengembalian Barang akan tampil di sini.</p>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>No.</th>
+                                            <th>Nama Barang</th>
+                                            <th>Kategori Barang</th>
+                                            <th>Jumlah</th>
+                                            <th>Nama Produsen</th>
+                                            <th>Alasan Pengembalian</th>
+                                            <th>Tanggal Pengembalian</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($returnedItems as $item)
+                                            <tr>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>{{ $item->nama_barang }}</td>
+                                                <td>{{ $item->kategori_barang }}</td>
+                                                <td>{{ $item->jumlah_barang }}</td>
+                                                <td>{{ $item->nama_produsen ?? '-' }}</td>
+                                                <td>{{ $item->alasan_pengembalian }}</td>
+                                                <td>{{ $item->created_at->format('d M Y H:i') }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="7" class="text-center">Tidak ada data barang yang dikembalikan.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>

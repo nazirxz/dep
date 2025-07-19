@@ -11,6 +11,7 @@ use App\Models\OutgoingItem;
 use App\Models\Producer;
 use App\Models\User;
 use App\Models\Category; // Added this import
+use App\Models\ReturnedItem;
 use Carbon\Carbon;
 use App\Exports\ItemReportExport;
 use Maatwebsite\Excel\Facades\Excel;
@@ -167,9 +168,11 @@ class HomeController extends Controller
     {
         // Mengambil data produsen dari database
         $producers = Producer::orderBy('nama_produsen_supplier')->get();
+        $returnedItems = ReturnedItem::orderBy('created_at', 'desc')->get();
 
         return view('dashboard.order_items', [
             'producers' => $producers,
+            'returnedItems' => $returnedItems,
         ]);
     }
 
@@ -288,5 +291,11 @@ class HomeController extends Controller
         // For the print view, we just need the data.
         // The view itself will handle the presentation.
         return view('exports.stock_report_print', ['incomingItems' => $incomingItems]);
+    }
+
+    public function showReturnedItems()
+    {
+        $returnedItems = ReturnedItem::orderBy('created_at', 'desc')->get();
+        return view('dashboard.returned_items', ['returnedItems' => $returnedItems]);
     }
 }
