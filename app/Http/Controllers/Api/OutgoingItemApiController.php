@@ -27,36 +27,38 @@ class OutgoingItemApiController extends Controller
 
             // Build query
             $query = OutgoingItem::select([
-                'id',
-                'nama_barang',
-                'kategori_barang',
-                'jumlah_barang',
-                'tanggal_keluar_barang',
-                'tujuan_distribusi',
-                'lokasi_rak_barang',
-                'nama_produsen',
-                'metode_bayar',
-                'foto_barang',
-                'pembayaran_transaksi',
-                'nota_transaksi'
-            ]);
+                'outgoing_items.id',
+                'outgoing_items.nama_barang',
+                'outgoing_items.kategori_barang',
+                'outgoing_items.jumlah_barang',
+                'outgoing_items.tanggal_keluar_barang',
+                'outgoing_items.tujuan_distribusi',
+                'outgoing_items.lokasi_rak_barang',
+                'producers.nama_produsen_supplier as nama_produsen',
+                'outgoing_items.metode_bayar',
+                'outgoing_items.foto_barang',
+                'outgoing_items.pembayaran_transaksi',
+                'outgoing_items.nota_transaksi'
+            ])
+            ->leftJoin('producers', 'outgoing_items.producer_id', '=', 'producers.id');
 
             // Filter by kategori
             if ($kategori && $kategori !== 'all') {
-                $query->where('kategori_barang', $kategori);
+                $query->where('outgoing_items.kategori_barang', $kategori);
             }
 
             // Search functionality
             if ($search) {
                 $query->where(function($q) use ($search) {
-                    $q->where('nama_barang', 'LIKE', "%{$search}%")
-                      ->orWhere('kategori_barang', 'LIKE', "%{$search}%")
-                      ->orWhere('tujuan_distribusi', 'LIKE', "%{$search}%")
-                      ->orWhere('nama_produsen', 'LIKE', "%{$search}%");
+                    $q->where('outgoing_items.nama_barang', 'LIKE', "%{$search}%")
+                      ->orWhere('outgoing_items.kategori_barang', 'LIKE', "%{$search}%")
+                      ->orWhere('outgoing_items.tujuan_distribusi', 'LIKE', "%{$search}%")
+                      ->orWhere('producers.nama_produsen_supplier', 'LIKE', "%{$search}%");
                 });
             }
 
             // Apply sorting
+            $sortBy = $sortBy === 'nama_produsen' ? 'producers.nama_produsen_supplier' : 'outgoing_items.' . $sortBy;
             $query->orderBy($sortBy, $sortOrder);
 
             // Paginate results
@@ -119,22 +121,23 @@ class OutgoingItemApiController extends Controller
             $search = $request->get('search');
 
             $query = OutgoingItem::select([
-                'id',
-                'nama_barang',
-                'kategori_barang',
-                'jumlah_barang',
-                'tanggal_keluar_barang',
-                'tujuan_distribusi',
-                'nama_produsen',
-                'foto_barang'
+                'outgoing_items.id',
+                'outgoing_items.nama_barang',
+                'outgoing_items.kategori_barang',
+                'outgoing_items.jumlah_barang',
+                'outgoing_items.tanggal_keluar_barang',
+                'outgoing_items.tujuan_distribusi',
+                'producers.nama_produsen_supplier as nama_produsen',
+                'outgoing_items.foto_barang'
             ])
-            ->where('kategori_barang', $kategori);
+            ->leftJoin('producers', 'outgoing_items.producer_id', '=', 'producers.id')
+            ->where('outgoing_items.kategori_barang', $kategori);
 
             if ($search) {
-                $query->where('nama_barang', 'LIKE', "%{$search}%");
+                $query->where('outgoing_items.nama_barang', 'LIKE', "%{$search}%");
             }
 
-            $outgoingItems = $query->orderBy('tanggal_keluar_barang', 'desc')
+            $outgoingItems = $query->orderBy('outgoing_items.tanggal_keluar_barang', 'desc')
                                   ->paginate($perPage);
 
             $formattedItems = $outgoingItems->getCollection()->map(function ($item) {
@@ -178,7 +181,13 @@ class OutgoingItemApiController extends Controller
     public function show(Request $request, $id): JsonResponse
     {
         try {
-            $outgoingItem = OutgoingItem::find($id);
+            $outgoingItem = OutgoingItem::select([
+                'outgoing_items.*',
+                'producers.nama_produsen_supplier as nama_produsen'
+            ])
+            ->leftJoin('producers', 'outgoing_items.producer_id', '=', 'producers.id')
+            ->where('outgoing_items.id', $id)
+            ->first();
 
             if (!$outgoingItem) {
                 return response()->json([
