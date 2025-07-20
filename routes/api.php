@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\DashboardApiController;
+use App\Http\Controllers\Api\OutgoingItemApiController;
+use App\Http\Controllers\Api\IncomingItemApiController;
 
 // Authentication routes (public)
 Route::post('/register', [AuthController::class, 'register']);
@@ -54,5 +56,47 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // GET /api/dashboard/complete - Get complete dashboard data in one request
         Route::get('/complete', [DashboardApiController::class, 'getCompleteDashboard']);
+    });
+
+    // Outgoing Items (Barang Keluar) API routes for mobile
+    Route::prefix('outgoing-items')->group(function () {
+        // GET /api/outgoing-items - Get all outgoing items with filters
+        Route::get('/', [OutgoingItemApiController::class, 'index']);
+        
+        // GET /api/outgoing-items/categories - Get all available categories
+        Route::get('/categories', [OutgoingItemApiController::class, 'getCategories']);
+        
+        // GET /api/outgoing-items/category/{kategori} - Get outgoing items by category
+        Route::get('/category/{kategori}', [OutgoingItemApiController::class, 'getByCategory']);
+        
+        // GET /api/outgoing-items/search?q=keyword - Search outgoing items
+        Route::get('/search', [OutgoingItemApiController::class, 'search']);
+        
+        // GET /api/outgoing-items/weekly-sales-stats - Get weekly sales statistics
+        Route::get('/weekly-sales-stats', [OutgoingItemApiController::class, 'getWeeklySalesStats']);
+        
+        // GET /api/outgoing-items/{id} - Get single outgoing item detail
+        Route::get('/{id}', [OutgoingItemApiController::class, 'show']);
+    });
+
+    // Incoming Items (Barang Masuk) API routes for mobile
+    Route::prefix('incoming-items')->group(function () {
+        // GET /api/incoming-items - Get all incoming items with filters
+        Route::get('/', [IncomingItemApiController::class, 'index']);
+        
+        // GET /api/incoming-items/categories - Get all available categories
+        Route::get('/categories', [IncomingItemApiController::class, 'getCategories']);
+        
+        // GET /api/incoming-items/category/{kategori} - Get incoming items by category
+        Route::get('/category/{kategori}', [IncomingItemApiController::class, 'getByCategory']);
+        
+        // GET /api/incoming-items/search?q=keyword - Search incoming items
+        Route::get('/search', [IncomingItemApiController::class, 'search']);
+        
+        // GET /api/incoming-items/weekly-incoming-stats - Get weekly incoming statistics
+        Route::get('/weekly-incoming-stats', [IncomingItemApiController::class, 'getWeeklyIncomingStats']);
+        
+        // GET /api/incoming-items/{id} - Get single incoming item detail
+        Route::get('/{id}', [IncomingItemApiController::class, 'show']);
     });
 });
