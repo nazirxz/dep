@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\DashboardApiController;
 use App\Http\Controllers\Api\OutgoingItemApiController;
 use App\Http\Controllers\Api\IncomingItemApiController;
+use App\Http\Controllers\Api\ReturnItemApiController;
 
 // Authentication routes (public)
 Route::post('/register', [AuthController::class, 'register']);
@@ -98,5 +99,26 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // GET /api/incoming-items/{id} - Get single incoming item detail
         Route::get('/{id}', [IncomingItemApiController::class, 'show']);
+    });
+
+    // Return Items (Barang Return) API routes for mobile
+    Route::prefix('return-items')->group(function () {
+        // GET /api/return-items - Get all returned items with filters
+        Route::get('/', [ReturnItemApiController::class, 'index']);
+        
+        // GET /api/return-items/categories - Get all available categories
+        Route::get('/categories', [ReturnItemApiController::class, 'getCategories']);
+        
+        // GET /api/return-items/category/{kategori} - Get returned items by category
+        Route::get('/category/{kategori}', [ReturnItemApiController::class, 'getByCategory']);
+        
+        // GET /api/return-items/search?q=keyword - Search returned items
+        Route::get('/search', [ReturnItemApiController::class, 'search']);
+        
+        // GET /api/return-items/weekly-return-stats - Get weekly return statistics
+        Route::get('/weekly-return-stats', [ReturnItemApiController::class, 'getWeeklyReturnStats']);
+        
+        // GET /api/return-items/{id} - Get single returned item detail
+        Route::get('/{id}', [ReturnItemApiController::class, 'show']);
     });
 });
