@@ -13,8 +13,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Disable foreign key checks
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        // Disable foreign key checks for SQLite
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys=OFF');
+        } else {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        }
 
         // Truncate all tables
         DB::table('verifikasi_barang')->truncate();
@@ -32,7 +36,11 @@ class DatabaseSeeder extends Seeder
             JsonDataSeeder::class,
         ]);
 
-        // Re-enable foreign key checks
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        // Re-enable foreign key checks for SQLite
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys=ON');
+        } else {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        }
     }
 }
