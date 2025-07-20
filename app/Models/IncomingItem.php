@@ -23,6 +23,7 @@ class IncomingItem extends Model
         'foto_barang',
         'kondisi_fisik',
         'catatan',
+        'harga_jual',
     ];
 
     /**
@@ -32,6 +33,7 @@ class IncomingItem extends Model
      */
     protected $casts = [
         'tanggal_masuk_barang' => 'date',
+        'harga_jual' => 'decimal:2',
     ];
 
     public function category()

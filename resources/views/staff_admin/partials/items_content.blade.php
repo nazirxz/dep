@@ -1303,6 +1303,14 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <input type="number" class="form-control" id="crud_jumlah_barang" name="jumlah_barang" required min="1">
                 </div>
                 <div class="mb-3">
+                    <label for="crud_harga_jual" class="form-label">Harga Jual</label>
+                    <div class="input-group">
+                        <span class="input-group-text">Rp</span>
+                        <input type="number" class="form-control" id="crud_harga_jual" name="harga_jual" min="0" step="0.01" placeholder="0.00">
+                    </div>
+                    <small class="text-muted">Masukkan harga jual per unit</small>
+                </div>
+                <div class="mb-3">
                     <label for="crud_tanggal_masuk" class="form-label">Tanggal Masuk *</label>
                     <input type="date" class="form-control" id="crud_tanggal_masuk" name="tanggal_masuk_barang" required>
                 </div>
@@ -1477,6 +1485,14 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                 <div class="mb-3">
                     <label for="crud_jumlah_barang" class="form-label">Jumlah Barang *</label>
                     <input type="number" class="form-control" id="crud_jumlah_barang" name="jumlah_barang" value="${itemData.jumlah_barang}" required min="0">
+                </div>
+                <div class="mb-3">
+                    <label for="crud_harga_jual" class="form-label">Harga Jual</label>
+                    <div class="input-group">
+                        <span class="input-group-text">Rp</span>
+                        <input type="number" class="form-control" id="crud_harga_jual" name="harga_jual" min="0" step="0.01" value="${itemData.harga_jual || ''}" placeholder="0.00">
+                    </div>
+                    <small class="text-muted">Masukkan harga jual per unit</small>
                 </div>
                 <div class="mb-3">
                     <label for="crud_tanggal_masuk" class="form-label">Tanggal Masuk *</label>
