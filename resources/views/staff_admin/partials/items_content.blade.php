@@ -1644,6 +1644,37 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
     const itemCrudModal = new bootstrap.Modal(document.getElementById('itemCrudModal'));
     itemCrudModal.show();
 
+    // Auto-fill form values for edit mode
+    if (mode === 'edit' && itemData) {
+        if (itemType === 'incoming') {
+            // Set category dropdown value
+            const categorySelect = document.getElementById('crud_kategori_barang');
+            if (categorySelect && itemData.category_id) {
+                categorySelect.value = itemData.category_id;
+            }
+            
+            // Set producer dropdown value
+            const producerSelect = document.getElementById('crud_producer_id');
+            if (producerSelect && itemData.producer_id) {
+                producerSelect.value = itemData.producer_id;
+            }
+        } else if (itemType === 'outgoing') {
+            // For outgoing items, producer is stored as name in producer field
+            const producerField = document.getElementById('crud_nama_produsen_outgoing');
+            if (producerField && itemData.nama_produsen) {
+                producerField.value = itemData.nama_produsen;
+            }
+            
+            // If producer_id exists and relates to producer table, get the name
+            if (itemData.producer_id && itemData.producer) {
+                const producerField = document.getElementById('crud_nama_produsen_outgoing');
+                if (producerField && itemData.producer.nama_produsen_supplier) {
+                    producerField.value = itemData.producer.nama_produsen_supplier;
+                }
+            }
+        }
+    }
+
     // Re-attach event listener for outgoing_nama_barang if it exists in the dynamically loaded form
     if (itemType === 'outgoing' && mode === 'add') {
         const crudNamaBarangSelect = document.getElementById('crud_nama_barang');

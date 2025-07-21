@@ -7,7 +7,6 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ItemManagementController;
 use App\Http\Controllers\EmployeeAccountController; // Import controller baru
 use App\Http\Controllers\VerificationItemController;
-use App\Http\Middleware\RoleMiddleware;
 
 // Route untuk splash screen
 Route::get('/', [SplashController::class, 'index'])->name('splash');
@@ -31,7 +30,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     
     // Routes untuk Manager (role: manager)
-    Route::middleware([RoleMiddleware::class.':manager'])->group(function () {
+    Route::middleware(['auth', 'role:manager'])->group(function () {
         Route::get('/report/stock', [HomeController::class, 'showStockReport'])->name('report.stock');
         Route::get('/report/stock/csv', [HomeController::class, 'exportCsv'])->name('report.stock.csv');
         Route::get('/report/stock/print', [HomeController::class, 'printStockReport'])->name('report.stock.print');
@@ -46,7 +45,7 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // Routes untuk Staff Admin (role: admin)
-    Route::middleware([RoleMiddleware::class.':admin'])->group(function () {
+    Route::middleware(['auth', 'role:admin,manager'])->group(function () {
         // Halaman utama data barang
         Route::get('/staff/items', [ItemManagementController::class, 'index'])->name('staff.items.index');
         
@@ -91,7 +90,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Monitor Gudang (Accessible by both manager and admin)
-    Route::middleware([RoleMiddleware::class.':manager,admin'])->group(function () {
+    Route::middleware(['auth', 'role:manager,admin'])->group(function () {
         Route::get('/staff/warehouse-monitor', [ItemManagementController::class, 'showWarehouseMonitor'])->name('staff.warehouse_monitor');
     });
 

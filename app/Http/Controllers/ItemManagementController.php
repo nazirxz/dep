@@ -729,7 +729,7 @@ class ItemManagementController extends Controller
     {
         \Log::info('getIncomingItem: Request received', ['item_id' => $id]);
         try {
-            $incomingItem = IncomingItem::findOrFail($id);
+            $incomingItem = IncomingItem::with(['producer', 'category'])->findOrFail($id);
             \Log::info('getIncomingItem: Item found', ['item_id' => $incomingItem->id, 'data' => $incomingItem->toArray()]);
             return response()->json([
                 'success' => true,
@@ -792,7 +792,7 @@ class ItemManagementController extends Controller
     {
         \Log::info('getOutgoingItem: Request received', ['item_id' => $id]);
         try {
-            $outgoingItem = OutgoingItem::findOrFail($id);
+            $outgoingItem = OutgoingItem::with(['producer', 'category'])->findOrFail($id);
             \Log::info('getOutgoingItem: Item found', ['item_id' => $outgoingItem->id, 'data' => $outgoingItem->toArray()]);
             return response()->json([
                 'success' => true,
