@@ -121,7 +121,31 @@ class OrderController extends Controller
                 $orderItemsData = [];
 
                 foreach ($items as $item) {
+                    \Log::info('Processing order item', [
+                        'product_id' => $item['product_id'],
+                        'incoming_item_id' => $item['incoming_item_id'],
+                        'quantity' => $item['quantity']
+                    ]);
+                    
+                    // Validasi konsistensi product_id dan incoming_item_id
+                    if ($item['product_id'] != $item['incoming_item_id']) {
+                        $productItem = IncomingItem::find($item['product_id']);
+                        $incomingItem = IncomingItem::find($item['incoming_item_id']);
+                        
+                        $productName = $productItem ? $productItem->nama_barang : 'Not found';
+                        $incomingName = $incomingItem ? $incomingItem->nama_barang : 'Not found';
+                        
+                        throw new \Exception("Ketidakcocokan ID produk: product_id ({$item['product_id']}: {$productName}) berbeda dengan incoming_item_id ({$item['incoming_item_id']}: {$incomingName}). Kedua ID harus sama untuk menghindari kebingungan produk.");
+                    }
+                    
                     $incomingItem = IncomingItem::findOrFail($item['incoming_item_id']);
+                    
+                    \Log::info('Found incoming item', [
+                        'id' => $incomingItem->id,
+                        'nama_barang' => $incomingItem->nama_barang,
+                        'kategori_barang' => $incomingItem->kategori_barang,
+                        'jumlah_barang' => $incomingItem->jumlah_barang
+                    ]);
                     
                     // Check stock availability
                     if ($incomingItem->jumlah_barang < $item['quantity']) {
@@ -143,7 +167,15 @@ class OrderController extends Controller
                         'unit_price' => $unitPrice,
                         'total_price' => $totalPrice,
                         'notes' => $item['notes'] ?? null,
-                        'incoming_item' => $incomingItem
+                        // Store complete incoming item data for later use
+                        'incoming_item_data' => [
+                            'id' => $incomingItem->id,
+                            'nama_barang' => $incomingItem->nama_barang,
+                            'kategori_barang' => $incomingItem->kategori_barang,
+                            'category_id' => $incomingItem->category_id,
+                            'producer_id' => $incomingItem->producer_id,
+                            'lokasi_rak_barang' => $incomingItem->lokasi_rak_barang,
+                        ]
                     ];
                 }
 
@@ -201,24 +233,34 @@ class OrderController extends Controller
 
                 // Create order items and update stock
                 foreach ($orderItemsData as $itemData) {
-                    $incomingItem = $itemData['incoming_item'];
-                    unset($itemData['incoming_item']);
+                    $incomingItemData = $itemData['incoming_item_data'];
+                    unset($itemData['incoming_item_data']);
                     
                     $itemData['order_id'] = $order->id;
                     $orderItem = OrderItem::create($itemData);
 
                     // Create outgoing item record for stock tracking
+                    \Log::info('Creating OutgoingItem for order', [
+                        'order_id' => $order->id,
+                        'order_item_id' => $orderItem->id,
+                        'incoming_item_id' => $incomingItemData['id'],
+                        'incoming_item_name' => $incomingItemData['nama_barang'],
+                        'incoming_item_category' => $incomingItemData['kategori_barang'],
+                        'requested_quantity' => $itemData['quantity'],
+                        'order_item_data' => $itemData
+                    ]);
+                    
                     OutgoingItem::create([
                         'order_id' => $order->id,
                         'order_item_id' => $orderItem->id,
-                        'incoming_item_id' => $incomingItem->id,
-                        'nama_barang' => $incomingItem->nama_barang,
-                        'kategori_barang' => $incomingItem->kategori_barang,
-                        'category_id' => $incomingItem->category_id,
-                        'producer_id' => $incomingItem->producer_id,
+                        'incoming_item_id' => $incomingItemData['id'],
+                        'nama_barang' => $incomingItemData['nama_barang'],
+                        'kategori_barang' => $incomingItemData['kategori_barang'],
+                        'category_id' => $incomingItemData['category_id'],
+                        'producer_id' => $incomingItemData['producer_id'],
                         'tanggal_keluar_barang' => Carbon::now()->toDateString(),
                         'jumlah_barang' => $itemData['quantity'],
-                        'lokasi_rak_barang' => $incomingItem->lokasi_rak_barang,
+                        'lokasi_rak_barang' => $incomingItemData['lokasi_rak_barang'],
                         'tujuan_distribusi' => $request->pengecer_name,
                         'metode_bayar' => $request->payment_method,
                         'pembayaran_transaksi' => $totalAmount,
@@ -231,8 +273,9 @@ class OrderController extends Controller
                         'transaction_type' => 'retail',
                     ]);
 
-                    // Update incoming item stock
-                    $incomingItem->decrement('jumlah_barang', $itemData['quantity']);
+                    // Update incoming item stock - refetch to avoid stale data
+                    $currentIncomingItem = IncomingItem::findOrFail($incomingItemData['id']);
+                    $currentIncomingItem->decrement('jumlah_barang', $itemData['quantity']);
                 }
 
                 // Increment voucher usage if used
