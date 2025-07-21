@@ -76,7 +76,7 @@ class JsonDataSeeder extends Seeder
                 'lokasi_rak_barang' => $item['lokasi_rak_barang'],
                 'producer_id' => $producer->id,
                 'metode_bayar' => $item['metode_bayar'],
-                'pembayaran_transaksi' => $item['pembayaran_transaski'] === 'null' ? null : $item['pembayaran_transaski'],
+                'pembayaran_transaksi' => $item['pembayaran_transaksi'] === 'null' ? null : $item['pembayaran_transaksi'],
                 'nota_transaksi' => $item['nota_transaksi'] === 'null' ? null : $item['nota_transaksi'],
                 'foto_barang' => $item['foto_barang']
             ];
