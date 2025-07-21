@@ -109,6 +109,15 @@ Route::middleware('auth:sanctum')->group(function () {
         // GET /api/return-items - Get all returned items with filters
         Route::get('/', [ReturnItemApiController::class, 'index']);
         
+        // POST /api/return-items - Create new returned item
+        Route::post('/', [ReturnItemApiController::class, 'store']);
+        
+        // PUT /api/return-items/{id} - Update returned item
+        Route::put('/{id}', [ReturnItemApiController::class, 'update']);
+        
+        // DELETE /api/return-items/{id} - Delete returned item
+        Route::delete('/{id}', [ReturnItemApiController::class, 'destroy']);
+        
         // GET /api/return-items/categories - Get all available categories
         Route::get('/categories', [ReturnItemApiController::class, 'getCategories']);
         

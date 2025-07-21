@@ -15,5 +15,6 @@ class ReturnedItem extends Model
         'jumlah_barang',
         'nama_produsen',
         'alasan_pengembalian',
+        'foto_bukti',
     ];
 }
