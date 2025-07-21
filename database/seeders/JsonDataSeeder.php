@@ -67,45 +67,53 @@ class JsonDataSeeder extends Seeder
                 $producers->put($item['nama_produsen_supplier'], $producer);
             }
 
-            $commonData = [
+            // Base data yang digunakan untuk kedua tabel
+            $baseData = [
                 'nama_barang' => $item['nama_barang'],
                 'kategori_barang' => $item['kategori_barang'],
                 'category_id' => $category->id,
-                'tanggal_masuk_barang' => Carbon::now(),
+                'tanggal_masuk_barang' => isset($item['tanggal_masuk_barang']) ? Carbon::parse($item['tanggal_masuk_barang']) : Carbon::now(),
                 'jumlah_barang' => $item['jumlah_barang'],
                 'lokasi_rak_barang' => $item['lokasi_rak_barang'],
                 'producer_id' => $producer->id,
-                'metode_bayar' => $item['metode_bayar'],
-                'pembayaran_transaksi' => $item['pembayaran_transaksi'] === 'null' ? null : $item['pembayaran_transaksi'],
-                'nota_transaksi' => $item['nota_transaksi'] === 'null' ? null : $item['nota_transaksi'],
-                'foto_barang' => $item['foto_barang']
+                'metode_bayar' => $item['metode_bayar'] ?? null,
+                'pembayaran_transaksi' => ($item['pembayaran_transaksi'] ?? null) === 'null' ? null : ($item['pembayaran_transaksi'] ?? null),
+                'nota_transaksi' => ($item['nota_transaksi'] ?? null) === 'null' ? null : ($item['nota_transaksi'] ?? null),
+                'foto_barang' => $item['foto_barang'] ?? null,
+                'kondisi_fisik' => $item['kondisi_fisik'] ?? 'Baik'
             ];
 
             try {
                 // Every third item goes directly to incoming_items as verified
                 if ($index % 3 === 0) {
-                    $incomingItem = IncomingItem::create(array_merge($commonData, [
-                        'kondisi_fisik' => 'Baik',
-                        'catatan' => 'Data dari import JSON - Langsung terverifikasi'
-                    ]));
+                    // Data tambahan khusus untuk incoming_items
+                    $incomingData = array_merge($baseData, [
+                        'harga_jual' => $item['harga_jual'] ?? null,
+                        'catatan' => ($item['catatan'] ?? '') . ' - Data dari import JSON - Langsung terverifikasi'
+                    ]);
+                    
+                    $incomingItem = IncomingItem::create($incomingData);
                     Log::info('Created incoming item:', [
                         'id' => $incomingItem->id,
                         'nama_barang' => $incomingItem->nama_barang,
                         'producer' => $producer->nama_produsen_supplier,
-                        'producer_id' => $producer->id
+                        'producer_id' => $producer->id,
+                        'harga_jual' => $incomingItem->harga_jual
                     ]);
                 } else {
-                    // Rest go to verification table
-                    $verificationItem = VerificationItem::create(array_merge($commonData, [
+                    // Data untuk tabel verifikasi (tanpa harga_jual dan catatan khusus)
+                    $verificationData = array_merge($baseData, [
                         'is_verified' => false,
-                        'kondisi_fisik' => 'Baik',
                         'catatan_verifikasi' => 'Data dari import JSON - Menunggu verifikasi'
-                    ]));
+                    ]);
+                    
+                    $verificationItem = VerificationItem::create($verificationData);
                     Log::info('Created verification item:', [
                         'id' => $verificationItem->id,
                         'nama_barang' => $verificationItem->nama_barang,
                         'producer' => $producer->nama_produsen_supplier,
-                        'producer_id' => $producer->id
+                        'producer_id' => $producer->id,
+                        'kondisi_fisik' => $verificationItem->kondisi_fisik
                     ]);
                 }
             } catch (\Exception $e) {
@@ -114,7 +122,8 @@ class JsonDataSeeder extends Seeder
                     'category_id' => $category->id,
                     'producer_id' => $producer->id,
                     'producer_name' => $producer->nama_produsen_supplier,
-                    'table' => ($index % 3 === 0) ? 'incoming_items' : 'verifikasi_barang'
+                    'table' => ($index % 3 === 0) ? 'incoming_items' : 'verifikasi_barang',
+                    'error' => $e->getTraceAsString()
                 ]);
             }
         }
