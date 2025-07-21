@@ -396,7 +396,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th>No.</th>
-                                <th>Foto Barang</th>
+                                <!-- <th>Foto Barang</th> -->
                                 <th>Nama Barang</th>
                                 <th>Kategori</th>
                                 <th>Jumlah</th>
