@@ -24,6 +24,16 @@ class OutgoingItem extends Model
         'pembayaran_transaksi',
         'nota_transaksi',
         'foto_barang',
+        // Order system fields
+        'order_id',
+        'order_item_id',
+        'pengecer_name',
+        'pengecer_phone',
+        'shipping_address',
+        'latitude',
+        'longitude',
+        'location_address',
+        'transaction_type',
     ];
 
     protected $casts = [
@@ -49,5 +59,21 @@ class OutgoingItem extends Model
     public function incomingItem()
     {
         return $this->belongsTo(IncomingItem::class);
+    }
+
+    /**
+     * Get the order that owns this outgoing item
+     */
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    /**
+     * Get the order item that owns this outgoing item
+     */
+    public function orderItem()
+    {
+        return $this->belongsTo(OrderItem::class);
     }
 }

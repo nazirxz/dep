@@ -8,6 +8,9 @@ use App\Http\Controllers\Api\DashboardApiController;
 use App\Http\Controllers\Api\OutgoingItemApiController;
 use App\Http\Controllers\Api\IncomingItemApiController;
 use App\Http\Controllers\Api\ReturnItemApiController;
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\VoucherController;
+use App\Http\Controllers\Api\ShippingMethodController;
 
 // Authentication routes (public)
 Route::post('/register', [AuthController::class, 'register']);
@@ -121,4 +124,43 @@ Route::middleware('auth:sanctum')->group(function () {
         // GET /api/return-items/{id} - Get single returned item detail
         Route::get('/{id}', [ReturnItemApiController::class, 'show']);
     });
+
+    // Orders API routes for mobile
+    Route::prefix('orders')->group(function () {
+        // GET /api/orders - Get user's orders
+        Route::get('/', [OrderController::class, 'index']);
+        
+        // POST /api/orders - Create new order
+        Route::post('/', [OrderController::class, 'store']);
+        
+        // GET /api/orders/stats - Get order statistics
+        Route::get('/stats', [OrderController::class, 'getOrderStats']);
+        
+        // Admin routes
+        Route::middleware('admin')->group(function () {
+            // GET /api/orders/admin - Get all orders (admin only)
+            Route::get('/admin', [OrderController::class, 'adminIndex']);
+            
+            // GET /api/orders/user/{userId} - Get orders by user ID (admin only)
+            Route::get('/user/{userId}', [OrderController::class, 'getOrdersByUserId']);
+        });
+        
+        // GET /api/orders/{id} - Get order detail
+        Route::get('/{id}', [OrderController::class, 'show']);
+    });
+
+    // Vouchers API routes for mobile
+    Route::prefix('vouchers')->group(function () {
+        // GET /api/vouchers - Get available vouchers
+        Route::get('/', [VoucherController::class, 'index']);
+        
+        // POST /api/vouchers/validate - Validate voucher code
+        Route::post('/validate', [VoucherController::class, 'validate']);
+    });
+});
+
+// Shipping Methods API routes (public - no auth required)
+Route::prefix('shipping-methods')->group(function () {
+    // GET /api/shipping-methods - Get available shipping methods
+    Route::get('/', [ShippingMethodController::class, 'index']);
 });

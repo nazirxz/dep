@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             ProducerSeeder::class,
             JsonDataSeeder::class,
+            OrderSystemSeeder::class,
         ]);
 
         // Re-enable foreign key checks for SQLite
