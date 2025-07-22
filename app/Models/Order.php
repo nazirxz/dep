@@ -36,6 +36,9 @@ class Order extends Model
         'voucher_discount',
         'order_status',
         'notes',
+        'delivered_at',
+        'delivery_photo',
+        'delivery_notes',
     ];
 
     protected $casts = [
@@ -50,6 +53,7 @@ class Order extends Model
         'location_accuracy' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'delivered_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

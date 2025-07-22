@@ -358,12 +358,12 @@ class OrderController extends Controller
     public function adminIndex(Request $request)
     {
         try {
-            // Check if user is admin (you can modify this logic based on your role system)
+            // Check if user is admin or sales
             $user = $request->user();
-            if ($user->role !== 'Admin') {
+            if (!in_array($user->role, ['Admin', 'sales'])) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Unauthorized. Admin access required.'
+                    'message' => 'Unauthorized. Admin or Sales access required.'
                 ], 403);
             }
 
@@ -522,4 +522,191 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Display orders for sales (ready to ship and shipping orders with location)
+     */
+    public function salesIndex(Request $request)
+    {
+        try {
+            // Check if user is sales or admin
+            $user = $request->user();
+            if (!in_array($user->role, ['Admin', 'sales'])) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Unauthorized. Sales access required.'
+                ], 403);
+            }
+
+            $perPage = $request->get('per_page', 15);
+            
+            // Query untuk orders yang siap dikirim dan sedang dikirim
+            $query = Order::with([
+                'orderItems:id,order_id,product_name,product_image,quantity,unit,unit_price,total_price',
+                'user:id,full_name,email,phone_number'
+            ])
+            ->whereIn('order_status', ['confirmed', 'processing', 'shipped'])
+            ->select([
+                'id', 'order_number', 'user_id', 'pengecer_name', 'pengecer_phone', 
+                'pengecer_email', 'shipping_address', 'city', 'postal_code',
+                'latitude', 'longitude', 'location_address', 'location_accuracy',
+                'order_status', 'payment_status', 'shipping_method', 'payment_method',
+                'subtotal', 'shipping_cost', 'discount_amount', 'total_amount',
+                'voucher_code', 'notes', 'created_at', 'updated_at'
+            ])
+            ->orderBy('created_at', 'desc');
+
+            // Filter berdasarkan status jika disediakan
+            if ($request->has('status') && $request->status !== '') {
+                $query->where('order_status', $request->status);
+            }
+
+            // Filter berdasarkan kota
+            if ($request->has('city') && $request->city !== '') {
+                $query->where('city', 'LIKE', "%{$request->city}%");
+            }
+
+            // Filter berdasarkan tanggal
+            if ($request->has('date_from')) {
+                $query->whereDate('created_at', '>=', $request->date_from);
+            }
+
+            if ($request->has('date_to')) {
+                $query->whereDate('created_at', '<=', $request->date_to);
+            }
+
+            // Search berdasarkan order number atau nama pengecer
+            if ($request->has('search') && $request->search !== '') {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('order_number', 'LIKE', "%{$search}%")
+                      ->orWhere('pengecer_name', 'LIKE', "%{$search}%")
+                      ->orWhere('shipping_address', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $orders = $query->paginate($perPage);
+
+            // Add distance calculation from warehouse if coordinates provided
+            if ($request->has('warehouse_lat') && $request->has('warehouse_lng')) {
+                $warehouseLat = $request->warehouse_lat;
+                $warehouseLng = $request->warehouse_lng;
+                
+                foreach ($orders->items() as $order) {
+                    if ($order->latitude && $order->longitude) {
+                        $order->distance_km = $this->calculateDistance(
+                            $warehouseLat, $warehouseLng, 
+                            $order->latitude, $order->longitude
+                        );
+                    } else {
+                        $order->distance_km = null;
+                    }
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $orders,
+                'summary' => [
+                    'ready_to_ship' => Order::where('order_status', 'confirmed')->count(),
+                    'processing' => Order::where('order_status', 'processing')->count(),
+                    'shipped' => Order::where('order_status', 'shipped')->count(),
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal mengambil data pesanan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update order shipping status
+     */
+    public function updateShippingStatus(Request $request, $id)
+    {
+        try {
+            // Check if user is sales or admin
+            $user = $request->user();
+            if (!in_array($user->role, ['Admin', 'sales'])) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Unauthorized. Sales access required.'
+                ], 403);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'order_status' => 'required|in:confirmed,processing,shipped,delivered,cancelled',
+                'delivery_notes' => 'nullable|string|max:500',
+                'delivered_at' => 'nullable|date',
+                'delivery_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validasi gagal',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $order = Order::findOrFail($id);
+
+            // Update order status
+            $order->order_status = $request->order_status;
+            
+            if ($request->delivery_notes) {
+                $order->notes = ($order->notes ? $order->notes . '\n' : '') . 
+                               '[' . now()->format('Y-m-d H:i:s') . '] ' . $request->delivery_notes;
+            }
+
+            if ($request->delivered_at && $request->order_status === 'delivered') {
+                $order->delivered_at = $request->delivered_at;
+            }
+
+            // Handle delivery photo upload
+            if ($request->hasFile('delivery_photo')) {
+                $photo = $request->file('delivery_photo');
+                $photoName = 'delivery_' . $order->id . '_' . time() . '.' . $photo->getClientOriginalExtension();
+                $photoPath = $photo->storeAs('delivery_photos', $photoName, 'public');
+                $order->delivery_photo = $photoPath;
+            }
+
+            $order->save();
+
+            // Load fresh data with relationships
+            $order->load(['orderItems', 'user:id,full_name,email,phone_number']);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Status pengantaran berhasil diupdate',
+                'data' => $order
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal update status pengantaran: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Calculate distance between two coordinates using Haversine formula
+     */
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371; // Earth's radius in kilometers
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+
+        $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon/2) * sin($dLon/2);
+        $c = 2 * atan2(sqrt($a), sqrt(1-$a));
+
+        return round($earthRadius * $c, 2);
+    }
 }
+
