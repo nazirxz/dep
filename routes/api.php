@@ -49,6 +49,12 @@ Route::middleware('auth:sanctum')->group(function () {
         // GET /api/dashboard/stats - Get dashboard statistics
         Route::get('/stats', [DashboardApiController::class, 'getDashboardStats']);
         
+        // GET /api/dashboard/low-stock - Get low stock warnings
+        Route::get('/low-stock', [DashboardApiController::class, 'getLowStockWarning']);
+        
+        // GET /api/dashboard/notifications - Get stock notifications for manager
+        Route::get('/notifications', [DashboardApiController::class, 'getStockNotifications']);
+        
         // GET /api/dashboard/low-stock - Get low stock warning items
         Route::get('/low-stock', [DashboardApiController::class, 'getLowStockWarning']);
         

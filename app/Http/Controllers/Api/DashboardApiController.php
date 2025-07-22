@@ -287,4 +287,95 @@ class DashboardApiController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get stock notifications for manager dashboard
+     * Returns both out-of-stock and low-stock notifications
+     */
+    public function getStockNotifications(Request $request): JsonResponse
+    {
+        try {
+            $lowStockThreshold = $request->get('low_stock_threshold', 10);
+            
+            // Barang dengan stok habis (0 unit)
+            $outOfStockItems = IncomingItem::where('jumlah_barang', 0)
+                ->select([
+                    'id',
+                    'nama_barang',
+                    'kategori_barang',
+                    'lokasi_rak_barang',
+                    'foto_barang'
+                ])
+                ->orderBy('nama_barang', 'asc')
+                ->get();
+            
+            // Barang dengan stok rendah (1 sampai threshold)
+            $lowStockItems = IncomingItem::whereBetween('jumlah_barang', [1, $lowStockThreshold])
+                ->select([
+                    'id',
+                    'nama_barang',
+                    'kategori_barang',
+                    'jumlah_barang',
+                    'lokasi_rak_barang',
+                    'foto_barang'
+                ])
+                ->orderBy('jumlah_barang', 'asc')
+                ->get();
+
+            // Format data untuk response
+            $outOfStockFormatted = $outOfStockItems->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'nama_barang' => $item->nama_barang,
+                    'kategori_barang' => $item->kategori_barang,
+                    'jumlah_barang' => 0,
+                    'lokasi_rak_barang' => $item->lokasi_rak_barang,
+                    'foto_barang' => $item->foto_barang ? url('storage/' . $item->foto_barang) : null,
+                    'status' => 'out_of_stock'
+                ];
+            });
+
+            $lowStockFormatted = $lowStockItems->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'nama_barang' => $item->nama_barang,
+                    'kategori_barang' => $item->kategori_barang,
+                    'jumlah_barang' => $item->jumlah_barang,
+                    'lokasi_rak_barang' => $item->lokasi_rak_barang,
+                    'foto_barang' => $item->foto_barang ? url('storage/' . $item->foto_barang) : null,
+                    'status' => $item->jumlah_barang <= 5 ? 'critical_low' : 'low_stock'
+                ];
+            });
+
+            $notifications = [
+                'out_of_stock' => [
+                    'count' => $outOfStockFormatted->count(),
+                    'items' => $outOfStockFormatted
+                ],
+                'low_stock' => [
+                    'count' => $lowStockFormatted->count(),
+                    'items' => $lowStockFormatted
+                ],
+                'summary' => [
+                    'total_notifications' => $outOfStockFormatted->count() + $lowStockFormatted->count(),
+                    'critical_count' => $outOfStockFormatted->count() + $lowStockFormatted->where('status', 'critical_low')->count(),
+                    'needs_attention' => $outOfStockFormatted->count() > 0 || $lowStockFormatted->count() > 0
+                ]
+            ];
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Notifikasi stok berhasil diambil',
+                'data' => $notifications,
+                'timestamp' => Carbon::now()->toISOString()
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat mengambil notifikasi stok',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

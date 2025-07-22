@@ -94,6 +94,47 @@
                 </div>
             @endif
 
+            {{-- Notifikasi Stok Barang --}}
+            @if($outOfStockNotifications->count() > 0)
+                <div class="alert alert-danger alert-dismissible fade show shadow-sm stock-notification" role="alert">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <div>
+                                <strong>STOK HABIS!</strong> {{ $outOfStockNotifications->count() }} Barang: 
+                                @foreach($outOfStockNotifications->take(2) as $index => $item)
+                                    {{ $item->nama_barang }}@if($index < 1 && $outOfStockNotifications->count() > 1), @endif
+                                @endforeach
+                                @if($outOfStockNotifications->count() > 2)
+                                    dan {{ $outOfStockNotifications->count() - 2 }} lainnya
+                                @endif
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </div>
+            @endif
+
+            @if($lowStockNotifications->count() > 0)
+                <div class="alert alert-warning alert-dismissible fade show shadow-sm stock-notification" role="alert">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <div>
+                                <strong>STOK RENDAH!</strong> {{ $lowStockNotifications->count() }} Barang: 
+                                @foreach($lowStockNotifications->take(2) as $index => $item)
+                                    {{ $item->nama_barang }} ({{ $item->jumlah_barang }})@if($index < 1 && $lowStockNotifications->count() > 1), @endif
+                                @endforeach
+                                @if($lowStockNotifications->count() > 2)
+                                    dan {{ $lowStockNotifications->count() - 2 }} lainnya
+                                @endif
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </div>
+            @endif
+
             {{-- Konten Dashboard Utama --}}
             <div class="row">
                 <div class="col-12">
@@ -146,7 +187,7 @@
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
                                     <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
-                                        Jumlah Transaksi Penjualan Hari Ini</div>
+                                        Transaksi Penjualan Hari Ini</div>
                                     <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $salesTransactionsToday }} Nota</div>
                                 </div>
                                 <div class="col-auto">
@@ -163,7 +204,7 @@
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
                                     <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
-                                        Jumlah Transaksi Pembelian Hari Ini</div>
+                                        Transaksi Pembelian Hari Ini</div>
                                     <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $purchaseTransactionsToday }} Produk</div>
                                 </div>
                                 <div class="col-auto">
@@ -204,6 +245,91 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- Section Detail Notifikasi Stok (Collapsible) --}}
+                @if($outOfStockNotifications->count() > 0 || $lowStockNotifications->count() > 0)
+                <div class="col-12 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header py-2 bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-dark">
+                                    <i class="fas fa-bell me-2"></i>Detail Notifikasi Stok Barang
+                                </h6>
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#stockNotificationDetails" aria-expanded="false">
+                                    <i class="fas fa-chevron-down"></i> Lihat Detail
+                                </button>
+                            </div>
+                        </div>
+                        <div class="collapse" id="stockNotificationDetails">
+                            <div class="card-body py-3">
+                                <div class="row">
+                                    @if($outOfStockNotifications->count() > 0)
+                                    <div class="col-lg-6">
+                                        <h6 class="text-danger mb-2">
+                                            <i class="fas fa-exclamation-triangle"></i> Stok Habis ({{ $outOfStockNotifications->count() }} Item)
+                                        </h6>
+                                        <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                                            <table class="table table-sm table-striped">
+                                                <thead class="bg-danger text-white">
+                                                    <tr>
+                                                        <th>Nama Barang</th>
+                                                        <th>Kategori</th>
+                                                        <th>Lokasi Rak</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($outOfStockNotifications as $item)
+                                                    <tr>
+                                                        <td><strong>{{ $item->nama_barang }}</strong></td>
+                                                        <td>{{ $item->kategori_barang }}</td>
+                                                        <td>{{ $item->lokasi_rak_barang ?? 'Tidak diketahui' }}</td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    @endif
+
+                                    @if($lowStockNotifications->count() > 0)
+                                    <div class="col-lg-6">
+                                        <h6 class="text-warning mb-2">
+                                            <i class="fas fa-exclamation-circle"></i> Stok Rendah ({{ $lowStockNotifications->count() }} Item)
+                                        </h6>
+                                        <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                                            <table class="table table-sm table-striped">
+                                                <thead class="bg-warning text-dark">
+                                                    <tr>
+                                                        <th>Nama Barang</th>
+                                                        <th>Kategori</th>
+                                                        <th>Sisa Stok</th>
+                                                        <th>Lokasi Rak</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($lowStockNotifications as $item)
+                                                    <tr class="{{ $item->jumlah_barang <= 5 ? 'table-danger' : '' }}">
+                                                        <td><strong>{{ $item->nama_barang }}</strong></td>
+                                                        <td>{{ $item->kategori_barang }}</td>
+                                                        <td>
+                                                            <span class="badge {{ $item->jumlah_barang <= 5 ? 'bg-danger' : 'bg-warning text-dark' }}">
+                                                                {{ $item->jumlah_barang }} unit
+                                                            </span>
+                                                        </td>
+                                                        <td>{{ $item->lokasi_rak_barang ?? 'Tidak diketahui' }}</td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
 
             </div>
         </div>
@@ -263,6 +389,65 @@
         position: relative;
         /* Removed fixed height, using max-height and min-height for responsiveness */
     }
+
+    /* Notifikasi Stok Styling */
+    .stock-notification {
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.75rem;
+        border-radius: 0.5rem;
+        border-left: 4px solid;
+        font-size: 0.9rem;
+    }
+    
+    .alert-danger.stock-notification {
+        border-left-color: #dc3545;
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .alert-warning.stock-notification {
+        border-left-color: #ffc107;
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .stock-notification .btn-close {
+        padding: 0.25rem;
+        font-size: 0.8rem;
+    }
+
+    .stock-notification i {
+        font-size: 1rem;
+    }
+
+    /* Styling untuk tabel notifikasi */
+    .table-responsive {
+        border-radius: 0.375rem;
+    }
+    
+    .table-striped > tbody > tr:nth-of-type(odd) > td {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    /* Badge styling */
+    .badge {
+        font-size: 0.75em;
+        padding: 0.25em 0.5em;
+    }
+
+    /* Enhanced alert styling */
+    .alert {
+        position: relative;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+        border: 1px solid transparent;
+        border-radius: 0.5rem;
+    }
+
+    .alert h6 {
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
 </style>
 
 @push('scripts')
@@ -298,6 +483,80 @@
         // Data from Laravel Controller for Stock Condition Chart
         const stockItemLabels = @json($stockItemLabels);
         const stockItemData = @json($stockItemData);
+
+        // Data untuk notifikasi stok
+        const outOfStockCount = {{ $outOfStockNotifications->count() }};
+        const lowStockCount = {{ $lowStockNotifications->count() }};
+
+        // Show notification badges if there are stock issues
+        if (outOfStockCount > 0 || lowStockCount > 0) {
+            updatePageTitle();
+        }
+
+        // Function to update page title with notification count
+        function updatePageTitle() {
+            const totalNotifications = outOfStockCount + lowStockCount;
+            if (totalNotifications > 0) {
+                document.title = `(${totalNotifications}) Dashboard Manajer - UD Keluarga Sehati`;
+            }
+        }
+
+        // Auto-refresh notifikasi setiap 5 menit (opsional)
+        setInterval(function() {
+            // Hanya reload jika ada notifikasi stok untuk menghindari reload yang tidak perlu
+            if (outOfStockCount > 0 || lowStockCount > 0) {
+                console.log('Checking for stock updates...');
+                // AJAX call untuk update notifikasi secara real-time
+                updateStockNotifications();
+            }
+        }, 300000); // 5 menit
+
+        // Function to update stock notifications via AJAX
+        function updateStockNotifications() {
+            fetch('/api/dashboard/notifications', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const notifications = data.data;
+                    const newOutOfStockCount = notifications.out_of_stock.count;
+                    const newLowStockCount = notifications.low_stock.count;
+                    
+                    // Update badge counts if changed
+                    if (newOutOfStockCount !== outOfStockCount || newLowStockCount !== lowStockCount) {
+                        console.log('Stock notifications updated - reloading page...');
+                        location.reload(); // Reload untuk update UI
+                    }
+                }
+            })
+            .catch(error => {
+                console.log('Error updating stock notifications:', error);
+            });
+        }
+
+        // Handle collapse toggle for stock notification details
+        const stockNotificationToggle = document.querySelector('[data-bs-target="#stockNotificationDetails"]');
+        const stockNotificationCollapse = document.getElementById('stockNotificationDetails');
+        
+        if (stockNotificationToggle && stockNotificationCollapse) {
+            stockNotificationCollapse.addEventListener('show.bs.collapse', function () {
+                const icon = stockNotificationToggle.querySelector('i');
+                icon.className = 'fas fa-chevron-up';
+                stockNotificationToggle.innerHTML = '<i class="fas fa-chevron-up"></i> Sembunyikan Detail';
+            });
+
+            stockNotificationCollapse.addEventListener('hide.bs.collapse', function () {
+                const icon = stockNotificationToggle.querySelector('i');
+                icon.className = 'fas fa-chevron-down';
+                stockNotificationToggle.innerHTML = '<i class="fas fa-chevron-down"></i> Lihat Detail';
+            });
+        }
         const itemColors = [
             '#e74c3c', '#e67e22', '#f1c40f', '#f39c12', '#3498db',
             '#9b59b6', '#1abc9c', '#2ecc71', '#34495e', '#795548'

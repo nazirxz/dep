@@ -84,6 +84,24 @@ class HomeController extends Controller
         $purchaseData = $dateRange->merge($incomingData)->values()->all();
         $salesData = $dateRange->merge($outgoingData)->values()->all();
 
+        // Data untuk notifikasi stok rendah (khusus untuk manager)
+        $lowStockNotifications = [];
+        $outOfStockNotifications = [];
+        if ($user->role === 'manager') {
+            // Barang dengan stok kritis (0 unit)
+            $outOfStockItems = IncomingItem::where('jumlah_barang', 0)
+                ->select('nama_barang', 'kategori_barang', 'lokasi_rak_barang')
+                ->get();
+            
+            // Barang dengan stok rendah (1-10 unit)
+            $lowStockItems = IncomingItem::whereBetween('jumlah_barang', [1, 10])
+                ->select('nama_barang', 'kategori_barang', 'jumlah_barang', 'lokasi_rak_barang')
+                ->orderBy('jumlah_barang', 'asc')
+                ->get();
+
+            $lowStockNotifications = $lowStockItems;
+            $outOfStockNotifications = $outOfStockItems;
+        }
 
         if ($user->role === 'manager') {
             return view('dashboard.manager_dashboard', [
@@ -97,6 +115,8 @@ class HomeController extends Controller
                 'purchaseTrendData' => $purchaseData,
                 'salesTrendData' => $salesData,
                 'chartPeriod' => $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y'),
+                'lowStockNotifications' => $lowStockNotifications,
+                'outOfStockNotifications' => $outOfStockNotifications,
             ]);
         } elseif ($user->role === 'admin') {
             return view('dashboard.staff_admin_dashboard', [
