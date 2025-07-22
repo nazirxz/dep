@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ReturnedItem;
+use App\Models\Order;
+use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
@@ -129,15 +131,45 @@ class ReturnItemApiController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
+            $user = $request->user();
+
             // Validate the request data
             $validatedData = $request->validate([
-                'nama_barang' => 'required|string|max:255',
-                'kategori_barang' => 'required|string|max:255',
+                'order_item_id' => 'required|exists:order_items,id',
                 'jumlah_barang' => 'required|integer|min:1',
-                'nama_produsen' => 'nullable|string|max:255',
                 'alasan_pengembalian' => 'required|string',
                 'foto_bukti' => 'nullable|image|mimes:jpeg,jpg,png|max:2048' // max 2MB
             ]);
+
+            // Get the order item
+            $orderItem = OrderItem::with(['order', 'product'])->find($validatedData['order_item_id']);
+            
+            // Verify that this order item belongs to the authenticated user
+            if ($orderItem->order->user_id !== $user->id) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Anda tidak memiliki akses untuk return item ini'
+                ], 403);
+            }
+
+            // Verify order status (hanya bisa return jika order sudah completed)
+            if ($orderItem->order->order_status !== 'completed') {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Hanya order dengan status completed yang bisa di-return'
+                ], 400);
+            }
+
+            // Check if return quantity doesn't exceed ordered quantity
+            $existingReturns = ReturnedItem::where('order_item_id', $orderItem->id)->sum('jumlah_barang');
+            $availableToReturn = $orderItem->quantity - $existingReturns;
+            
+            if ($validatedData['jumlah_barang'] > $availableToReturn) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Jumlah return melebihi yang tersedia. Tersisa: {$availableToReturn} item"
+                ], 400);
+            }
 
             $fotoPath = null;
 
@@ -150,15 +182,21 @@ class ReturnItemApiController extends Controller
                 $fotoPath = $file->storeAs('return_items', $fileName, 'public');
             }
 
-            // Create the returned item
+            // Create the returned item with data from order
             $returnedItem = ReturnedItem::create([
-                'nama_barang' => $validatedData['nama_barang'],
-                'kategori_barang' => $validatedData['kategori_barang'],
+                'order_id' => $orderItem->order_id,
+                'order_item_id' => $orderItem->id,
+                'user_id' => $user->id,
+                'nama_barang' => $orderItem->product_name,
+                'kategori_barang' => $orderItem->product_category,
                 'jumlah_barang' => $validatedData['jumlah_barang'],
-                'nama_produsen' => $validatedData['nama_produsen'],
+                'nama_produsen' => $orderItem->product->nama_produsen ?? null, // dari incoming_items
                 'alasan_pengembalian' => $validatedData['alasan_pengembalian'],
                 'foto_bukti' => $fotoPath
             ]);
+
+            // Load relationships for response
+            $returnedItem->load(['order', 'orderItem', 'user']);
 
             // Generate full URL for foto if exists
             $fotoUrl = null;
@@ -171,6 +209,10 @@ class ReturnItemApiController extends Controller
                 'message' => 'Barang return berhasil ditambahkan',
                 'data' => [
                     'id' => $returnedItem->id,
+                    'order_id' => $returnedItem->order_id,
+                    'order_number' => $returnedItem->order->order_number,
+                    'order_item_id' => $returnedItem->order_item_id,
+                    'user_id' => $returnedItem->user_id,
                     'nama_barang' => $returnedItem->nama_barang,
                     'kategori_barang' => $returnedItem->kategori_barang,
                     'jumlah_barang' => $returnedItem->jumlah_barang,
@@ -194,6 +236,59 @@ class ReturnItemApiController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'Terjadi kesalahan saat menambahkan barang return',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get user's returnable order items (completed orders only)
+     */
+    public function getReturnableOrderItems(Request $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+
+            // Get completed orders for the user
+            $orderItems = OrderItem::whereHas('order', function($query) use ($user) {
+                $query->where('user_id', $user->id)
+                      ->where('order_status', 'completed');
+            })
+            ->with(['order:id,order_number,created_at', 'returnedItems'])
+            ->get();
+
+            // Format data dengan informasi return yang tersedia
+            $returnableItems = $orderItems->map(function($item) {
+                $totalReturned = $item->returnedItems->sum('jumlah_barang');
+                $availableToReturn = $item->quantity - $totalReturned;
+
+                return [
+                    'order_item_id' => $item->id,
+                    'order_id' => $item->order_id,
+                    'order_number' => $item->order->order_number,
+                    'order_date' => $item->order->created_at->format('Y-m-d'),
+                    'product_name' => $item->product_name,
+                    'product_category' => $item->product_category,
+                    'quantity_ordered' => $item->quantity,
+                    'quantity_returned' => $totalReturned,
+                    'available_to_return' => $availableToReturn,
+                    'unit_price' => $item->unit_price,
+                    'can_return' => $availableToReturn > 0
+                ];
+            })->filter(function($item) {
+                return $item['can_return']; // Only show items that can still be returned
+            })->values();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data order items yang bisa di-return berhasil diambil',
+                'data' => $returnableItems
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat mengambil data order items',
                 'error' => $e->getMessage()
             ], 500);
         }

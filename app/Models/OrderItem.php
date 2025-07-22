@@ -46,4 +46,12 @@ class OrderItem extends Model
     {
         return $this->belongsTo(IncomingItem::class);
     }
+
+    /**
+     * Relasi ke ReturnedItems
+     */
+    public function returnedItems()
+    {
+        return $this->hasMany(ReturnedItem::class);
+    }
 }

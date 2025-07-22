@@ -68,6 +68,14 @@ class Order extends Model
     }
 
     /**
+     * Relasi ke ReturnedItems
+     */
+    public function returnedItems(): HasMany
+    {
+        return $this->hasMany(ReturnedItem::class);
+    }
+
+    /**
      * Generate order number
      */
     public static function generateOrderNumber(): string

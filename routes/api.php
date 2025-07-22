@@ -109,6 +109,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // GET /api/return-items - Get all returned items with filters
         Route::get('/', [ReturnItemApiController::class, 'index']);
         
+        // GET /api/return-items/returnable-items - Get user's returnable order items
+        Route::get('/returnable-items', [ReturnItemApiController::class, 'getReturnableOrderItems']);
+        
         // POST /api/return-items - Create new returned item
         Route::post('/', [ReturnItemApiController::class, 'store']);
         
