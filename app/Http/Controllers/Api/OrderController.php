@@ -709,6 +709,70 @@ class OrderController extends Controller
     }
 
     /**
+     * Mark order as finished packing (Barang Sudah Selesai dikemas)
+     * For Admin role in Pengelolaan Barang menu
+     */
+    public function markAsFinishedPacking(Request $request, $id)
+    {
+        try {
+            // Check if user is admin
+            $user = $request->user();
+            if ($user->role !== 'Admin') {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Unauthorized. Admin access required.'
+                ], 403);
+            }
+
+            $order = Order::findOrFail($id);
+
+            // Validate current order status - only allow from confirmed status
+            if ($order->order_status !== 'confirmed') {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Order harus dalam status confirmed untuk bisa ditandai selesai dikemas'
+                ], 422);
+            }
+
+            // Update order status to processing (barang sudah selesai dikemas)
+            $order->order_status = 'processing';
+            
+            // Add notes about packing completion
+            $packingNote = '[' . now()->format('Y-m-d H:i:s') . '] Barang sudah selesai dikemas oleh Admin';
+            $order->notes = ($order->notes ? $order->notes . '\n' : '') . $packingNote;
+
+            $order->save();
+
+            // Load fresh data with relationships
+            $order->load(['orderItems', 'user:id,full_name,email,phone_number']);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Order berhasil ditandai sebagai selesai dikemas',
+                'data' => [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'previous_status' => 'confirmed',
+                    'current_status' => $order->order_status,
+                    'updated_at' => $order->updated_at,
+                    'notes' => $order->notes
+                ]
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Order tidak ditemukan'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal menandai order selesai dikemas: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Calculate distance between two coordinates using Haversine formula
      */
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)

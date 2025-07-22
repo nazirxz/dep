@@ -161,6 +161,9 @@ Route::middleware('auth:sanctum')->group(function () {
             
             // GET /api/orders/user/{userId} - Get orders by user ID (admin only)
             Route::get('/user/{userId}', [OrderController::class, 'getOrdersByUserId']);
+            
+            // PUT /api/orders/{id}/finished-packing - Mark order as finished packing (admin only)
+            Route::put('/{id}/finished-packing', [OrderController::class, 'markAsFinishedPacking']);
         });
 
                 // Sales routes (for admin and sales role)

@@ -1754,4 +1754,73 @@ class ItemManagementController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Mark order as finished packing
+     * For Admin role in Pengelolaan Barang menu
+     */
+    public function markOrderAsFinishedPacking(Request $request, $orderId)
+    {
+        try {
+            // Check if user is admin
+            $user = Auth::user();
+            if ($user->role !== 'Admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized. Admin access required.'
+                ], 403);
+            }
+
+            // Import Order model if not already imported
+            $order = \App\Models\Order::findOrFail($orderId);
+
+            // Validate current order status - only allow from confirmed status
+            if ($order->order_status !== 'confirmed') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order harus dalam status confirmed untuk bisa ditandai selesai dikemas'
+                ], 422);
+            }
+
+            // Update order status to processing (barang sudah selesai dikemas)
+            $order->order_status = 'processing';
+            
+            // Add notes about packing completion
+            $packingNote = '[' . now()->format('Y-m-d H:i:s') . '] Barang sudah selesai dikemas oleh Admin';
+            $order->notes = ($order->notes ? $order->notes . '\n' : '') . $packingNote;
+
+            $order->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order berhasil ditandai sebagai selesai dikemas',
+                'data' => [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'previous_status' => 'confirmed',
+                    'current_status' => $order->order_status,
+                    'updated_at' => $order->updated_at,
+                    'notes' => $order->notes
+                ]
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order tidak ditemukan'
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error in markOrderAsFinishedPacking: ' . $e->getMessage(), [
+                'order_id' => $orderId,
+                'user_id' => Auth::id(),
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menandai order selesai dikemas: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

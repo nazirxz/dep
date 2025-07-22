@@ -196,9 +196,13 @@
                                                     <button class="btn btn-sm btn-primary me-1" onclick="showRackLocation('{{ $item->lokasi_rak_barang }}')">
                                                         <i class="fas fa-map-marker-alt"></i> Tampilkan Lokasi Rak Barang
                                                     </button>
-                                                    <button class="btn btn-sm btn-success" onclick="markAsCompleted({{ $item->id }})">
-                                                        <i class="fas fa-check"></i> Barang Sudah Selesai dikemas
-                                                    </button>
+                                                    @if($item->order_id)
+                                                        <button class="btn btn-sm btn-success" onclick="markAsCompleted({{ $item->order_id }})">
+                                                            <i class="fas fa-check"></i> Barang Sudah Selesai dikemas
+                                                        </button>
+                                                    @else
+                                                        <span class="badge bg-secondary">Tidak Ada Order</span>
+                                                    @endif
                                                 </td>
                                             </tr>
                                         @empty
@@ -236,6 +240,66 @@
             </div>
             <div class="modal-body" id="modalRackDetails">
                 <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Confirmation Modal -->
+<div class="modal fade" id="customConfirmModal" tabindex="-1" aria-labelledby="customConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="customConfirmModalLabel">Konfirmasi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="customConfirmMessage">Apakah Anda yakin?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="customConfirmActionBtn">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Item Modal -->
+<div class="modal fade" id="editItemModal" tabindex="-1" aria-labelledby="editItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editItemModalLabel">Edit Barang Masuk</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editItemForm">
+                    <input type="hidden" id="editItemId">
+                    <div class="mb-3">
+                        <label for="editNamaBarang" class="form-label">Nama Barang</label>
+                        <input type="text" class="form-control" id="editNamaBarang" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editKategoriBarang" class="form-label">Kategori Barang</label>
+                        <input type="text" class="form-control" id="editKategoriBarang" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editJumlahBarang" class="form-label">Jumlah Barang</label>
+                        <input type="number" class="form-control" id="editJumlahBarang" required min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTanggalMasuk" class="form-label">Tanggal Masuk</label>
+                        <input type="date" class="form-control" id="editTanggalMasuk" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editLokasiRak" class="form-label">Lokasi Rak</label>
+                        <input type="text" class="form-control" id="editLokasiRak">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="saveEditBtn">Simpan Perubahan</button>
             </div>
         </div>
     </div>
@@ -411,6 +475,82 @@
     // atau diakses melalui window.namaFungsi. Untuk kemudahan, kita akan membuatnya global.
 
     /**
+     * Display alert message
+     * @param {string} type - success, error, warning, info
+     * @param {string} message - Alert message
+     */
+    window.showAlert = function(type, message) {
+        // Remove existing alerts
+        const existingAlerts = document.querySelectorAll('.custom-alert');
+        existingAlerts.forEach(alert => alert.remove());
+
+        // Create alert element
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show custom-alert`;
+        alertDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 500px;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+        `;
+        
+        alertDiv.innerHTML = `
+            <strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        document.body.appendChild(alertDiv);
+
+        // Animate in
+        setTimeout(() => {
+            alertDiv.style.opacity = '1';
+            alertDiv.style.transform = 'translateY(0)';
+        }, 100);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (alertDiv && alertDiv.parentNode) {
+                alertDiv.style.opacity = '0';
+                alertDiv.style.transform = 'translateY(-20px)';
+                setTimeout(() => {
+                    if (alertDiv && alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
+                }, 300);
+            }
+        }, 5000);
+    }
+
+    /**
+     * Displays a custom confirmation modal.
+     * @param {string} message - The confirmation message.
+     * @param {Function} onConfirm - Callback when the user confirms.
+     */
+    window.showCustomConfirm = function(message, onConfirm) {
+        const confirmModal = new bootstrap.Modal(document.getElementById('customConfirmModal'));
+        const confirmMessage = document.getElementById('customConfirmMessage');
+        const confirmBtn = document.getElementById('customConfirmActionBtn');
+
+        confirmMessage.textContent = message;
+        
+        // Clear previous event listener
+        confirmBtn.onclick = null; 
+        
+        // Set new event listener
+        confirmBtn.onclick = () => {
+            onConfirm();
+            confirmModal.hide();
+        };
+
+        confirmModal.show();
+    }
+
+    /**
      * Menampilkan detail rak dan barang di dalamnya.
      * @param {string} position - Posisi rak (misal: "R1-1-1").
      * @param {number|null} itemId - ID barang di rak tersebut, atau null jika kosong.
@@ -485,12 +625,6 @@
                                     </button>
                                     <button class="btn btn-sm btn-danger w-100 mb-2" onclick="deleteIncomingItemFromManagement('${item.id}')">
                                         <i class="fas fa-trash"></i> Hapus Barang
-                                    </button>
-                                    <button class="btn btn-sm btn-info w-100" onclick="showItemHistory('${item.id}')">
-                                        <i class="fas fa-history"></i> Lihat Riwayat
-                                    </button>
-                                    <button class="btn btn-sm btn-success w-100 mt-2" onclick="updateItemLocationToClickedRack('${item.id}', '${position}')">
-                                        <i class="fas fa-sync-alt"></i> Sinkronkan Lokasi ke Rak Ini
                                     </button>
                                 </div>
                             </div>
@@ -594,11 +728,36 @@
      * Menandai pesanan barang keluar sebagai selesai dikemas.
      * @param {number} itemId - ID barang keluar.
      */
-    window.markAsCompleted = function(itemId) {
-        showCustomConfirm('Apakah barang ini sudah selesai dikemas dan siap dikirim?', () => {
-            // Implement AJAX call to update outgoing item status
-            showAlert('success', 'Status barang berhasil diperbarui menjadi "Selesai Dikemas"');
-            // location.reload(); // Reload to reflect changes
+    window.markAsCompleted = function(orderId) {
+        showCustomConfirm('Apakah barang ini sudah selesai dikemas dan siap dikirim?', async () => {
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                
+                const response = await fetch(`/staff/orders/${orderId}/finished-packing`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    credentials: 'same-origin'
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success === true) {
+                    showAlert('success', 'Status barang berhasil diperbarui menjadi "Selesai Dikemas"');
+                    // Reload page to reflect changes
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showAlert('error', result.message || 'Gagal memperbarui status barang');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('error', 'Terjadi kesalahan saat memperbarui status barang');
+            }
         });
     }
 
@@ -629,12 +788,32 @@
      * @param {number} itemId - ID barang masuk.
      */
     window.editIncomingItemFromManagement = function(itemId) {
-        // Panggil fungsi editIncomingItem dari items_content.blade.php
-        if (typeof window.editIncomingItem === 'function') {
-            window.editIncomingItem(itemId);
-        } else {
-            showAlert('error', 'Fungsi editIncomingItem tidak ditemukan. Pastikan items_content.blade.php dimuat dengan benar.');
-        }
+        // Fetch item data and show edit modal
+        fetch(`/staff/incoming-items/${itemId}`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    const item = result.data;
+                    
+                    // Populate form fields
+                    document.getElementById('editItemId').value = item.id;
+                    document.getElementById('editNamaBarang').value = item.nama_barang;
+                    document.getElementById('editKategoriBarang').value = item.kategori_barang;
+                    document.getElementById('editJumlahBarang').value = item.jumlah_barang;
+                    document.getElementById('editTanggalMasuk').value = item.tanggal_masuk_barang;
+                    document.getElementById('editLokasiRak').value = item.lokasi_rak_barang || '';
+                    
+                    // Show modal
+                    const editModal = new bootstrap.Modal(document.getElementById('editItemModal'));
+                    editModal.show();
+                } else {
+                    showAlert('error', 'Gagal memuat data barang: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('error', 'Terjadi kesalahan saat memuat data barang');
+            });
     }
 
     /**
@@ -642,76 +821,37 @@
      * @param {number} itemId - ID barang masuk.
      */
     window.deleteIncomingItemFromManagement = function(itemId) {
-        // Panggil fungsi deleteIncomingItem dari items_content.blade.php
-        if (typeof window.deleteIncomingItem === 'function') {
-            window.deleteIncomingItem(itemId);
-        } else {
-            showAlert('error', 'Fungsi deleteIncomingItem tidak ditemukan. Pastikan items_content.blade.php dimuat dengan benar.');
-        }
-    }
-
-    /**
-     * Menampilkan riwayat barang (placeholder).
-     * @param {number} itemId - ID barang.
-     */
-    window.showItemHistory = function(itemId) {
-        showAlert('info', 'Fitur riwayat barang akan segera hadir!');
-        // Here you would open a modal or navigate to history page
-    }
-
-    /**
-     * Sinkronkan lokasi rak barang di database dengan posisi rak yang diklik.
-     * Ini akan memperbarui `lokasi_rak_barang` di `IncomingItem` di database.
-     * @param {number} itemId - ID barang masuk.
-     * @param {string} newLocation - Posisi rak yang akan disinkronkan.
-     */
-    window.updateItemLocationToClickedRack = async function(itemId, newLocation) {
-        showCustomConfirm(`Apakah Anda yakin ingin memperbarui lokasi rak barang ini di database menjadi ${newLocation}?`, async () => {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            showAlert('info', `Memperbarui lokasi barang #${itemId} ke ${newLocation}...`);
-
+        showCustomConfirm('Apakah Anda yakin ingin menghapus barang ini? Tindakan ini tidak dapat dibatalkan.', async () => {
             try {
-                // Fetch current item data to send a complete update request
-                const itemResponse = await fetch(`/staff/incoming-items/${itemId}`);
-                const itemResult = await itemResponse.json();
-
-                if (!itemResult.success) {
-                    showAlert('error', itemResult.message || 'Gagal memuat data barang untuk sinkronisasi lokasi.');
-                    return;
-                }
-                const existingItemData = itemResult.data;
-
-                const formData = new FormData();
-                formData.append('_method', 'PUT');
-                formData.append('nama_barang', existingItemData.nama_barang);
-                formData.append('kategori_barang', existingItemData.kategori_barang);
-                formData.append('jumlah_barang', existingItemData.jumlah_barang);
-                formData.append('tanggal_masuk_barang', existingItemData.tanggal_masuk_barang);
-                formData.append('lokasi_rak_barang', newLocation); // Update only location
-
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                
                 const response = await fetch(`/staff/incoming-items/${itemId}`, {
-                    method: 'POST', // Laravel will interpret PUT via _method
+                    method: 'DELETE',
                     headers: {
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
                     },
-                    body: formData
+                    credentials: 'same-origin'
                 });
 
-                const data = await response.json();
+                const result = await response.json();
 
-                if (data.success) {
-                    showAlert('success', data.message);
-                    location.reload(); // Reload to reflect changes
+                if (response.ok && result.success) {
+                    showAlert('success', 'Barang berhasil dihapus');
+                    // Reload page to reflect changes
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
                 } else {
-                    showAlert('error', data.message || 'Gagal memperbarui lokasi barang.');
+                    showAlert('error', result.message || 'Gagal menghapus barang');
                 }
             } catch (error) {
-                console.error('Error updating item location:', error);
-                showAlert('error', 'Terjadi kesalahan jaringan saat memperbarui lokasi barang.');
+                console.error('Error:', error);
+                showAlert('error', 'Terjadi kesalahan saat menghapus barang');
             }
         });
-    };
+    }
 
     // Add some CSS for detail styling (ensure these are not duplicated if already in app.blade.php)
     const additionalStyles = `
@@ -791,6 +931,50 @@
         const highlightPosition = urlParams.get('highlight');
         if (highlightPosition) {
             window.showRackLocation(highlightPosition);
+        }
+
+        // Setup edit modal save button
+        const saveEditBtn = document.getElementById('saveEditBtn');
+        if (saveEditBtn) {
+            saveEditBtn.addEventListener('click', async function() {
+                const itemId = document.getElementById('editItemId').value;
+                const formData = new FormData();
+                
+                formData.append('_method', 'PUT');
+                formData.append('nama_barang', document.getElementById('editNamaBarang').value);
+                formData.append('kategori_barang', document.getElementById('editKategoriBarang').value);
+                formData.append('jumlah_barang', document.getElementById('editJumlahBarang').value);
+                formData.append('tanggal_masuk_barang', document.getElementById('editTanggalMasuk').value);
+                formData.append('lokasi_rak_barang', document.getElementById('editLokasiRak').value);
+
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    const response = await fetch(`/staff/incoming-items/${itemId}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showAlert('success', 'Barang berhasil diperbarui');
+                        const editModal = bootstrap.Modal.getInstance(document.getElementById('editItemModal'));
+                        editModal.hide();
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        showAlert('error', result.message || 'Gagal memperbarui barang');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showAlert('error', 'Terjadi kesalahan saat memperbarui barang');
+                }
+            });
         }
     });
 </script>

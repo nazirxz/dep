@@ -87,6 +87,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/staff/items/pending-verification', [ItemManagementController::class, 'getPendingVerificationItems'])->name('staff.items.pending-verification');
         Route::post('/staff/items/verify', [ItemManagementController::class, 'verify'])->name('staff.items.verify');
 
+        // Route for marking order as finished packing
+        Route::put('/staff/orders/{orderId}/finished-packing', [ItemManagementController::class, 'markOrderAsFinishedPacking'])->name('staff.orders.finished-packing');
+
     });
 
     // Monitor Gudang (Accessible by both manager and admin)
