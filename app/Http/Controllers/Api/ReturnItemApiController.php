@@ -11,6 +11,8 @@ use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class ReturnItemApiController extends Controller
 {
@@ -144,31 +146,62 @@ class ReturnItemApiController extends Controller
             // Get the order item
             $orderItem = OrderItem::with(['order', 'product'])->find($validatedData['order_item_id']);
             
-            // Verify that this order item belongs to the authenticated user
-            if ($orderItem->order->user_id !== $user->id) {
+            // Debug logging
+            Log::info('Return Item Debug', [
+                'user_id' => $user->id,
+                'order_item_id' => $validatedData['order_item_id'],
+                'order_item_found' => $orderItem ? true : false,
+                'order_user_id' => $orderItem ? $orderItem->order->user_id : null,
+                'order_status' => $orderItem ? $orderItem->order->order_status : null
+            ]);
+
+            if (!$orderItem) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Anda tidak memiliki akses untuk return item ini'
+                    'message' => 'Order item tidak ditemukan'
+                ], 404);
+            }
+            
+            // Verify that this order item belongs to the authenticated user
+            if ($orderItem->order->user_id != $user->id) { // Use != instead of !==
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Anda tidak memiliki akses untuk return item ini',
+                    'debug' => [
+                        'your_user_id' => $user->id,
+                        'your_user_id_type' => gettype($user->id),
+                        'order_user_id' => $orderItem->order->user_id,
+                        'order_user_id_type' => gettype($orderItem->order->user_id),
+                        'order_id' => $orderItem->order_id
+                    ]
                 ], 403);
             }
 
-            // Verify order status (hanya bisa return jika order sudah completed)
-            if ($orderItem->order->order_status !== 'completed') {
+            // Verify order status (hanya bisa return jika order sudah completed atau delivered)
+            if (!in_array($orderItem->order->order_status, ['completed', 'delivered'])) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Hanya order dengan status completed yang bisa di-return'
+                    'message' => 'Hanya order dengan status completed atau delivered yang bisa di-return',
+                    'debug' => [
+                        'current_status' => $orderItem->order->order_status
+                    ]
                 ], 400);
             }
 
-            // Check if return quantity doesn't exceed ordered quantity
-            $existingReturns = ReturnedItem::where('order_item_id', $orderItem->id)->sum('jumlah_barang');
-            $availableToReturn = $orderItem->quantity - $existingReturns;
-            
-            if ($validatedData['jumlah_barang'] > $availableToReturn) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => "Jumlah return melebihi yang tersedia. Tersisa: {$availableToReturn} item"
-                ], 400);
+            // Check if we have the new relational fields (after migration)
+            $hasRelationalFields = Schema::hasColumn('returned_items', 'order_id');
+
+            // Check if return quantity doesn't exceed ordered quantity (only if we have relational data)
+            if ($hasRelationalFields) {
+                $existingReturns = ReturnedItem::where('order_item_id', $orderItem->id)->sum('jumlah_barang');
+                $availableToReturn = $orderItem->quantity - $existingReturns;
+                
+                if ($validatedData['jumlah_barang'] > $availableToReturn) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => "Jumlah return melebihi yang tersedia. Tersisa: {$availableToReturn} item"
+                    ], 400);
+                }
             }
 
             $fotoPath = null;
@@ -182,21 +215,30 @@ class ReturnItemApiController extends Controller
                 $fotoPath = $file->storeAs('return_items', $fileName, 'public');
             }
 
-            // Create the returned item with data from order
-            $returnedItem = ReturnedItem::create([
-                'order_id' => $orderItem->order_id,
-                'order_item_id' => $orderItem->id,
-                'user_id' => $user->id,
+            // Create data array based on available fields
+            $createData = [
                 'nama_barang' => $orderItem->product_name,
                 'kategori_barang' => $orderItem->product_category,
                 'jumlah_barang' => $validatedData['jumlah_barang'],
-                'nama_produsen' => $orderItem->product->nama_produsen ?? null, // dari incoming_items
+                'nama_produsen' => $orderItem->product->nama_produsen ?? null,
                 'alasan_pengembalian' => $validatedData['alasan_pengembalian'],
                 'foto_bukti' => $fotoPath
-            ]);
+            ];
 
-            // Load relationships for response
-            $returnedItem->load(['order', 'orderItem', 'user']);
+            // Add relational fields if available
+            if ($hasRelationalFields) {
+                $createData['order_id'] = $orderItem->order_id;
+                $createData['order_item_id'] = $orderItem->id;
+                $createData['user_id'] = $user->id;
+            }
+
+            // Create the returned item
+            $returnedItem = ReturnedItem::create($createData);
+
+            // Load relationships for response if available
+            if ($hasRelationalFields) {
+                $returnedItem->load(['order', 'orderItem', 'user']);
+            }
 
             // Generate full URL for foto if exists
             $fotoUrl = null;
@@ -204,25 +246,31 @@ class ReturnItemApiController extends Controller
                 $fotoUrl = url('storage/' . $returnedItem->foto_bukti);
             }
 
+            $responseData = [
+                'id' => $returnedItem->id,
+                'nama_barang' => $returnedItem->nama_barang,
+                'kategori_barang' => $returnedItem->kategori_barang,
+                'jumlah_barang' => $returnedItem->jumlah_barang,
+                'nama_produsen' => $returnedItem->nama_produsen,
+                'alasan_pengembalian' => $returnedItem->alasan_pengembalian,
+                'foto_bukti' => $returnedItem->foto_bukti,
+                'foto_url' => $fotoUrl,
+                'created_at' => $returnedItem->created_at,
+                'updated_at' => $returnedItem->updated_at
+            ];
+
+            // Add relational data if available
+            if ($hasRelationalFields && isset($returnedItem->order)) {
+                $responseData['order_id'] = $returnedItem->order_id;
+                $responseData['order_number'] = $returnedItem->order->order_number;
+                $responseData['order_item_id'] = $returnedItem->order_item_id;
+                $responseData['user_id'] = $returnedItem->user_id;
+            }
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Barang return berhasil ditambahkan',
-                'data' => [
-                    'id' => $returnedItem->id,
-                    'order_id' => $returnedItem->order_id,
-                    'order_number' => $returnedItem->order->order_number,
-                    'order_item_id' => $returnedItem->order_item_id,
-                    'user_id' => $returnedItem->user_id,
-                    'nama_barang' => $returnedItem->nama_barang,
-                    'kategori_barang' => $returnedItem->kategori_barang,
-                    'jumlah_barang' => $returnedItem->jumlah_barang,
-                    'nama_produsen' => $returnedItem->nama_produsen,
-                    'alasan_pengembalian' => $returnedItem->alasan_pengembalian,
-                    'foto_bukti' => $returnedItem->foto_bukti,
-                    'foto_url' => $fotoUrl,
-                    'created_at' => $returnedItem->created_at,
-                    'updated_at' => $returnedItem->updated_at
-                ]
+                'data' => $responseData
             ], 201);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -249,26 +297,48 @@ class ReturnItemApiController extends Controller
         try {
             $user = $request->user();
 
-            // Get completed orders for the user
+            // Get delivered/completed orders for the user (both status can be returned)
             $orderItems = OrderItem::whereHas('order', function($query) use ($user) {
                 $query->where('user_id', $user->id)
-                      ->where('order_status', 'completed');
+                      ->whereIn('order_status', ['completed', 'delivered']);
             })
-            ->with(['order:id,order_number,created_at', 'returnedItems'])
+            ->with(['order:id,order_number,order_status,created_at', 'returnedItems'])
             ->get();
+
+            // Debug logging
+            Log::info('Returnable Items Debug', [
+                'user_id' => $user->id,
+                'total_order_items_found' => $orderItems->count(),
+                'order_items' => $orderItems->map(function($item) {
+                    return [
+                        'order_item_id' => $item->id,
+                        'order_id' => $item->order_id,
+                        'order_status' => $item->order->order_status,
+                        'product_name' => $item->product_name
+                    ];
+                })
+            ]);
 
             // Format data dengan informasi return yang tersedia
             $returnableItems = $orderItems->map(function($item) {
-                $totalReturned = $item->returnedItems->sum('jumlah_barang');
+                // Check if we have relational fields for returned items
+                $hasRelationalFields = Schema::hasColumn('returned_items', 'order_item_id');
+                
+                $totalReturned = 0;
+                if ($hasRelationalFields) {
+                    $totalReturned = $item->returnedItems->sum('jumlah_barang');
+                }
+                
                 $availableToReturn = $item->quantity - $totalReturned;
 
                 return [
                     'order_item_id' => $item->id,
                     'order_id' => $item->order_id,
                     'order_number' => $item->order->order_number,
+                    'order_status' => $item->order->order_status,
                     'order_date' => $item->order->created_at->format('Y-m-d'),
                     'product_name' => $item->product_name,
-                    'product_category' => $item->product_category,
+                    'product_category' => $item->product_category ?? 'Tidak ada kategori',
                     'quantity_ordered' => $item->quantity,
                     'quantity_returned' => $totalReturned,
                     'available_to_return' => $availableToReturn,
