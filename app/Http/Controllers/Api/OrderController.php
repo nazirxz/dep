@@ -540,21 +540,11 @@ class OrderController extends Controller
 
             $perPage = $request->get('per_page', 15);
             
-            // Query untuk orders yang siap dikirim dan sedang dikirim
+            // Query untuk SEMUA orders - hapus filter status default
             $query = Order::with([
-                'orderItems:id,order_id,product_name,product_image,quantity,unit,unit_price,total_price',
-                'user:id,full_name,email,phone_number'
-            ])
-            ->whereIn('order_status', ['confirmed', 'processing', 'shipped'])
-            ->select([
-                'id', 'order_number', 'user_id', 'pengecer_name', 'pengecer_phone', 
-                'pengecer_email', 'shipping_address', 'city', 'postal_code',
-                'latitude', 'longitude', 'location_address', 'location_accuracy',
-                'order_status', 'payment_status', 'shipping_method', 'payment_method',
-                'subtotal', 'shipping_cost', 'discount_amount', 'total_amount',
-                'voucher_code', 'notes', 'created_at', 'updated_at'
-            ])
-            ->orderBy('created_at', 'desc');
+                'orderItems',
+                'user'
+            ])->orderBy('created_at', 'desc');
 
             // Filter berdasarkan status jika disediakan
             if ($request->has('status') && $request->status !== '') {
@@ -587,30 +577,55 @@ class OrderController extends Controller
 
             $orders = $query->paginate($perPage);
 
-            // Add distance calculation from warehouse if coordinates provided
-            if ($request->has('warehouse_lat') && $request->has('warehouse_lng')) {
-                $warehouseLat = $request->warehouse_lat;
-                $warehouseLng = $request->warehouse_lng;
-                
-                foreach ($orders->items() as $order) {
-                    if ($order->latitude && $order->longitude) {
-                        $order->distance_km = $this->calculateDistance(
-                            $warehouseLat, $warehouseLng, 
-                            $order->latitude, $order->longitude
-                        );
-                    } else {
-                        $order->distance_km = null;
-                    }
+            // Add distance calculation from warehouse
+            // Default warehouse location: Pekanbaru, Riau
+            $defaultWarehouseLat = 0.5084228544488281;
+            $defaultWarehouseLng = 101.40900501631607;
+            
+            $warehouseLat = $request->get('warehouse_lat', $defaultWarehouseLat);
+            $warehouseLng = $request->get('warehouse_lng', $defaultWarehouseLng);
+            
+            foreach ($orders->items() as $order) {
+                if ($order->latitude && $order->longitude) {
+                    $order->distance_km = $this->calculateDistance(
+                        $warehouseLat, $warehouseLng, 
+                        $order->latitude, $order->longitude
+                    );
+                } else {
+                    $order->distance_km = null;
                 }
+                
+                // Add warehouse info to each order
+                $order->warehouse_info = [
+                    'latitude' => $warehouseLat,
+                    'longitude' => $warehouseLng,
+                    'address' => 'Jl. Suntai, Labuh Baru Bar., Kec. Payung Sekaki, Kota Pekanbaru, Riau 28292'
+                ];
             }
 
             return response()->json([
                 'status' => 'success',
                 'data' => $orders,
+                'warehouse' => [
+                    'latitude' => $warehouseLat,
+                    'longitude' => $warehouseLng,
+                    'address' => 'Jl. Suntai, Labuh Baru Bar., Kec. Payung Sekaki, Kota Pekanbaru, Riau 28292',
+                    'city' => 'Pekanbaru',
+                    'province' => 'Riau'
+                ],
+                'debug' => [
+                    'total_orders_in_db' => Order::count(),
+                    'final_count' => $orders->total(),
+                    'query_info' => 'Showing ALL orders with distance calculation from Pekanbaru warehouse'
+                ],
                 'summary' => [
-                    'ready_to_ship' => Order::where('order_status', 'confirmed')->count(),
+                    'total_all_orders' => Order::count(),
+                    'pending' => Order::where('order_status', 'pending')->count(),
+                    'confirmed' => Order::where('order_status', 'confirmed')->count(),
                     'processing' => Order::where('order_status', 'processing')->count(),
                     'shipped' => Order::where('order_status', 'shipped')->count(),
+                    'delivered' => Order::whereIn('order_status', ['delivered', 'completed'])->count(),
+                    'cancelled' => Order::where('order_status', 'cancelled')->count(),
                 ]
             ]);
 
@@ -707,6 +722,43 @@ class OrderController extends Controller
         $c = 2 * atan2(sqrt($a), sqrt(1-$a));
 
         return round($earthRadius * $c, 2);
+    }
+
+    /**
+     * Simple test endpoint to check order data
+     */
+    public function testOrders(Request $request)
+    {
+        try {
+            // Get simple order data
+            $orders = Order::select([
+                'id', 'order_number', 'pengecer_name', 'pengecer_phone', 
+                'shipping_address', 'city', 'latitude', 'longitude',
+                'order_status', 'payment_status', 'total_amount', 'created_at'
+            ])->orderBy('created_at', 'desc')->limit(10)->get();
+
+            $totalCount = Order::count();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Test endpoint - order data retrieved',
+                'data' => [
+                    'total_orders' => $totalCount,
+                    'sample_orders' => $orders,
+                    'first_order_example' => $orders->first()
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Test failed: ' . $e->getMessage(),
+                'debug' => [
+                    'error_line' => $e->getLine(),
+                    'error_file' => $e->getFile()
+                ]
+            ], 500);
+        }
     }
 }
 

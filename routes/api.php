@@ -157,10 +157,16 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/user/{userId}', [OrderController::class, 'getOrdersByUserId']);
         });
 
-        // Sales routes (for admin and sales role)
+                // Sales routes (for admin and sales role)
         Route::middleware('auth:sanctum')->group(function () {
             // GET /api/orders/sales - Get orders ready for shipping (sales access)
             Route::get('/sales', [OrderController::class, 'salesIndex']);
+            
+            // GET /api/orders/debug - Debug all orders and statuses
+            Route::get('/debug', [OrderController::class, 'debugOrders']);
+            
+            // GET /api/orders/test - Simple test endpoint
+            Route::get('/test', [OrderController::class, 'testOrders']);
             
             // PUT /api/orders/{id}/shipping-status - Update shipping status
             Route::put('/{id}/shipping-status', [OrderController::class, 'updateShippingStatus']);
