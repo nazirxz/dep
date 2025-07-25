@@ -1339,9 +1339,46 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <small class="form-text text-muted">Format yang diizinkan: JPG, PNG, GIF, SVG, PDF. Maksimal 2MB.</small>
                 </div>
                 <div class="mb-3">
-                    <label for="crud_foto_barang" class="form-label">Foto Barang</label>
-                    <input type="file" class="form-control" id="crud_foto_barang" name="foto_barang" accept="image/*">
-                    <small class="form-text text-muted">Format yang diizinkan: JPG, PNG, GIF, SVG. Maksimal 2MB.</small>
+                    <label for="foto_option" class="form-label">Opsi Foto Barang</label>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="foto_option" id="foto_existing" value="existing" onchange="toggleFotoOptions()">
+                            <label class="form-check-label" for="foto_existing">
+                                Pilih dari foto yang sudah ada
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="foto_option" id="foto_upload" value="upload" onchange="toggleFotoOptions()">
+                            <label class="form-check-label" for="foto_upload">
+                                Upload foto baru
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Existing photo selection -->
+                    <div id="existing_foto_section" class="mb-3" style="display: none;">
+                        <label for="crud_foto_barang_existing" class="form-label">Pilih Foto yang Sudah Ada</label>
+                        <select class="form-select" id="crud_foto_barang_existing" name="foto_barang_existing">
+                            <option value="">Pilih foto...</option>
+                            @if(isset($incomingItems))
+                                @foreach($incomingItems->whereNotNull('foto_barang')->unique('foto_barang') as $item)
+                                    <option value="{{ $item->foto_barang }}" data-preview="{{ asset('storage/' . $item->foto_barang) }}">
+                                        {{ $item->nama_barang }} - {{ basename($item->foto_barang) }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        <div id="existing_foto_preview" class="mt-2" style="display: none;">
+                            <img id="existing_foto_img" src="" alt="Preview" style="width: 100px; height: auto; border-radius: 5px;">
+                        </div>
+                    </div>
+                    
+                    <!-- New photo upload -->
+                    <div id="upload_foto_section" class="mb-3" style="display: none;">
+                        <label for="crud_foto_barang" class="form-label">Upload Foto Barang Baru</label>
+                        <input type="file" class="form-control" id="crud_foto_barang" name="foto_barang" accept="image/*">
+                        <small class="form-text text-muted">Format yang diizinkan: JPG, PNG, GIF, SVG. Maksimal 2MB.</small>
+                    </div>
                 </div>
             `;
         } else { // outgoing - add mode (e.g., from "Pindah ke Barang Keluar" or "Proses Barang Keluar")
@@ -3015,5 +3052,56 @@ function clearFormErrors() {
         feedback.remove();
     });
 }
+
+/**
+ * Toggles the visibility of photo options based on selected radio button
+ */
+window.toggleFotoOptions = function() {
+    const fotoTidakPerlu = document.getElementById('foto_tidak_perlu');
+    const fotoExisting = document.getElementById('foto_existing');
+    const fotoUpload = document.getElementById('foto_upload');
+    
+    const existingSection = document.getElementById('existing_foto_section');
+    const uploadSection = document.getElementById('upload_foto_section');
+    
+    if (fotoTidakPerlu && fotoTidakPerlu.checked) {
+        // Hide both sections
+        if (existingSection) existingSection.style.display = 'none';
+        if (uploadSection) uploadSection.style.display = 'none';
+    } else if (fotoExisting && fotoExisting.checked) {
+        // Show existing photo section, hide upload section
+        if (existingSection) existingSection.style.display = 'block';
+        if (uploadSection) uploadSection.style.display = 'none';
+    } else if (fotoUpload && fotoUpload.checked) {
+        // Show upload section, hide existing photo section
+        if (existingSection) existingSection.style.display = 'none';
+        if (uploadSection) uploadSection.style.display = 'block';
+    }
+}
+
+// Add event listener for existing photo dropdown to show preview
+document.addEventListener('DOMContentLoaded', function() {
+    const existingFotoSelect = document.getElementById('crud_foto_barang_existing');
+    if (existingFotoSelect) {
+        existingFotoSelect.addEventListener('change', function() {
+            const previewDiv = document.getElementById('existing_foto_preview');
+            const previewImg = document.getElementById('existing_foto_img');
+            
+            if (this.value && previewDiv && previewImg) {
+                const selectedOption = this.options[this.selectedIndex];
+                const previewUrl = selectedOption.getAttribute('data-preview');
+                
+                if (previewUrl) {
+                    previewImg.src = previewUrl;
+                    previewDiv.style.display = 'block';
+                } else {
+                    previewDiv.style.display = 'none';
+                }
+            } else if (previewDiv) {
+                previewDiv.style.display = 'none';
+            }
+        });
+    }
+});
 </script>
 @endpush

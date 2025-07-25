@@ -82,6 +82,8 @@ class ItemManagementController extends Controller
             'pembayaran_transaksi' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048',
             'nota_transaksi' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048',
             'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'foto_option' => 'required|in:tidak_perlu,existing,upload',
+            'foto_barang_existing' => 'nullable|string',
         ], [
             'nama_barang.required' => 'Nama barang wajib diisi.',
             'category_id.required' => 'Kategori barang wajib dipilih.',
@@ -101,6 +103,8 @@ class ItemManagementController extends Controller
             'foto_barang.image' => 'File foto barang harus berupa gambar.',
             'foto_barang.mimes' => 'File foto barang harus berformat: jpeg, png, jpg, gif, atau svg.',
             'foto_barang.max' => 'Ukuran file foto barang maksimal 2MB.',
+            'foto_option.required' => 'Opsi foto barang wajib dipilih.',
+            'foto_option.in' => 'Opsi foto barang tidak valid.',
         ]);
 
         if ($validator->fails()) {
@@ -128,9 +132,17 @@ class ItemManagementController extends Controller
                 \Log::info('storeIncomingItem: Nota Transaksi uploaded', ['path' => $notaTransaksiPath]);
             }
 
-            if ($request->hasFile('foto_barang')) {
+            // Handle photo based on selected option
+            if ($request->foto_option === 'upload' && $request->hasFile('foto_barang')) {
                 $fotoPath = $request->file('foto_barang')->store('items', 'public');
                 \Log::info('storeIncomingItem: Foto Barang uploaded', ['path' => $fotoPath]);
+            } elseif ($request->foto_option === 'existing' && $request->foto_barang_existing) {
+                $fotoPath = $request->foto_barang_existing;
+                \Log::info('storeIncomingItem: Using existing photo', ['path' => $fotoPath]);
+            } else {
+                // foto_option is 'tidak_perlu' or no valid photo provided
+                $fotoPath = null;
+                \Log::info('storeIncomingItem: No photo selected');
             }
 
             // Get kategori name for storage

@@ -620,9 +620,6 @@
                                     ${inconsistencyWarning}
                                 </div>
                                 <div class="mt-3">
-                                    <button class="btn btn-sm btn-warning w-100 mb-2" onclick="editIncomingItemFromManagement('${item.id}')">
-                                        <i class="fas fa-edit"></i> Edit Barang
-                                    </button>
                                     <button class="btn btn-sm btn-danger w-100 mb-2" onclick="deleteIncomingItemFromManagement('${item.id}')">
                                         <i class="fas fa-trash"></i> Hapus Barang
                                     </button>
@@ -783,38 +780,6 @@
         }
     }
 
-    /**
-     * Mengedit barang masuk dari halaman manajemen gudang.
-     * @param {number} itemId - ID barang masuk.
-     */
-    window.editIncomingItemFromManagement = function(itemId) {
-        // Fetch item data and show edit modal
-        fetch(`/staff/incoming-items/${itemId}`)
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    const item = result.data;
-                    
-                    // Populate form fields
-                    document.getElementById('editItemId').value = item.id;
-                    document.getElementById('editNamaBarang').value = item.nama_barang;
-                    document.getElementById('editKategoriBarang').value = item.kategori_barang;
-                    document.getElementById('editJumlahBarang').value = item.jumlah_barang;
-                    document.getElementById('editTanggalMasuk').value = item.tanggal_masuk_barang;
-                    document.getElementById('editLokasiRak').value = item.lokasi_rak_barang || '';
-                    
-                    // Show modal
-                    const editModal = new bootstrap.Modal(document.getElementById('editItemModal'));
-                    editModal.show();
-                } else {
-                    showAlert('error', 'Gagal memuat data barang: ' + result.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showAlert('error', 'Terjadi kesalahan saat memuat data barang');
-            });
-    }
 
     /**
      * Menghapus barang masuk dari halaman manajemen gudang.
