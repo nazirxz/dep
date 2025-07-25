@@ -45,6 +45,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/report/stock/print', [HomeController::class, 'printStockReport'])->name('report.stock.print');
         Route::get('/order/items', [HomeController::class, 'showOrderItems'])->name('order.items');
         
+        // Route untuk chart data AJAX
+        Route::get('/chart/data', [HomeController::class, 'getChartData'])->name('chart.data');
+        
         // Routes untuk Akun Pegawai (sekarang di EmployeeAccountController)
         Route::get('/employee/accounts', [EmployeeAccountController::class, 'showEmployeeAccounts'])->name('employee.accounts');
         Route::post('/employee/accounts', [EmployeeAccountController::class, 'storeEmployeeAccount'])->name('employee.accounts.store');

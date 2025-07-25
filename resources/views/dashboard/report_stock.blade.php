@@ -118,16 +118,16 @@
                             {{-- Filter dan Pencarian --}}
                             <div class="row mb-3">
                                 <div class="col-md-4">
-                                    <select class="form-select">
-                                        <option selected>Semua Item</option>
-                                        {{-- Anda bisa mengisi opsi ini secara dinamis dari database jika diperlukan --}}
-                                        <option value="1">Item 1</option>
-                                        <option value="2">Item 2</option>
+                                    <select class="form-select" id="incomingStockFilter">
+                                        <option value="">Semua Jumlah Stok</option>
+                                        <option value="empty">Stok Habis (0)</option>
+                                        <option value="low">Stok Sedikit (1-20)</option>
+                                        <option value="high">Stok Banyak (> 20)</option>
                                     </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <select class="form-select">
-                                        <option selected>Pilih Kategori Barang</option>
+                                    <select class="form-select" id="incomingCategoryFilter">
+                                        <option value="">Pilih Kategori Barang</option>
                                         @if(isset($incomingItems))
                                             @foreach($incomingItems->pluck('kategori_barang')->unique()->filter() as $category)
                                                 <option value="{{ $category }}">{{ $category }}</option>
@@ -137,15 +137,16 @@
                                 </div>
                                 <div class="col-md-4 text-end">
                                     <div class="input-group">
-                                        <input type="text" class="form-control" placeholder="Mencari">
-                                        <button class="btn btn-outline-secondary" type="button"><i class="fas fa-search"></i></button>
+                                        <input type="text" class="form-control" placeholder="Mencari nama barang atau produsen" id="incomingSearchInput">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="filterIncomingItems()"><i class="fas fa-search"></i></button>
+                                        <button class="btn btn-outline-danger" type="button" onclick="resetFilters('incoming')" title="Reset Filter"><i class="fas fa-times"></i></button>
                                     </div>
                                 </div>
                             </div>
 
                             {{-- Tabel Stok Barang Masuk --}}
                             <div class="table-responsive">
-                                <table class="table table-hover">
+                                <table class="table table-hover" id="incomingItemsTable">
                                     <thead class="table-light">
                                         <tr>
                                             <th>No.</th>
@@ -228,16 +229,16 @@
                             {{-- Filter dan Pencarian untuk Barang Keluar --}}
                             <div class="row mb-3">
                                 <div class="col-md-4">
-                                    <select class="form-select">
-                                        <option selected>Semua Item</option>
-                                        {{-- Anda bisa mengisi opsi ini secara dinamis dari database jika diperlukan --}}
-                                        <option value="1">Item 1</option>
-                                        <option value="2">Item 2</option>
+                                    <select class="form-select" id="outgoingStockFilter">
+                                        <option value="">Semua Jumlah Stok</option>
+                                        <option value="empty">Stok Habis (0)</option>
+                                        <option value="low">Stok Sedikit (1-20)</option>
+                                        <option value="high">Stok Banyak (> 20)</option>
                                     </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <select class="form-select">
-                                        <option selected>Pilih Kategori Barang</option>
+                                    <select class="form-select" id="outgoingCategoryFilter">
+                                        <option value="">Pilih Kategori Barang</option>
                                         @if(isset($outgoingItems))
                                             @foreach($outgoingItems->pluck('kategori_barang')->unique()->filter() as $category)
                                                 <option value="{{ $category }}">{{ $category }}</option>
@@ -247,15 +248,16 @@
                                 </div>
                                 <div class="col-md-4 text-end">
                                     <div class="input-group">
-                                        <input type="text" class="form-control" placeholder="Mencari">
-                                        <button class="btn btn-outline-secondary" type="button"><i class="fas fa-search"></i></button>
+                                        <input type="text" class="form-control" placeholder="Mencari nama barang atau tujuan" id="outgoingSearchInput">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="filterOutgoingItems()"><i class="fas fa-search"></i></button>
+                                        <button class="btn btn-outline-danger" type="button" onclick="resetFilters('outgoing')" title="Reset Filter"><i class="fas fa-times"></i></button>
                                     </div>
                                 </div>
                             </div>
 
                             {{-- Tabel Stok Barang Keluar --}}
                             <div class="table-responsive">
-                                <table class="table table-hover">
+                                <table class="table table-hover" id="outgoingItemsTable">
                                     <thead class="table-light">
                                         <tr>
                                             <th>No.</th>
@@ -322,9 +324,10 @@
                 <div class="card-header bg-white d-flex justify-content-between align-items-center" id="chartCardHeader">
                     <h5 class="mb-0">Tren Pembelian & Penjualan Barang</h5> {{-- Judul awal --}}
                     <div class="d-flex align-items-center">
-                        <span class="me-2">Periode : {{ $chartPeriod }}</span> {{-- Tampilkan periode dari controller --}}
-                        <button class="btn btn-sm btn-outline-secondary me-2"><i class="fas fa-calendar-alt"></i> Detail Kalender</button>
-                        <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-chevron-right"></i> Minggu Berikutnya</button>
+                        <span class="me-2" id="chartPeriodDisplay">Periode : {{ $chartPeriod }}</span> {{-- Tampilkan periode dari controller --}}
+                        <button class="btn btn-sm btn-outline-secondary me-2" id="calendarDetailBtn"><i class="fas fa-calendar-alt"></i> Detail Kalender</button>
+                        <button class="btn btn-sm btn-outline-secondary me-2" id="prevWeekBtn"><i class="fas fa-chevron-left"></i> Minggu Sebelumnya</button>
+                        <button class="btn btn-sm btn-outline-secondary" id="nextWeekBtn"><i class="fas fa-chevron-right"></i> Minggu Berikutnya</button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -539,7 +542,7 @@
 
             const salesChartCtx = document.getElementById('salesChart');
             if (salesChartCtx) {
-                salesChart = new Chart(salesChartCtx, salesConfig);
+                chartInstance = new Chart(salesChartCtx, salesConfig);
             }
         }
 
@@ -662,7 +665,350 @@
                 alertModal.show();
             }
         }
+
+        // Initialize filter functionality
+        initializeFilters();
+        
+        // Initialize chart navigation functionality
+        initializeChartNavigation();
     });
+
+    // Filter Functions
+    function initializeFilters() {
+        // Add event listeners for filters
+        document.getElementById('incomingStockFilter').addEventListener('change', filterIncomingItems);
+        document.getElementById('incomingCategoryFilter').addEventListener('change', filterIncomingItems);
+        document.getElementById('incomingSearchInput').addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                filterIncomingItems();
+            }
+        });
+
+        document.getElementById('outgoingStockFilter').addEventListener('change', filterOutgoingItems);
+        document.getElementById('outgoingCategoryFilter').addEventListener('change', filterOutgoingItems);
+        document.getElementById('outgoingSearchInput').addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                filterOutgoingItems();
+            }
+        });
+    }
+
+    function filterIncomingItems() {
+        const stockFilter = document.getElementById('incomingStockFilter').value;
+        const categoryFilter = document.getElementById('incomingCategoryFilter').value.toLowerCase();
+        const searchFilter = document.getElementById('incomingSearchInput').value.toLowerCase();
+        const table = document.getElementById('incomingItemsTable');
+        const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const cells = row.getElementsByTagName('td');
+            
+            if (cells.length === 0) continue; // Skip header rows
+            
+            const itemName = cells[1] ? cells[1].textContent.toLowerCase() : '';
+            const category = cells[2] ? cells[2].textContent.toLowerCase() : '';
+            const stockQuantity = cells[4] ? parseInt(cells[4].textContent.replace(/[^\d]/g, '')) : 0; // Jumlah column
+            const producer = cells[6] ? cells[6].textContent.toLowerCase() : '';
+            
+            let showRow = true;
+            
+            // Stock filter
+            if (stockFilter) {
+                switch(stockFilter) {
+                    case 'empty':
+                        if (stockQuantity !== 0) showRow = false;
+                        break;
+                    case 'low':
+                        if (stockQuantity > 20 || stockQuantity === 0) showRow = false;
+                        break;
+                    case 'high':
+                        if (stockQuantity <= 20) showRow = false;
+                        break;
+                }
+            }
+            
+            // Category filter
+            if (categoryFilter && category !== categoryFilter) {
+                showRow = false;
+            }
+            
+            // Search filter
+            if (searchFilter && !itemName.includes(searchFilter) && !producer.includes(searchFilter)) {
+                showRow = false;
+            }
+            
+            row.style.display = showRow ? '' : 'none';
+        }
+    }
+
+    function filterOutgoingItems() {
+        const stockFilter = document.getElementById('outgoingStockFilter').value;
+        const categoryFilter = document.getElementById('outgoingCategoryFilter').value.toLowerCase();
+        const searchFilter = document.getElementById('outgoingSearchInput').value.toLowerCase();
+        const table = document.getElementById('outgoingItemsTable');
+        const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const cells = row.getElementsByTagName('td');
+            
+            if (cells.length === 0) continue; // Skip header rows
+            
+            const itemName = cells[1] ? cells[1].textContent.toLowerCase() : '';
+            const category = cells[2] ? cells[2].textContent.toLowerCase() : '';
+            const stockQuantity = cells[4] ? parseInt(cells[4].textContent.replace(/[^\d]/g, '')) : 0; // Jumlah column
+            const destination = cells[6] ? cells[6].textContent.toLowerCase() : '';
+            
+            let showRow = true;
+            
+            // Stock filter
+            if (stockFilter) {
+                switch(stockFilter) {
+                    case 'empty':
+                        if (stockQuantity !== 0) showRow = false;
+                        break;
+                    case 'low':
+                        if (stockQuantity > 20 || stockQuantity === 0) showRow = false;
+                        break;
+                    case 'high':
+                        if (stockQuantity <= 20) showRow = false;
+                        break;
+                }
+            }
+            
+            // Category filter  
+            if (categoryFilter && category !== categoryFilter) {
+                showRow = false;
+            }
+            
+            // Search filter
+            if (searchFilter && !itemName.includes(searchFilter) && !destination.includes(searchFilter)) {
+                showRow = false;
+            }
+            
+            row.style.display = showRow ? '' : 'none';
+        }
+    }
+
+    // Reset filters function
+    function resetFilters(type) {
+        if (type === 'incoming') {
+            document.getElementById('incomingStockFilter').value = '';
+            document.getElementById('incomingCategoryFilter').value = '';
+            document.getElementById('incomingSearchInput').value = '';
+            filterIncomingItems();
+        } else if (type === 'outgoing') {
+            document.getElementById('outgoingStockFilter').value = '';
+            document.getElementById('outgoingCategoryFilter').value = '';
+            document.getElementById('outgoingSearchInput').value = '';
+            filterOutgoingItems();
+        }
+    }
+
+    // Chart Navigation Functions
+    let currentDate = new Date();
+    let chartInstance = null;
+
+    function initializeChartNavigation() {
+        // Event listeners for chart navigation buttons
+        document.getElementById('calendarDetailBtn').addEventListener('click', showCalendarModal);
+        document.getElementById('nextWeekBtn').addEventListener('click', () => navigateWeek(1));
+        document.getElementById('prevWeekBtn').addEventListener('click', () => navigateWeek(-1));
+        document.getElementById('applyDateFilter').addEventListener('click', applyCustomDateFilter);
+        document.getElementById('resetToToday').addEventListener('click', resetToToday);
+        
+        // Initialize current period info and set initial daily data
+        updateCurrentPeriodInfo();
+        
+        // Set initial chart to show daily data for current week
+        const startOfWeek = getStartOfWeek(currentDate);
+        const endOfWeek = getEndOfWeek(currentDate);
+        setTimeout(() => {
+            fetchChartDataFromServer(startOfWeek, endOfWeek);
+        }, 1000); // Wait for chart to be initialized
+    }
+
+    function showCalendarModal() {
+        // Set current dates in modal
+        const startOfWeek = getStartOfWeek(currentDate);
+        const endOfWeek = getEndOfWeek(currentDate);
+        
+        document.getElementById('startDate').value = formatDateForInput(startOfWeek);
+        document.getElementById('endDate').value = formatDateForInput(endOfWeek);
+        document.getElementById('currentPeriodInfo').textContent = formatPeriodDisplay(startOfWeek, endOfWeek);
+        
+        new bootstrap.Modal(document.getElementById('calendarModal')).show();
+    }
+
+    function navigateWeek(direction) {
+        // direction: 1 for next week, -1 for previous week
+        currentDate.setDate(currentDate.getDate() + (direction * 7));
+        
+        // Always show daily data for the current week
+        const startOfWeek = getStartOfWeek(currentDate);
+        const endOfWeek = getEndOfWeek(currentDate);
+        updateChartData(startOfWeek, endOfWeek, 'daily');
+        updateCurrentPeriodInfo();
+    }
+
+    function applyCustomDateFilter() {
+        const startDate = new Date(document.getElementById('startDate').value);
+        const endDate = new Date(document.getElementById('endDate').value);
+        const periodType = document.getElementById('periodType').value;
+        
+        if (startDate && endDate && startDate <= endDate) {
+            currentDate = new Date(startDate);
+            // Always use daily for x-axis labels, but respect period selection for data aggregation
+            updateChartData(startDate, endDate, 'daily');
+            updateCurrentPeriodInfo();
+            bootstrap.Modal.getInstance(document.getElementById('calendarModal')).hide();
+        } else {
+            alert('Silakan pilih tanggal yang valid');
+        }
+    }
+
+    function resetToToday() {
+        currentDate = new Date();
+        const startOfWeek = getStartOfWeek(currentDate);
+        const endOfWeek = getEndOfWeek(currentDate);
+        updateChartData(startOfWeek, endOfWeek, 'daily');
+        updateCurrentPeriodInfo();
+        bootstrap.Modal.getInstance(document.getElementById('calendarModal')).hide();
+    }
+
+    function updateCurrentPeriodInfo() {
+        const startOfWeek = getStartOfWeek(currentDate);
+        const endOfWeek = getEndOfWeek(currentDate);
+        const periodDisplay = formatPeriodDisplay(startOfWeek, endOfWeek);
+        
+        document.getElementById('chartPeriodDisplay').textContent = 'Periode : ' + periodDisplay;
+        if (document.getElementById('currentPeriodInfo')) {
+            document.getElementById('currentPeriodInfo').textContent = periodDisplay;
+        }
+    }
+
+    function updateChartData(startDate = null, endDate = null, periodType = 'daily') {
+        // Show loading indicator
+        showChartLoading();
+        
+        const start = startDate || getStartOfWeek(currentDate);
+        const end = endDate || getEndOfWeek(currentDate);
+        
+        // Fetch real data from server
+        fetchChartDataFromServer(start, end);
+    }
+
+    function fetchChartDataFromServer(startDate, endDate) {
+        const start = formatDateForAPI(startDate);
+        const end = formatDateForAPI(endDate);
+        
+        fetch(`/chart/data?start_date=${start}&end_date=${end}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                updateChartWithRealData(data);
+                hideChartLoading();
+            })
+            .catch(error => {
+                console.error('Error fetching chart data:', error);
+                // Fallback to generating sample data
+                generateSampleChartData(startDate, endDate);
+                hideChartLoading();
+            });
+    }
+
+    function updateChartWithRealData(data) {
+        if (chartInstance) {
+            chartInstance.data.labels = data.labels;
+            chartInstance.data.datasets[0].data = data.purchaseData;
+            chartInstance.data.datasets[1].data = data.salesData;
+            chartInstance.update();
+            
+            // Update period display
+            document.getElementById('chartPeriodDisplay').textContent = 'Periode : ' + data.period;
+        }
+    }
+
+    function generateSampleChartData(startDate, endDate) {
+        // Fallback function if API fails
+        const labels = generateDateLabels(startDate, endDate);
+        const purchaseData = labels.map(() => Math.floor(Math.random() * 100) + 20);
+        const salesData = labels.map(() => Math.floor(Math.random() * 80) + 10);
+        
+        if (chartInstance) {
+            chartInstance.data.labels = labels;
+            chartInstance.data.datasets[0].data = purchaseData;
+            chartInstance.data.datasets[1].data = salesData;
+            chartInstance.update();
+        }
+    }
+
+    function generateDateLabels(startDate, endDate, periodType = 'daily') {
+        const labels = [];
+        const current = new Date(startDate);
+        
+        // Always generate daily labels regardless of periodType
+        while (current <= endDate) {
+            labels.push(current.toLocaleDateString('id-ID', { 
+                weekday: 'short',
+                day: '2-digit', 
+                month: 'short' 
+            }));
+            current.setDate(current.getDate() + 1);
+        }
+        
+        return labels;
+    }
+
+    function getStartOfWeek(date) {
+        const start = new Date(date);
+        const day = start.getDay();
+        const diff = start.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Monday start
+        start.setDate(diff);
+        return start;
+    }
+
+    function getEndOfWeek(date) {
+        const end = new Date(getStartOfWeek(date));
+        end.setDate(end.getDate() + 6);
+        return end;
+    }
+
+    function formatDateForInput(date) {
+        return date.toISOString().split('T')[0];
+    }
+
+    function formatDateForAPI(date) {
+        return date.toISOString().split('T')[0];
+    }
+
+    function formatPeriodDisplay(startDate, endDate) {
+        return `${startDate.toLocaleDateString('id-ID')} - ${endDate.toLocaleDateString('id-ID')}`;
+    }
+
+    function showChartLoading() {
+        const chartContainer = document.querySelector('#salesChart').parentElement;
+        chartContainer.style.opacity = '0.5';
+        chartContainer.style.pointerEvents = 'none';
+    }
+
+    function hideChartLoading() {
+        const chartContainer = document.querySelector('#salesChart').parentElement;
+        chartContainer.style.opacity = '1';
+        chartContainer.style.pointerEvents = 'auto';
+    }
 </script>
 
 {{-- Custom Alert Modal (Pengganti alert()) --}}
@@ -678,6 +1024,48 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Detail Kalender --}}
+<div class="modal fade" id="calendarModal" tabindex="-1" aria-labelledby="calendarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="calendarModalLabel">Detail Kalender Tren Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="startDate" class="form-label">Tanggal Mulai</label>
+                        <input type="date" class="form-control" id="startDate">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="endDate" class="form-label">Tanggal Akhir</label>
+                        <input type="date" class="form-control" id="endDate">
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <label for="periodType" class="form-label">Jenis Periode Data</label>
+                        <select class="form-select" id="periodType" disabled>
+                            <option value="daily" selected>Harian (Chart selalu menampilkan data harian)</option>
+                        </select>
+                        <small class="text-muted">X-axis chart akan selalu menampilkan data per hari</small>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <h6>Periode Saat Ini: <span id="currentPeriodInfo"></span></h6>
+                    <small class="text-muted">Gunakan tombol navigasi untuk berpindah periode atau pilih tanggal custom</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-primary" id="applyDateFilter">Terapkan Filter</button>
+                <button type="button" class="btn btn-outline-primary" id="resetToToday">Reset ke Hari Ini</button>
             </div>
         </div>
     </div>

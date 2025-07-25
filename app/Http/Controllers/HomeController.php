@@ -230,6 +230,64 @@ class HomeController extends Controller
     }
 
     /**
+     * Get chart data for AJAX requests.
+     */
+    public function getChartData(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->startOfWeek());
+        $endDate = $request->input('end_date', Carbon::now()->endOfWeek());
+        
+        // Convert to Carbon instances if they're strings
+        if (is_string($startDate)) {
+            $startDate = Carbon::parse($startDate);
+        }
+        if (is_string($endDate)) {
+            $endDate = Carbon::parse($endDate);
+        }
+        
+        // Generate daily labels for the period
+        $labels = [];
+        $currentDate = $startDate->copy();
+        while ($currentDate <= $endDate) {
+            $labels[] = $currentDate->format('D, d M'); // Format: Sen, 01 Jan
+            $currentDate->addDay();
+        }
+        
+        // Get incoming items data (pembelian)
+        $incomingData = IncomingItem::selectRaw('DATE(created_at) as date, SUM(jumlah_barang) as total')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('date')
+            ->pluck('total', 'date')
+            ->toArray();
+            
+        // Get outgoing items data (penjualan)
+        $outgoingData = OutgoingItem::selectRaw('DATE(created_at) as date, SUM(jumlah_barang) as total')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('date')
+            ->pluck('total', 'date')
+            ->toArray();
+        
+        // Fill in missing dates with 0
+        $purchaseData = [];
+        $salesData = [];
+        $currentDate = $startDate->copy();
+        
+        while ($currentDate <= $endDate) {
+            $dateKey = $currentDate->format('Y-m-d');
+            $purchaseData[] = $incomingData[$dateKey] ?? 0;
+            $salesData[] = $outgoingData[$dateKey] ?? 0;
+            $currentDate->addDay();
+        }
+        
+        return response()->json([
+            'labels' => $labels,
+            'purchaseData' => $purchaseData,
+            'salesData' => $salesData,
+            'period' => $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y')
+        ]);
+    }
+
+    /**
      * Show the employee accounts management page.
      */
     public function showEmployeeAccounts()
