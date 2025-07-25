@@ -869,15 +869,15 @@ window.setupFilters = function() {
         const rows = document.querySelectorAll('#incomingTable tbody tr');
 
         rows.forEach(row => {
-            if (row.cells.length < 2) return; // Skip empty rows
+            if (row.cells.length < 4) return; // Skip empty rows or incomplete rows
             
-            const nameCell = row.cells[3]; // Nama Barang column (index 3 after No. and Foto Barang)
+            const nameCell = row.cells[3]; // Nama Barang column (index 3: Checkbox, No, Foto, Nama)
             const category = row.dataset.category || '';
             const date = row.dataset.date || '';
 
             if (nameCell) {
-                const nameText = nameCell.textContent.toLowerCase();
-                const matchesSearch = nameText.includes(searchText);
+                const nameText = nameCell.textContent.toLowerCase().trim();
+                const matchesSearch = !searchText || nameText.includes(searchText);
                 const matchesCategory = !selectedCategory || category === selectedCategory;
                 const matchesDate = !selectedDate || date === selectedDate;
 
@@ -3079,8 +3079,12 @@ window.toggleFotoOptions = function() {
     }
 }
 
-// Add event listener for existing photo dropdown to show preview
+// Initialize page functionality when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all page functionality
+    window.initializePage();
+    
+    // Add event listener for existing photo dropdown to show preview
     const existingFotoSelect = document.getElementById('crud_foto_barang_existing');
     if (existingFotoSelect) {
         existingFotoSelect.addEventListener('change', function() {
