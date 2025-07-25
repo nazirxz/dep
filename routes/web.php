@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ItemManagementController;
 use App\Http\Controllers\EmployeeAccountController; // Import controller baru
 use App\Http\Controllers\VerificationItemController;
+use App\Http\Controllers\ProducerController;
 
 // Route untuk splash screen
 Route::get('/', [SplashController::class, 'index'])->name('splash');
@@ -29,6 +30,14 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard utama (dinamis berdasarkan role)
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     
+    // Routes untuk Producer CRUD (accessible by both manager and admin)
+    Route::resource('producers', ProducerController::class)->only(['store', 'update', 'destroy']);
+    
+    // Test route for debugging
+    Route::get('/test-producers', function() {
+        return 'Producer routes are working';
+    });
+    
     // Routes untuk Manager (role: manager)
     Route::middleware(['auth', 'role:manager'])->group(function () {
         Route::get('/report/stock', [HomeController::class, 'showStockReport'])->name('report.stock');
@@ -42,6 +51,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/employee/accounts/{user}/edit', [EmployeeAccountController::class, 'edit'])->name('employee.accounts.edit'); // Untuk ambil data edit
         Route::put('/employee/accounts/{user}', [EmployeeAccountController::class, 'update'])->name('employee.accounts.update');
         Route::delete('/employee/accounts/{user}', [EmployeeAccountController::class, 'destroy'])->name('employee.accounts.destroy');
+        
     });
     
     // Routes untuk Staff Admin (role: admin)

@@ -117,7 +117,12 @@
                         <div class="tab-pane fade show active" id="add-producer" role="tabpanel" aria-labelledby="add-producer-tab">
                             {{-- Filter dan Pencarian --}}
                             <div class="row mb-3 align-items-center">
-                                <div class="col-md-6 offset-md-6 text-end">
+                                <div class="col-md-6">
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#producerModal">
+                                        <i class="fas fa-plus"></i> Tambah Mitra Produsen
+                                    </button>
+                                </div>
+                                <div class="col-md-6 text-end">
                                     <div class="input-group">
                                         <input type="text" class="form-control" placeholder="Mencari" id="searchProducerInput">
                                         <button class="btn btn-outline-secondary" type="button"><i class="fas fa-search"></i></button>
@@ -132,7 +137,9 @@
                                         <tr>
                                             <th>No.</th>
                                             <th>Nama Produsen/Supplier</th>
-                                            <th>Pemesanan Barang</th>
+                                            <th>No. Telepon/WhatsApp</th>
+                                            <th>Alamat</th>
+                                            <th>Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -140,15 +147,27 @@
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $producer->nama_produsen_supplier }}</td>
+                                                <td>{{ $producer->kontak_whatsapp ?? $producer->no_telp ?? '-' }}</td>
+                                                <td>{{ $producer->alamat ?? '-' }}</td>
                                                 <td>
-                                                    <a href="https://wa.me/{{ $producer->kontak_whatsapp }}" target="_blank" class="btn btn-success btn-sm">
-                                                        <i class="fab fa-whatsapp"></i> Hubungi
-                                                    </a>
+                                                    <div class="btn-group" role="group">
+                                                        @if($producer->kontak_whatsapp || $producer->no_telp)
+                                                        <a href="https://wa.me/{{ $producer->kontak_whatsapp ?? $producer->no_telp }}" target="_blank" class="btn btn-success btn-sm">
+                                                            <i class="fab fa-whatsapp"></i>
+                                                        </a>
+                                                        @endif
+                                                        <button type="button" class="btn btn-warning btn-sm" onclick="editProducer({{ $producer->id }}, {{ json_encode($producer->nama_produsen_supplier) }}, {{ json_encode($producer->kontak_whatsapp) }}, {{ json_encode($producer->alamat) }}, {{ json_encode($producer->no_telp ?? '') }}, {{ json_encode($producer->email ?? '') }}, {{ json_encode($producer->catatan ?? '') }})">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-danger btn-sm" onclick="deleteProducer({{ $producer->id }}, {{ json_encode($producer->nama_produsen_supplier) }})">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="3" class="text-center">Tidak ada data mitra produsen.</td>
+                                                <td colspan="5" class="text-center">Tidak ada data mitra produsen.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -199,6 +218,88 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal untuk Create/Edit Mitra Produsen --}}
+<div class="modal fade" id="producerModal" tabindex="-1" aria-labelledby="producerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="producerModalLabel">Tambah Mitra Produsen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="producerForm" method="POST" action="/producers">
+                @csrf
+                <input type="hidden" id="producerMethod" name="_method" value="POST">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="nama_produsen_supplier" class="form-label">Nama Produsen/Supplier <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="nama_produsen_supplier" name="nama_produsen_supplier" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="kontak_whatsapp" class="form-label">Kontak WhatsApp <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="kontak_whatsapp" name="kontak_whatsapp" placeholder="Contoh: 628123456789" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="no_telp" class="form-label">No. Telepon</label>
+                                <input type="text" class="form-control" id="no_telp" name="no_telp">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="alamat" class="form-label">Alamat</label>
+                        <textarea class="form-control" id="alamat" name="alamat" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="catatan" class="form-label">Catatan</label>
+                        <textarea class="form-control" id="catatan" name="catatan" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Konfirmasi Hapus --}}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Konfirmasi Hapus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus mitra produsen <strong id="deleteProducerName"></strong>?</p>
+                <p class="text-muted">Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">Hapus</button>
+                </form>
             </div>
         </div>
     </div>
@@ -302,6 +403,45 @@
                 }
             });
         }
+
+        // Reset modal saat ditutup
+        document.getElementById('producerModal').addEventListener('hidden.bs.modal', function () {
+            resetModal();
+        });
     });
+
+    // Fungsi untuk reset modal
+    function resetModal() {
+        document.getElementById('producerForm').action = '/producers';
+        document.getElementById('producerMethod').value = 'POST';
+        document.getElementById('producerModalLabel').textContent = 'Tambah Mitra Produsen';
+        document.getElementById('submitBtn').textContent = 'Simpan';
+        document.getElementById('producerForm').reset();
+    }
+
+    // Fungsi untuk edit producer
+    function editProducer(id, nama, whatsapp, alamat, noTelp, email, catatan) {
+        document.getElementById('producerForm').action = '/producers/' + id;
+        document.getElementById('producerMethod').value = 'PUT';
+        document.getElementById('producerModalLabel').textContent = 'Edit Mitra Produsen';
+        document.getElementById('submitBtn').textContent = 'Update';
+        
+        // Set values dengan null check
+        document.getElementById('nama_produsen_supplier').value = nama || '';
+        document.getElementById('kontak_whatsapp').value = whatsapp || '';
+        document.getElementById('alamat').value = alamat || '';
+        document.getElementById('no_telp').value = noTelp || '';
+        document.getElementById('email').value = email || '';
+        document.getElementById('catatan').value = catatan || '';
+        
+        new bootstrap.Modal(document.getElementById('producerModal')).show();
+    }
+
+    // Fungsi untuk delete producer
+    function deleteProducer(id, nama) {
+        document.getElementById('deleteProducerName').textContent = nama;
+        document.getElementById('deleteForm').action = '/producers/' + id;
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
 </script>
 @endsection
