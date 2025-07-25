@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
         // Run seeders in correct order
         $this->call([
             UserTableSeeder::class,
+            PengecerUserSeeder::class,
             CategorySeeder::class,
             ProducerSeeder::class,
             JsonDataSeeder::class,

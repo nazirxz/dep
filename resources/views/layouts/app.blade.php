@@ -288,13 +288,56 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Add loading state to logout form
+            // Enhanced logout handling with CSRF token refresh
+            window.handleLogout = function() {
+                // Get fresh CSRF token
+                const token = document.querySelector('meta[name="csrf-token"]');
+                if (token) {
+                    const csrfToken = token.getAttribute('content');
+                    
+                    // Create or update logout form
+                    let logoutForm = document.getElementById('logout-form');
+                    if (!logoutForm) {
+                        logoutForm = document.createElement('form');
+                        logoutForm.id = 'logout-form';
+                        logoutForm.action = '{{ route("logout") }}';
+                        logoutForm.method = 'POST';
+                        logoutForm.style.display = 'none';
+                        document.body.appendChild(logoutForm);
+                    }
+                    
+                    // Clear existing tokens and add fresh one
+                    const existingTokens = logoutForm.querySelectorAll('input[name="_token"]');
+                    existingTokens.forEach(token => token.remove());
+                    
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_token';
+                    csrfInput.value = csrfToken;
+                    logoutForm.appendChild(csrfInput);
+                    
+                    // Show loading state
+                    const logoutLinks = document.querySelectorAll('a[onclick*="logout-form"], a[onclick*="handleLogout"]');
+                    logoutLinks.forEach(link => {
+                        link.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Keluar...';
+                        link.style.pointerEvents = 'none';
+                    });
+                    
+                    // Submit form
+                    logoutForm.submit();
+                } else {
+                    console.error('CSRF token not found');
+                    alert('Terjadi kesalahan. Silakan refresh halaman dan coba lagi.');
+                }
+            };
+            
+            // Add loading state to existing logout forms
             const logoutForms = document.querySelectorAll('form#logout-form');
             logoutForms.forEach(function(form) {
                 form.addEventListener('submit', function() {
                     const logoutBtn = form.querySelector('a[onclick*="logout-form"]');
                     if (logoutBtn) {
-                        logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
+                        logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Keluar...';
                         logoutBtn.style.pointerEvents = 'none';
                     }
                 });

@@ -31,6 +31,11 @@
                             <i class="fas fa-users-cog"></i>Akun Pegawai
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('pengecer.users') }}">
+                            <i class="fas fa-store"></i>User Pengecer
+                        </a>
+                    </li>
                     {{-- Bagian bawah sidebar --}}
                     <li class="nav-item" style="margin-top: auto;">
                         <hr class="text-white-50">
@@ -40,7 +45,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-danger" href="{{ route('logout') }}"
-                           onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                           onclick="event.preventDefault(); window.handleLogout();">
                             <i class="fas fa-sign-out-alt"></i>Keluar
                         </a>
                         <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">

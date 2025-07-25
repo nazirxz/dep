@@ -29,6 +29,32 @@ class EmployeeAccountController extends Controller
     }
 
     /**
+     * Menampilkan halaman pengelolaan user pengecer.
+     */
+    public function showPengecerUsers()
+    {
+        // Mengambil semua user dengan role 'pengecer' dari database
+        $pengecerUsers = User::where('role', 'pengecer')->get();
+
+        return view('dashboard.pengecer_users', [
+            'pengecerUsers' => $pengecerUsers,
+        ]);
+    }
+
+    /**
+     * Menampilkan halaman users pengecer untuk admin staff.
+     */
+    public function showPengecerUsersForAdmin()
+    {
+        // Mengambil semua user dengan role 'pengecer' dari database
+        $pengecerUsers = User::where('role', 'pengecer')->get();
+
+        return view('staff_admin.users', [
+            'pengecerUsers' => $pengecerUsers,
+        ]);
+    }
+
+    /**
      * Menyimpan akun pegawai baru.
      * (Dipindahkan dari HomeController)
      */

@@ -55,6 +55,9 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/employee/accounts/{user}', [EmployeeAccountController::class, 'update'])->name('employee.accounts.update');
         Route::delete('/employee/accounts/{user}', [EmployeeAccountController::class, 'destroy'])->name('employee.accounts.destroy');
         
+        // Route untuk User Pengecer
+        Route::get('/pengecer/users', [EmployeeAccountController::class, 'showPengecerUsers'])->name('pengecer.users');
+        
     });
     
     // Routes untuk Staff Admin (role: admin)
@@ -102,6 +105,9 @@ Route::middleware(['auth'])->group(function () {
 
         // Route for marking order as finished packing
         Route::put('/staff/orders/{orderId}/finished-packing', [ItemManagementController::class, 'markOrderAsFinishedPacking'])->name('staff.orders.finished-packing');
+        
+        // Route untuk Admin melihat Users Pengecer
+        Route::get('/staff/users', [EmployeeAccountController::class, 'showPengecerUsersForAdmin'])->name('staff.users');
 
     });
 
