@@ -11,10 +11,22 @@ use App\Http\Controllers\Api\ReturnItemApiController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\VoucherController;
 use App\Http\Controllers\Api\ShippingMethodController;
+use App\Http\Controllers\ForgotPasswordController;
+use App\Http\Controllers\Auth\EmailVerificationController;
 
 // Authentication routes (public)
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// Email verification routes (public) with rate limiting
+Route::post('/send-otp', [EmailVerificationController::class, 'sendOTP'])->middleware('throttle:3,1');
+Route::post('/verify-otp', [EmailVerificationController::class, 'verifyOTP'])->middleware('throttle:5,1');
+Route::post('/resend-otp', [EmailVerificationController::class, 'resendOTP'])->middleware('throttle:2,1');
+
+// Password Reset API routes (public) with rate limiting
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmailAPI'])->middleware('throttle:3,1');
+Route::post('/reset-password', [ForgotPasswordController::class, 'resetPasswordAPI'])->middleware('throttle:5,1');
+Route::post('/verify-reset-token', [ForgotPasswordController::class, 'verifyTokenAPI'])->middleware('throttle:10,1');
 
 // Protected routes (requires authentication)
 Route::middleware('auth:sanctum')->group(function () {
