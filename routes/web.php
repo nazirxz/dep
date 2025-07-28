@@ -92,6 +92,10 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/staff/outgoing-items/{id}', [ItemManagementController::class, 'deleteOutgoingItem'])->name('staff.outgoing_items.delete');
         Route::get('/staff/outgoing-items/{id}', [ItemManagementController::class, 'getOutgoingItem'])->name('staff.outgoing_items.show'); // Untuk mendapatkan detail item keluar
 
+        // Route untuk Pergantian Barang
+        Route::get('/staff/incoming-items-list', [ItemManagementController::class, 'getIncomingItemsList'])->name('staff.incoming_items.list');
+        Route::post('/staff/pergantian-barang', [ItemManagementController::class, 'storePergantianBarang'])->name('staff.pergantian_barang.store');
+
         // Rute baru untuk proses verifikasi barang
         Route::get('/staff/verification-items', [VerificationItemController::class, 'index'])->name('staff.verification_items.index');
         Route::post('/staff/verification-items', [VerificationItemController::class, 'store'])->name('staff.verification_items.store');

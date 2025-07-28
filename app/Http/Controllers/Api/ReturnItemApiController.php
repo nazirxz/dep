@@ -128,7 +128,85 @@ class ReturnItemApiController extends Controller
     }
 
     /**
-     * Store a newly created returned item
+     * Store pergantian barang (direct return without order)
+     */
+    public function storePergantianBarang(Request $request): JsonResponse
+    {
+        try {
+            // Validate the request data for pergantian barang
+            $validatedData = $request->validate([
+                'nama_barang' => 'required|string|max:255',
+                'kategori_barang' => 'required|string|max:255', 
+                'jumlah_barang' => 'required|integer|min:1',
+                'nama_produsen' => 'nullable|string|max:255',
+                'alasan_pengembalian' => 'required|string',
+                'foto_bukti' => 'nullable|image|mimes:jpeg,jpg,png|max:2048' // max 2MB
+            ]);
+
+            $fotoPath = null;
+
+            // Handle file upload if foto_bukti is provided
+            if ($request->hasFile('foto_bukti')) {
+                $file = $request->file('foto_bukti');
+                $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                
+                // Store file in public/storage/return_items folder
+                $fotoPath = $file->storeAs('return_items', $fileName, 'public');
+            }
+
+            // Create the returned item for pergantian barang
+            $returnedItem = ReturnedItem::create([
+                'nama_barang' => $validatedData['nama_barang'],
+                'kategori_barang' => $validatedData['kategori_barang'],
+                'jumlah_barang' => $validatedData['jumlah_barang'],
+                'nama_produsen' => $validatedData['nama_produsen'],
+                'alasan_pengembalian' => $validatedData['alasan_pengembalian'],
+                'foto_bukti' => $fotoPath
+            ]);
+
+            // Generate full URL for foto if exists
+            $fotoUrl = null;
+            if ($returnedItem->foto_bukti) {
+                $fotoUrl = url('storage/' . $returnedItem->foto_bukti);
+            }
+
+            $responseData = [
+                'id' => $returnedItem->id,
+                'nama_barang' => $returnedItem->nama_barang,
+                'kategori_barang' => $returnedItem->kategori_barang,
+                'jumlah_barang' => $returnedItem->jumlah_barang,
+                'nama_produsen' => $returnedItem->nama_produsen,
+                'alasan_pengembalian' => $returnedItem->alasan_pengembalian,
+                'foto_bukti' => $returnedItem->foto_bukti,
+                'foto_url' => $fotoUrl,
+                'created_at' => $returnedItem->created_at,
+                'updated_at' => $returnedItem->updated_at
+            ];
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Pengajuan pergantian barang berhasil dikirim',
+                'data' => $responseData
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data tidak valid',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat mengirim pengajuan pergantian barang',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Store a newly created returned item (for orders)
      */
     public function store(Request $request): JsonResponse
     {

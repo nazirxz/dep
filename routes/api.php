@@ -130,6 +130,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // GET /api/return-items/returnable-items - Get user's returnable order items
         Route::get('/returnable-items', [ReturnItemApiController::class, 'getReturnableOrderItems']);
         
+        // POST /api/return-items/pergantian - Create new pergantian barang (direct return)
+        Route::post('/pergantian', [ReturnItemApiController::class, 'storePergantianBarang']);
+        
         // POST /api/return-items - Create new returned item
         Route::post('/', [ReturnItemApiController::class, 'store']);
         

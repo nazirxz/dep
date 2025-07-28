@@ -177,6 +177,7 @@
                                             <th>Nama Akun</th>
                                             <th>Username</th>
                                             <th>Email Akun</th>
+                                            <th>Password</th>
                                             <th>Peran Akun</th>
                                             <th>Status Akun</th>
                                             <th>Aksi</th>
@@ -189,6 +190,20 @@
                                                 <td>{{ $account->full_name }}</td>
                                                 <td>{{ $account->username }}</td>
                                                 <td>{{ $account->email }}</td>
+                                                <td>
+                                                    <div class="password-field">
+                                                        <span class="password-text d-none">{{ $account->plain_password ?? $account->password }}</span>
+                                                        <span class="password-masked">••••••••</span>
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary ms-1" onclick="togglePassword(this)" title="Tampilkan password">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        @if(!$account->plain_password)
+                                                            <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">
+                                                                <i class="fas fa-info-circle"></i> Hash
+                                                            </small>
+                                                        @endif
+                                                    </div>
+                                                </td>
                                                 <td>
                                                     <span class="badge {{ $account->role === 'manager' ? 'bg-primary' : ($account->role === 'sales' ? 'bg-info' : 'bg-secondary') }}">
                                                         {{ ucfirst($account->role) }}
@@ -208,7 +223,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="7" class="text-center py-4">
+                                                <td colspan="8" class="text-center py-4">
                                                     <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
                                                     <p class="text-muted">Tidak ada akun pegawai yang terdaftar.</p>
                                                     {{-- Tombol ini tidak lagi memicu tab, hanya sebagai visual --}}
@@ -679,6 +694,30 @@
                 }
             }, 5000);
         }
+
+        // Function to toggle password visibility
+        window.togglePassword = function(button) {
+            const passwordField = button.closest('.password-field');
+            const passwordText = passwordField.querySelector('.password-text');
+            const passwordMasked = passwordField.querySelector('.password-masked');
+            const icon = button.querySelector('i');
+
+            if (passwordText.classList.contains('d-none')) {
+                // Show password
+                passwordText.classList.remove('d-none');
+                passwordMasked.classList.add('d-none');
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+                button.title = 'Sembunyikan password';
+            } else {
+                // Hide password
+                passwordText.classList.add('d-none');
+                passwordMasked.classList.remove('d-none');
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+                button.title = 'Tampilkan password';
+            }
+        };
     });
 </script>
 @endsection

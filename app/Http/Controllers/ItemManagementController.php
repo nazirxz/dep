@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\IncomingItem;
 use App\Models\OutgoingItem;
 use App\Models\VerificationItem;
+use App\Models\ReturnedItem;
 use App\Models\Producer;
 use App\Models\Category;
 use Carbon\Carbon;
@@ -1835,6 +1836,221 @@ class ItemManagementController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menandai order selesai dikemas: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get list of incoming items for pergantian barang selection
+     */
+    public function getIncomingItemsList(Request $request)
+    {
+        try {
+            $search = $request->get('search', '');
+            
+            $query = IncomingItem::with(['category', 'producer'])
+                ->select([
+                    'id',
+                    'nama_barang',
+                    'kategori_barang', 
+                    'category_id',
+                    'producer_id',
+                    'jumlah_barang',
+                    'tanggal_masuk_barang',
+                    'lokasi_rak_barang',
+                    'foto_barang'
+                ])
+                ->where('jumlah_barang', '>', 0); // Only items with available stock
+            
+            // Add search functionality
+            if (!empty($search)) {
+                $query->where(function($q) use ($search) {
+                    $q->where('nama_barang', 'LIKE', "%{$search}%")
+                      ->orWhere('kategori_barang', 'LIKE', "%{$search}%");
+                });
+            }
+            
+            $items = $query->orderBy('nama_barang', 'asc')
+                          ->limit(50) // Limit results for performance
+                          ->get();
+            
+            $formattedItems = $items->map(function($item) {
+                return [
+                    'id' => $item->id,
+                    'nama_barang' => $item->nama_barang,
+                    'kategori_barang' => $item->kategori_barang,
+                    'category_id' => $item->category_id,
+                    'producer_id' => $item->producer_id,
+                    'nama_produsen' => $item->producer ? $item->producer->nama_produsen : null,
+                    'jumlah_barang' => $item->jumlah_barang,
+                    'tanggal_masuk_barang' => $item->tanggal_masuk_barang,
+                    'lokasi_rak_barang' => $item->lokasi_rak_barang,
+                    'foto_barang' => $item->foto_barang,
+                    'foto_url' => $item->foto_barang ? url('storage/' . $item->foto_barang) : null,
+                    'display_name' => $item->nama_barang . ' - ' . $item->kategori_barang . ' (Stock: ' . $item->jumlah_barang . ')'
+                ];
+            });
+            
+            return response()->json([
+                'success' => true,
+                'data' => $formattedItems
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error in getIncomingItemsList: ' . $e->getMessage(), [
+                'exception' => $e
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengambil daftar barang.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Store pergantian barang (direct return without order)
+     */
+    public function storePergantianBarang(Request $request)
+    {
+        try {
+            // Validate the request data for pergantian barang
+            $validator = Validator::make($request->all(), [
+                'nama_barang' => 'required|string|max:255',
+                'kategori_barang' => 'required|string|max:255', 
+                'jumlah_barang' => 'required|integer|min:1|max:99999',
+                'nama_produsen' => 'nullable|string|max:255',
+                'alasan_pengembalian' => 'required|string|max:1000',
+                'incoming_item_id' => 'nullable|integer|exists:incoming_items,id',
+                'foto_bukti' => 'nullable|image|mimes:jpeg,jpg,png|max:2048' // max 2MB
+            ], [
+                'nama_barang.required' => 'Nama barang wajib diisi.',
+                'kategori_barang.required' => 'Kategori barang wajib diisi.',
+                'jumlah_barang.required' => 'Jumlah barang wajib diisi.',
+                'jumlah_barang.min' => 'Jumlah barang minimal 1.',
+                'jumlah_barang.max' => 'Jumlah barang maksimal 99999.',
+                'alasan_pengembalian.required' => 'Alasan pergantian wajib diisi.',
+                'alasan_pengembalian.max' => 'Alasan pergantian maksimal 1000 karakter.',
+                'incoming_item_id.exists' => 'Barang yang dipilih tidak valid.',
+                'foto_bukti.image' => 'File foto bukti harus berupa gambar.',
+                'foto_bukti.mimes' => 'File foto bukti harus berformat: jpeg, jpg, atau png.',
+                'foto_bukti.max' => 'Ukuran file foto bukti maksimal 2MB.'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal.',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $fotoPath = null;
+
+            // Handle file upload if foto_bukti is provided
+            if ($request->hasFile('foto_bukti')) {
+                $file = $request->file('foto_bukti');
+                $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                
+                // Store file in public/storage/return_items folder
+                $fotoPath = $file->storeAs('return_items', $fileName, 'public');
+                \Log::info('storePergantianBarang: Foto bukti uploaded', ['path' => $fotoPath]);
+            }
+
+            // Validate stock if incoming_item_id is provided
+            if ($request->incoming_item_id) {
+                $incomingItem = IncomingItem::find($request->incoming_item_id);
+                if (!$incomingItem) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Barang yang dipilih tidak ditemukan.'
+                    ], 404);
+                }
+                
+                if ($request->jumlah_barang > $incomingItem->jumlah_barang) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Jumlah barang tidak boleh melebihi stok yang tersedia ({$incomingItem->jumlah_barang} unit)."
+                    ], 400);
+                }
+            }
+
+            // Log data before saving for debugging
+            \Log::info('storePergantianBarang: Data sebelum disimpan', [
+                'request_data' => $request->except(['foto_bukti']),
+                'foto_path' => $fotoPath
+            ]);
+
+            // Prepare data for creation - use NULL for non-order returns (pergantian barang)
+            $createData = [
+                'order_id' => null, // NULL for pergantian barang (not from order)
+                'order_item_id' => null, // NULL for pergantian barang (not from order)
+                'user_id' => Auth::id(), // Current staff user, can be null
+                'nama_barang' => $request->nama_barang,
+                'kategori_barang' => $request->kategori_barang,
+                'jumlah_barang' => (int) $request->jumlah_barang,
+                'nama_produsen' => $request->nama_produsen ?? '',
+                'alasan_pengembalian' => $request->alasan_pengembalian,
+                'foto_bukti' => $fotoPath,
+                'incoming_item_id' => $request->incoming_item_id ? (int) $request->incoming_item_id : null
+            ];
+
+            \Log::info('storePergantianBarang: Final create data', [
+                'create_data' => $createData
+            ]);
+
+            try {
+                // Create using Eloquent model (simpler and handles nullable fields better)
+                $returnedItem = ReturnedItem::create($createData);
+                
+                \Log::info('storePergantianBarang: Item berhasil dibuat', [
+                    'returned_item_id' => $returnedItem->id
+                ]);
+                
+            } catch (\Exception $createException) {
+                \Log::error('storePergantianBarang: Error saat create ReturnedItem', [
+                    'error' => $createException->getMessage(),
+                    'create_data' => $createData,
+                    'trace' => $createException->getTraceAsString()
+                ]);
+                
+                // Check if it's a nullable column issue
+                if (str_contains($createException->getMessage(), 'cannot be null') || 
+                    str_contains($createException->getMessage(), 'NOT NULL')) {
+                    throw new \Exception(
+                        'Tabel returned_items memerlukan kolom order_id, order_item_id, dan user_id menjadi nullable. ' .
+                        'Silakan jalankan migration yang sudah dibuat: php artisan migrate'
+                    );
+                }
+                
+                throw $createException;
+            }
+
+            \Log::info('storePergantianBarang: Pergantian barang berhasil disimpan', [
+                'returned_item_id' => $returnedItem->id,
+                'data' => $returnedItem->toArray()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pengajuan pergantian barang berhasil dikirim! Admin akan memproses permintaan Anda.',
+                'data' => $returnedItem
+            ]);
+
+        } catch (\Exception $e) {
+            // Clean up uploaded files if there's an error
+            if (isset($fotoPath) && $fotoPath) {
+                Storage::disk('public')->delete($fotoPath);
+            }
+
+            \Log::error('Error in storePergantianBarang: ' . $e->getMessage(), [
+                'request_data' => $request->all(),
+                'exception' => $e
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menyimpan data pergantian barang: ' . $e->getMessage()
             ], 500);
         }
     }

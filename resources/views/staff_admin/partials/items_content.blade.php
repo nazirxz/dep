@@ -690,6 +690,140 @@
     </div>
 </div>
 
+{{-- Modal untuk Ajukan Pergantian Barang --}}
+<div class="modal fade" id="ajukanPergantianModal" tabindex="-1" aria-labelledby="ajukanPergantianModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ajukanPergantianModalLabel">
+                    <i class="fas fa-exchange-alt"></i> Ajukan Pergantian Barang
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="pergantianBarangForm" enctype="multipart/form-data">
+                    @csrf
+                    
+                    <!-- Section untuk memilih barang -->
+                    <div class="mb-4">
+                        <div class="card border-info">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0"><i class="fas fa-search"></i> Pilih Barang dari Inventory</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="pergantian_search_barang" class="form-label">Cari Barang</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="pergantian_search_barang" 
+                                               placeholder="Ketik nama barang untuk mencari..." 
+                                               onkeypress="if(event.key==='Enter') searchIncomingItems()">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="searchIncomingItems()">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="pergantian_select_barang" class="form-label">Pilih Barang</label>
+                                    <select class="form-control" id="pergantian_select_barang" onchange="fillFormFromSelectedItem()">
+                                        <option value="">-- Pilih barang dari daftar --</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Pilih barang yang akan diganti dari daftar inventory yang tersedia
+                                    </small>
+                                </div>
+                                
+                                <div class="text-center">
+                                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="clearSelectedItem()">
+                                        <i class="fas fa-eraser"></i> Clear & Isi Manual
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form fields (akan di-autofill) -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="pergantian_nama_barang" class="form-label">Nama Barang <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="pergantian_nama_barang" name="nama_barang" required>
+                                <input type="hidden" id="pergantian_incoming_item_id" name="incoming_item_id">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="pergantian_kategori_barang" class="form-label">Kategori Barang <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="pergantian_kategori_barang" name="kategori_barang" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="pergantian_jumlah_barang" class="form-label">Jumlah Barang <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="pergantian_jumlah_barang" name="jumlah_barang" min="1" required>
+                                <small class="form-text text-muted">
+                                    <span id="pergantian_stok_info" class="text-info"></span>
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="pergantian_nama_produsen" class="form-label">Nama Produsen</label>
+                                <input type="text" class="form-control" id="pergantian_nama_produsen" name="nama_produsen">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="pergantian_lokasi_rak" class="form-label">Lokasi Rak</label>
+                                <input type="text" class="form-control" id="pergantian_lokasi_rak" name="lokasi_rak_barang" readonly>
+                                <small class="form-text text-muted">Lokasi rak barang yang dipilih</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="pergantian_alasan" class="form-label">Alasan Pergantian <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="pergantian_alasan" name="alasan_pengembalian" rows="3" required 
+                                  placeholder="Jelaskan alasan mengapa barang perlu diganti..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="pergantian_foto_bukti" class="form-label">Foto Bukti</label>
+                        <input type="file" class="form-control" id="pergantian_foto_bukti" name="foto_bukti" 
+                               accept="image/jpeg,image/jpg,image/png" onchange="previewFotoBukti(this)">
+                        <small class="form-text text-muted">
+                            Upload foto yang menunjukkan kondisi barang (format: JPEG, JPG, PNG, max 2MB)
+                        </small>
+                        <div id="pergantian_foto_preview" class="mt-3" style="display: none;">
+                            <div class="card" style="max-width: 300px;">
+                                <img id="pergantian_foto_img" src="" class="card-img-top" alt="Preview">
+                                <div class="card-body">
+                                    <small class="text-muted">Preview foto bukti</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Catatan:</strong> Pengajuan pergantian barang akan diproses oleh admin. 
+                        Pastikan informasi yang dimasukkan akurat dan lengkap.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="submitPergantianBarang()">
+                    <i class="fas fa-paper-plane"></i> Ajukan Pergantian
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <style>
 /* Additional CSS for enhanced functionality */
@@ -1325,7 +1459,6 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                         <option value="">Pilih Metode Pembayaran</option>
                         <option value="Cash">Cash</option>
                         <option value="Transfer Bank">Transfer Bank</option>
-                        <option value="Kredit">Kredit</option>
                     </select>
                 </div>
                 <div class="mb-3">
@@ -1457,7 +1590,6 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                         <option value="">Pilih Metode</option>
                         <option value="Cash">Cash</option>
                         <option value="Transfer Bank">Transfer Bank</option>
-                        <option value="Kartu Kredit">Kartu Kredit</option>
                         <option value="Debit">Debit</option>
                     </select>
                 </div>
@@ -1549,7 +1681,6 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                         <option value="">Pilih Metode Pembayaran</option>
                         <option value="Cash" ${itemData.metode_bayar === 'Cash' ? 'selected' : ''}>Cash</option>
                         <option value="Transfer Bank" ${itemData.metode_bayar === 'Transfer Bank' ? 'selected' : ''}>Transfer Bank</option>
-                        <option value="Kredit" ${itemData.metode_bayar === 'Kredit' ? 'selected' : ''}>Kredit</option>
                     </select>
                 </div>
                 <div class="mb-3">
@@ -1633,8 +1764,6 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                         <option value="">Pilih Metode</option>
                         <option value="Cash" ${itemData.metode_bayar === 'Cash' ? 'selected' : ''}>Cash</option>
                         <option value="Transfer Bank" ${itemData.metode_bayar === 'Transfer Bank' ? 'selected' : ''}>Transfer Bank</option>
-                        <option value="Kartu Kredit" ${itemData.metode_bayar === 'Kartu Kredit' ? 'selected' : ''}>Kartu Kredit</option>
-                        <option value="Debit" ${itemData.metode_bayar === 'Debit' ? 'selected' : ''}>Debit</option>
                     </select>
                 </div>
                 <div class="mb-3">
@@ -1678,7 +1807,19 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
     }
 
     formContentDiv.innerHTML = formHtml;
-    const itemCrudModal = new bootstrap.Modal(document.getElementById('itemCrudModal'));
+    
+    // Create modal with proper error handling
+    const itemCrudModalElement = document.getElementById('itemCrudModal');
+    if (!itemCrudModalElement) {
+        console.error('itemCrudModal element not found');
+        window.showAlert('error', 'Modal element tidak ditemukan. Silakan refresh halaman.');
+        return;
+    }
+    
+    const itemCrudModal = new bootstrap.Modal(itemCrudModalElement, {
+        backdrop: 'static',
+        keyboard: false
+    });
     itemCrudModal.show();
 
     // Auto-fill form values for edit mode
@@ -2028,7 +2169,18 @@ window.showRackSelector = function(targetInputId, itemId = null) {
     window.currentTargetInput = targetInputId;
     window.currentItemIdForRack = itemId; // Store current item ID if moving an existing item
     window.generateWarehouseSelector();
-    const modal = new bootstrap.Modal(document.getElementById('rackSelectorModal'));
+    
+    const modalElement = document.getElementById('rackSelectorModal');
+    if (!modalElement) {
+        console.error('rackSelectorModal element not found');
+        window.showAlert('error', 'Modal pemilih rak tidak ditemukan. Silakan refresh halaman.');
+        return;
+    }
+    
+    const modal = new bootstrap.Modal(modalElement, {
+        backdrop: 'static',
+        keyboard: false
+    });
     modal.show();
 }
 
@@ -2824,12 +2976,360 @@ window.generateQR = function(itemId) {
     }, 1500);
 }
 
+// Global variable to store incoming items data
+let incomingItemsData = [];
+
 /**
- * Placeholder for "Ajukan Pergantian Barang" action.
+ * Function untuk refresh CSRF token
+ */
+window.refreshCSRFToken = function() {
+    return fetch('/staff/item-management', {
+        method: 'GET',
+        headers: {
+            'Accept': 'text/html',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.text())
+    .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newToken = doc.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
+        if (newToken) {
+            const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+            if (tokenMeta) {
+                tokenMeta.setAttribute('content', newToken);
+            }
+            return newToken;
+        }
+        throw new Error('Could not refresh CSRF token');
+    })
+    .catch(error => {
+        console.error('Error refreshing CSRF token:', error);
+        return null;
+    });
+};
+
+/**
+ * Function untuk membuka modal ajukan pergantian barang
  */
 window.ajukanPergantianBarang = function() {
-    window.showAlert('info', 'Fitur "Permintaan Penggantian Barang" segera hadir!');
-    // Implement logic for "Ajukan Pergantian Barang" here
+    // Reset form
+    document.getElementById('pergantianBarangForm').reset();
+    
+    // Hide preview
+    const preview = document.getElementById('pergantian_foto_preview');
+    if (preview) {
+        preview.style.display = 'none';
+    }
+    
+    // Clear stok info
+    document.getElementById('pergantian_stok_info').textContent = '';
+    
+    // Refresh CSRF token proactively
+    refreshCSRFToken().then(() => {
+        // Load incoming items data
+        loadIncomingItems();
+    });
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('ajukanPergantianModal'));
+    modal.show();
+};
+
+/**
+ * Function untuk load daftar incoming items
+ */
+window.loadIncomingItems = function(search = '') {
+    fetch(`/staff/incoming-items-list?search=${encodeURIComponent(search)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                incomingItemsData = data.data;
+                populateItemSelect(data.data);
+            } else {
+                console.error('Error loading incoming items:', data.message);
+                window.showAlert('error', 'Gagal memuat daftar barang');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            window.showAlert('error', 'Terjadi kesalahan saat memuat daftar barang');
+        });
+};
+
+/**
+ * Function untuk populate select option dengan data barang
+ */
+window.populateItemSelect = function(items) {
+    const selectElement = document.getElementById('pergantian_select_barang');
+    
+    // Clear existing options except the first one
+    selectElement.innerHTML = '<option value="">-- Pilih barang dari daftar --</option>';
+    
+    items.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = item.display_name;
+        option.dataset.item = JSON.stringify(item);
+        selectElement.appendChild(option);
+    });
+};
+
+/**
+ * Function untuk search incoming items
+ */
+window.searchIncomingItems = function() {
+    const search = document.getElementById('pergantian_search_barang').value;
+    loadIncomingItems(search);
+};
+
+/**
+ * Function untuk autofill form berdasarkan barang yang dipilih
+ */
+window.fillFormFromSelectedItem = function() {
+    const selectElement = document.getElementById('pergantian_select_barang');
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    
+    if (selectedOption.value && selectedOption.dataset.item) {
+        const item = JSON.parse(selectedOption.dataset.item);
+        
+        // Fill form fields
+        document.getElementById('pergantian_incoming_item_id').value = item.id;
+        document.getElementById('pergantian_nama_barang').value = item.nama_barang;
+        document.getElementById('pergantian_kategori_barang').value = item.kategori_barang;
+        document.getElementById('pergantian_nama_produsen').value = item.nama_produsen || '';
+        document.getElementById('pergantian_lokasi_rak').value = item.lokasi_rak_barang || '';
+        
+        // Set max jumlah barang berdasarkan stok
+        const jumlahInput = document.getElementById('pergantian_jumlah_barang');
+        jumlahInput.max = item.jumlah_barang;
+        jumlahInput.value = 1; // Default value
+        
+        // Update stok info
+        document.getElementById('pergantian_stok_info').textContent = 
+            `Stok tersedia: ${item.jumlah_barang} unit`;
+        
+        // Make fields readonly to prevent manual editing
+        document.getElementById('pergantian_nama_barang').readOnly = true;
+        document.getElementById('pergantian_kategori_barang').readOnly = true;
+        document.getElementById('pergantian_nama_produsen').readOnly = true;
+        
+        // Show selected item photo if available
+        if (item.foto_url) {
+            const previewDiv = document.getElementById('pergantian_foto_preview');
+            const previewImg = document.getElementById('pergantian_foto_img');
+            
+            if (previewDiv && previewImg) {
+                previewImg.src = item.foto_url;
+                previewDiv.style.display = 'block';
+                
+                // Add info that this is current item photo
+                const cardBody = previewDiv.querySelector('.card-body');
+                if (cardBody) {
+                    cardBody.innerHTML = '<small class="text-muted">Foto barang saat ini</small>';
+                }
+            }
+        }
+    }
+};
+
+/**
+ * Function untuk clear selected item dan enable manual input
+ */
+window.clearSelectedItem = function() {
+    // Reset select
+    document.getElementById('pergantian_select_barang').value = '';
+    document.getElementById('pergantian_search_barang').value = '';
+    
+    // Clear form fields
+    document.getElementById('pergantian_incoming_item_id').value = '';
+    document.getElementById('pergantian_nama_barang').value = '';
+    document.getElementById('pergantian_kategori_barang').value = '';
+    document.getElementById('pergantian_nama_produsen').value = '';
+    document.getElementById('pergantian_lokasi_rak').value = '';
+    document.getElementById('pergantian_jumlah_barang').value = '';
+    
+    // Clear stok info
+    document.getElementById('pergantian_stok_info').textContent = '';
+    
+    // Remove max limit from jumlah input
+    const jumlahInput = document.getElementById('pergantian_jumlah_barang');
+    jumlahInput.removeAttribute('max');
+    
+    // Make fields editable again
+    document.getElementById('pergantian_nama_barang').readOnly = false;
+    document.getElementById('pergantian_kategori_barang').readOnly = false;
+    document.getElementById('pergantian_nama_produsen').readOnly = false;
+    
+    // Hide photo preview
+    const preview = document.getElementById('pergantian_foto_preview');
+    if (preview) {
+        preview.style.display = 'none';
+    }
+    
+    window.showAlert('info', 'Form dikosongkan. Anda bisa mengisi manual.');
+};
+
+/**
+ * Function untuk preview foto bukti
+ */
+window.previewFotoBukti = function(input) {
+    const preview = document.getElementById('pergantian_foto_preview');
+    const previewImg = document.getElementById('pergantian_foto_img');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        preview.style.display = 'none';
+    }
+};
+
+/**
+ * Function untuk submit pergantian barang
+ */
+window.submitPergantianBarang = function() {
+    const form = document.getElementById('pergantianBarangForm');
+    const formData = new FormData(form);
+    
+    // Validate required fields
+    const namaBarang = document.getElementById('pergantian_nama_barang').value.trim();
+    const kategoriBarang = document.getElementById('pergantian_kategori_barang').value.trim();
+    const jumlahBarang = document.getElementById('pergantian_jumlah_barang').value;
+    const alasanPergantian = document.getElementById('pergantian_alasan').value.trim();
+    
+    if (!namaBarang || !kategoriBarang || !jumlahBarang || !alasanPergantian) {
+        window.showAlert('error', 'Semua field yang bertanda * wajib diisi!');
+        return;
+    }
+    
+    if (parseInt(jumlahBarang) < 1) {
+        window.showAlert('error', 'Jumlah barang harus minimal 1!');
+        return;
+    }
+    
+    // Validate against stock if item is selected from incoming_items
+    const incomingItemId = document.getElementById('pergantian_incoming_item_id').value;
+    if (incomingItemId) {
+        const selectedItem = incomingItemsData.find(item => item.id == incomingItemId);
+        if (selectedItem && parseInt(jumlahBarang) > selectedItem.jumlah_barang) {
+            window.showAlert('error', `Jumlah barang tidak boleh melebihi stok yang tersedia (${selectedItem.jumlah_barang} unit)!`);
+            return;
+        }
+    }
+    
+    // Show loading state
+    const submitBtn = document.querySelector('#ajukanPergantianModal .btn-primary');
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+    
+    // Get fresh CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (!csrfToken) {
+        window.showAlert('error', 'CSRF token tidak ditemukan. Silakan refresh halaman.');
+        return;
+    }
+
+    // Submit to Web Route
+    fetch('/staff/pergantian-barang', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            // If 419 CSRF error, try to get fresh token and retry once
+            if (response.status === 419) {
+                return refreshCSRFToken().then(newToken => {
+                    if (newToken) {
+                        // Retry with fresh token
+                        return fetch('/staff/pergantian-barang', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': newToken,
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: formData
+                        });
+                    } else {
+                        throw new Error('CSRF token mismatch');
+                    }
+                }).then(retryResponse => {
+                    if (!retryResponse.ok) {
+                        return retryResponse.json().then(err => Promise.reject(err));
+                    }
+                    return retryResponse.json();
+                });
+            } else {
+                return response.json().then(err => Promise.reject(err));
+            }
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            window.showAlert('success', data.message || 'Pengajuan pergantian barang berhasil dikirim! Admin akan memproses permintaan Anda.');
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('ajukanPergantianModal'));
+            modal.hide();
+            
+            // Reset form
+            form.reset();
+            document.getElementById('pergantian_foto_preview').style.display = 'none';
+            
+        } else {
+            throw new Error(data.message || 'Gagal mengirim pengajuan pergantian barang');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        let errorMessage = 'Terjadi kesalahan saat mengirim pengajuan pergantian barang';
+        
+        // Handle CSRF token mismatch
+        if (error.message && error.message.includes('CSRF token mismatch')) {
+            errorMessage = 'Session telah berakhir. Silakan refresh halaman dan coba lagi.';
+            window.showAlert('warning', errorMessage);
+            
+            // Optionally reload page after delay
+            setTimeout(() => {
+                if (confirm('Refresh halaman sekarang?')) {
+                    location.reload();
+                }
+            }, 2000);
+            return;
+        }
+        
+        if (error.errors) {
+            // Handle validation errors
+            const errorList = Object.values(error.errors).flat();
+            errorMessage = errorList.join(', ');
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        window.showAlert('error', errorMessage);
+    })
+    .finally(() => {
+        // Restore button state
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+    });
 };
 
 // --- NEW VERIFICATION LOGIC ---

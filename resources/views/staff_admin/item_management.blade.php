@@ -537,7 +537,17 @@
      * @param {Function} onConfirm - Callback when the user confirms.
      */
     window.showCustomConfirm = function(message, onConfirm) {
-        const confirmModal = new bootstrap.Modal(document.getElementById('customConfirmModal'));
+        const modalElement = document.getElementById('customConfirmModal');
+        if (!modalElement) {
+            console.error('customConfirmModal element not found');
+            window.showAlert('error', 'Modal konfirmasi tidak ditemukan. Silakan refresh halaman.');
+            return;
+        }
+        
+        const confirmModal = new bootstrap.Modal(modalElement, {
+            backdrop: 'static',
+            keyboard: false
+        });
         const confirmMessage = document.getElementById('customConfirmMessage');
         const confirmBtn = document.getElementById('customConfirmActionBtn');
 
