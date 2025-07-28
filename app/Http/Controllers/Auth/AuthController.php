@@ -69,8 +69,8 @@ class AuthController extends Controller
 
         $user = User::where('email', $request['email'])->firstOrFail();
 
-        // Check if email is verified
-        if (!$user->email_verified_at) {
+        // Check if email is verified (only for pengecer role)
+        if (in_array($user->role, ['Pengecer', 'pengecer']) && !$user->email_verified_at) {
             return response()->json([
                 'success' => false,
                 'message' => 'Email belum diverifikasi. Silakan verifikasi email Anda terlebih dahulu.',

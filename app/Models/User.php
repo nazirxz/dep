@@ -25,6 +25,7 @@ class User extends Authenticatable
         'password',
         'role',         // Tambahkan
         'phone_number', // Tambahkan
+        'email_verified_at', // Tambahkan untuk verifikasi email
     ];
 
     /**
