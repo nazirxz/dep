@@ -182,9 +182,6 @@ class OrderController extends Controller
                 // Calculate shipping cost (simplified - could be more complex)
                 $shippingCost = $this->calculateShippingCost($request->shipping_method);
                 
-                // Calculate tax (simplified - 10%)
-                $taxAmount = $subtotal * 0.10;
-                
                 // Handle voucher
                 $voucherDiscount = 0;
                 $voucherCode = null;
@@ -200,7 +197,7 @@ class OrderController extends Controller
                 }
 
                 $discountAmount = $voucherDiscount;
-                $totalAmount = $subtotal + $shippingCost + $taxAmount - $discountAmount;
+                $totalAmount = $subtotal + $shippingCost - $discountAmount;
 
                 // Generate order number
                 $orderNumber = Order::generateOrderNumber();
@@ -221,7 +218,6 @@ class OrderController extends Controller
                     'location_accuracy' => $request->location_accuracy,
                     'subtotal' => $subtotal,
                     'shipping_cost' => $shippingCost,
-                    'tax_amount' => $taxAmount,
                     'discount_amount' => $discountAmount,
                     'total_amount' => $totalAmount,
                     'shipping_method' => $request->shipping_method,

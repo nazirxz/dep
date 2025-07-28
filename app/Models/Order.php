@@ -26,7 +26,6 @@ class Order extends Model
         'location_accuracy',
         'subtotal',
         'shipping_cost',
-        'tax_amount',
         'discount_amount',
         'total_amount',
         'shipping_method',
@@ -44,7 +43,6 @@ class Order extends Model
     protected $casts = [
         'subtotal' => 'decimal:2',
         'shipping_cost' => 'decimal:2',
-        'tax_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'voucher_discount' => 'decimal:2',
