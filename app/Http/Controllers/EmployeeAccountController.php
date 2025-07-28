@@ -97,6 +97,7 @@ class EmployeeAccountController extends Controller
                 'username' => $request->username,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
+                'plain_password' => $request->password, // Simpan password asli untuk display manager
                 'role' => $request->role, 
                 'phone_number' => $request->phone_number,
             ]);
@@ -177,6 +178,7 @@ class EmployeeAccountController extends Controller
 
             if ($request->filled('password')) {
                 $user->password = Hash::make($request->password);
+                $user->plain_password = $request->password; // Simpan password asli untuk display manager
             }
 
             $user->save();

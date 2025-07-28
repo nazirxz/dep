@@ -149,28 +149,31 @@ class ItemManagementController extends Controller
             $kategori = Category::find($request->category_id);
             $kategoriName = $kategori ? $kategori->nama_kategori : 'Lainnya';
 
-            // Create incoming item with harga_jual
-            $incomingItem = IncomingItem::create([
+            // Create verification item first (barang masuk ke tabel verifikasi dulu)
+            $verificationItem = VerificationItem::create([
                 'nama_barang' => $request->nama_barang,
                 'kategori_barang' => $kategoriName,
                 'category_id' => $request->category_id,
                 'producer_id' => $request->producer_id,
                 'jumlah_barang' => $request->jumlah_barang,
-                'harga_jual' => $request->harga_jual, // Tambahkan harga_jual
+                'harga_jual' => $request->harga_jual,
                 'tanggal_masuk_barang' => $request->tanggal_masuk_barang,
                 'lokasi_rak_barang' => $request->lokasi_rak_barang,
                 'metode_bayar' => $request->metode_bayar,
                 'pembayaran_transaksi' => $pembayaranTransaksiPath,
                 'nota_transaksi' => $notaTransaksiPath,
                 'foto_barang' => $fotoPath,
+                'status' => 'pending', // Status pending menunggu verifikasi
+                'verified_at' => null,
+                'verified_by' => null,
             ]);
 
-            \Log::info('storeIncomingItem: Item created successfully', ['item_id' => $incomingItem->id, 'data' => $incomingItem->toArray()]);
+            \Log::info('storeIncomingItem: Item added to verification table', ['verification_id' => $verificationItem->id, 'data' => $verificationItem->toArray()]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Barang masuk berhasil ditambahkan.',
-                'data' => $incomingItem
+                'message' => 'Barang masuk berhasil ditambahkan ke daftar verifikasi. Menunggu verifikasi dari admin.',
+                'data' => $verificationItem
             ]);
 
         } catch (\Exception $e) {

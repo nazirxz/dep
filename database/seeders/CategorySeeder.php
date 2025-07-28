@@ -11,40 +11,8 @@ class CategorySeeder extends Seeder
     {
         $categories = [
             [
-                'nama_kategori' => 'Makanan',
-                'deskripsi' => 'Produk makanan dan makanan ringan',
-            ],
-            [
-                'nama_kategori' => 'Minuman',
+                'nama_kategori' => 'Minuman Ringan',
                 'deskripsi' => 'Produk minuman dan minuman ringan',
-            ],
-            [
-                'nama_kategori' => 'Elektronik',
-                'deskripsi' => 'Perangkat elektronik dan aksesoris',
-            ],
-            [
-                'nama_kategori' => 'Pakaian',
-                'deskripsi' => 'Pakaian dan aksesoris fashion',
-            ],
-            [
-                'nama_kategori' => 'Alat Tulis',
-                'deskripsi' => 'Perlengkapan kantor dan alat tulis',
-            ],
-            [
-                'nama_kategori' => 'Pembersih',
-                'deskripsi' => 'Produk pembersih dan perawatan',
-            ],
-            [
-                'nama_kategori' => 'Kesehatan',
-                'deskripsi' => 'Produk kesehatan dan obat-obatan',
-            ],
-            [
-                'nama_kategori' => 'Peralatan',
-                'deskripsi' => 'Peralatan dan perkakas',
-            ],
-            [
-                'nama_kategori' => 'Perlengkapan Mandi',
-                'deskripsi' => 'Produk perlengkapan mandi dan kebersihan pribadi',
             ],
             [
                 'nama_kategori' => 'Makanan Ringan',

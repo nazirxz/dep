@@ -26,6 +26,7 @@ class User extends Authenticatable
         'role',         // Tambahkan
         'phone_number', // Tambahkan
         'email_verified_at', // Tambahkan untuk verifikasi email
+        'plain_password', // Tambahkan untuk menyimpan password asli (hanya untuk display manager)
     ];
 
     /**

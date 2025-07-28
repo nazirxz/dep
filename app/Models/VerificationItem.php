@@ -19,6 +19,7 @@ class VerificationItem extends Model
         'tanggal_masuk_barang',
         'jumlah_barang',
         'satuan_barang',
+        'harga_jual', // Tambahkan harga_jual
         'lokasi_rak_barang',
         'producer_id',
         'metode_bayar',
@@ -27,6 +28,7 @@ class VerificationItem extends Model
         'foto_barang',
         'kondisi_fisik',
         'catatan_verifikasi',
+        'status', // Tambahkan status (pending, verified, rejected)
         'is_verified',
         'verified_by',
         'verified_at',

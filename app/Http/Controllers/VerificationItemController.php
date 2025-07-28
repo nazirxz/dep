@@ -9,45 +9,83 @@ use App\Models\ReturnedItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 
 class VerificationItemController extends Controller
 {
-    // Ambil semua barang yang perlu diverifikasi
+    // Ambil semua barang yang perlu diverifikasi (status pending)
     public function index()
     {
-        $items = VerificationItem::whereNull('verified_at')->orderByDesc('created_at')->get();
+        $items = VerificationItem::where('status', 'pending')
+            ->with(['producer', 'category'])
+            ->orderByDesc('created_at')
+            ->get();
         return response()->json(['success' => true, 'data' => $items]);
     }
 
     // Simpan barang baru ke tabel verifikasi_barang
     public function store(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'nama_barang' => 'required|string|max:255',
-        'jumlah_barang' => 'required|integer|min:1',
-        'satuan_barang' => 'required|string|max:20',
-        'kondisi_fisik' => 'required|string|max:50',
-        'nama_produsen' => 'nullable|string|max:255',
-    ]);
-    if ($validator->fails()) {
-        return response()->json(['success' => false, 'message' => 'Validasi gagal', 'errors' => $validator->errors()], 422);
+    {
+        $validator = Validator::make($request->all(), [
+            'nama_barang' => 'required|string|max:255',
+            'kategori_barang' => 'required|string|max:100',
+            'category_id' => 'required|exists:categories,id',
+            'producer_id' => 'required|exists:producers,id',
+            'jumlah_barang' => 'required|integer|min:1',
+            'harga_jual' => 'nullable|numeric|min:0',
+            'tanggal_masuk_barang' => 'required|date',
+            'lokasi_rak_barang' => 'nullable|string|regex:/^R[1-8]-[1-4]-[1-6]$/',
+            'metode_bayar' => 'nullable|string|max:50',
+        ], [
+            'nama_barang.required' => 'Nama barang wajib diisi.',
+            'kategori_barang.required' => 'Kategori barang wajib diisi.',
+            'category_id.required' => 'Kategori barang wajib dipilih.',
+            'category_id.exists' => 'Kategori yang dipilih tidak valid.',
+            'producer_id.required' => 'Produsen barang wajib dipilih.',
+            'producer_id.exists' => 'Produsen yang dipilih tidak valid.',
+            'jumlah_barang.required' => 'Jumlah barang wajib diisi.',
+            'jumlah_barang.min' => 'Jumlah barang minimal 1.',
+            'harga_jual.numeric' => 'Harga jual harus berupa angka.',
+            'harga_jual.min' => 'Harga jual tidak boleh negatif.',
+            'tanggal_masuk_barang.required' => 'Tanggal masuk barang wajib diisi.',
+            'lokasi_rak_barang.regex' => 'Format lokasi rak tidak valid. Gunakan format R[1-8]-[1-4]-[1-6].',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Validasi gagal', 'errors' => $validator->errors()], 422);
+        }
+
+        try {
+            // Simpan langsung ke tabel verifikasi_barang dengan status pending
+            $verificationItem = VerificationItem::create([
+                'nama_barang' => $request->nama_barang,
+                'kategori_barang' => $request->kategori_barang,
+                'category_id' => $request->category_id,
+                'producer_id' => $request->producer_id,
+                'jumlah_barang' => $request->jumlah_barang,
+                'harga_jual' => $request->harga_jual,
+                'tanggal_masuk_barang' => $request->tanggal_masuk_barang,
+                'lokasi_rak_barang' => $request->lokasi_rak_barang,
+                'metode_bayar' => $request->metode_bayar,
+                'status' => 'pending', // Status pending menunggu verifikasi
+                'is_verified' => false,
+                'verified_at' => null,
+                'verified_by' => null,
+            ]);
+
+            return response()->json([
+                'success' => true, 
+                'message' => 'Barang berhasil ditambahkan ke daftar verifikasi. Menunggu verifikasi dari admin.',
+                'data' => $verificationItem
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage()
+            ], 500);
+        }
     }
-    $kategori = $request->kategori_barang ?? 'Lainnya'; // Default jika null
-
-    // Simpan ke incoming_items
-    $incoming = \App\Models\IncomingItem::create([
-        'nama_barang' => $request->nama_barang,
-        'kategori_barang' => $kategori,
-        'tanggal_masuk_barang' => now()->toDateString(),
-        'jumlah_barang' => $request->jumlah_barang,
-        'satuan_barang' => $request->satuan_barang,
-        'nama_produsen' => $request->nama_produsen,
-        // tambahkan field lain jika perlu
-    ]);
-
-    return response()->json(['success' => true, 'message' => 'Barang berhasil masuk ke stok masuk', 'data' => $incoming]);
-}
 
     // Verifikasi barang: pindahkan ke incoming_items
 
@@ -68,7 +106,7 @@ class VerificationItemController extends Controller
                 'catatan_verifikasi.max' => 'Catatan verifikasi maksimal 1000 karakter.',
             ]);
 
-            // If condition is not "Baik", delete the item and return
+            // If condition is not "Baik", mark as rejected and create return record
             if ($request->kondisi_fisik !== 'Baik') {
                 // Create a new returned item record
                 ReturnedItem::create([
@@ -79,26 +117,22 @@ class VerificationItemController extends Controller
                     'alasan_pengembalian' => $request->kondisi_fisik . ' - ' . $request->catatan_verifikasi,
                 ]);
 
+                // Update verification item status to rejected instead of deleting
+                $verificationItem->update([
+                    'status' => 'rejected',
+                    'is_verified' => false,
+                    'verified_by' => Auth::id(),
+                    'verified_at' => Carbon::now(),
+                    'kondisi_fisik' => $request->kondisi_fisik,
+                    'catatan_verifikasi' => $request->catatan_verifikasi,
+                ]);
+
                 // Store the item details for the response
                 $itemDetails = [
                     'nama_barang' => $verificationItem->nama_barang,
                     'kondisi_fisik' => $request->kondisi_fisik,
                     'catatan_verifikasi' => $request->catatan_verifikasi
                 ];
-
-                // Delete any uploaded files
-                if ($verificationItem->foto_barang) {
-                    Storage::disk('public')->delete($verificationItem->foto_barang);
-                }
-                if ($verificationItem->pembayaran_transaksi) {
-                    Storage::disk('public')->delete($verificationItem->pembayaran_transaksi);
-                }
-                if ($verificationItem->nota_transaksi) {
-                    Storage::disk('public')->delete($verificationItem->nota_transaksi);
-                }
-
-                // Delete the verification item
-                $verificationItem->delete();
 
                 DB::commit();
 
@@ -117,6 +151,7 @@ class VerificationItemController extends Controller
                 'category_id' => $verificationItem->category_id,
                 'tanggal_masuk_barang' => $verificationItem->tanggal_masuk_barang,
                 'jumlah_barang' => $verificationItem->jumlah_barang,
+                'harga_jual' => $verificationItem->harga_jual, // Tambahkan harga_jual
                 'lokasi_rak_barang' => $verificationItem->lokasi_rak_barang,
                 'producer_id' => $verificationItem->producer_id,
                 'metode_bayar' => $verificationItem->metode_bayar,
@@ -129,6 +164,7 @@ class VerificationItemController extends Controller
 
             // Update verification item status
             $verificationItem->update([
+                'status' => 'verified', // Update status ke verified
                 'is_verified' => true,
                 'verified_by' => Auth::id(),
                 'verified_at' => Carbon::now(),

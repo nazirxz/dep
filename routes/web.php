@@ -13,6 +13,11 @@ use App\Http\Controllers\ForgotPasswordController;
 // Route untuk splash screen
 Route::get('/', [SplashController::class, 'index'])->name('splash');
 
+// React app routes - catch all routes for React SPA
+Route::get('/react/{path?}', function () {
+    return view('react');
+})->where('path', '.*')->name('react');
+
 // Route untuk masuk ke aplikasi (redirect ke login jika belum login)
 Route::get('/enter', function () {
     if (auth()->check()) {
