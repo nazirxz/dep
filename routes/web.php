@@ -125,6 +125,9 @@ Route::middleware(['auth'])->group(function () {
         // Route untuk Admin melihat Users Pengecer
         Route::get('/staff/users', [EmployeeAccountController::class, 'showPengecerUsersForAdmin'])->name('staff.users');
 
+        // Route untuk warehouse capacity check
+        Route::post('/staff/warehouse-capacity-check', [ItemManagementController::class, 'checkWarehouseCapacity'])->name('staff.warehouse.capacity_check');
+
     });
 
     // Monitor Gudang (Accessible by both manager and admin)

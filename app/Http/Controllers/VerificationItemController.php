@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\VerificationItem;
 use App\Models\IncomingItem;
 use App\Models\ReturnedItem;
+use App\Models\WarehouseLocation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -161,6 +162,32 @@ class VerificationItemController extends Controller
                 'kondisi_fisik' => 'Baik',
                 'catatan' => $request->catatan_verifikasi
             ]);
+
+            // Update warehouse location capacity after item is verified and moved to inventory
+            if ($incomingItem->lokasi_rak_barang) {
+                $location = WarehouseLocation::where('location_name', $incomingItem->lokasi_rak_barang)->first();
+                if (!$location) {
+                    // Create new location if doesn't exist
+                    WarehouseLocation::create([
+                        'location_name' => $incomingItem->lokasi_rak_barang,
+                        'max_capacity' => 300,
+                        'current_capacity' => $incomingItem->jumlah_barang
+                    ]);
+                    \Log::info('VerificationItemController: Created new warehouse location', [
+                        'location' => $incomingItem->lokasi_rak_barang,
+                        'initial_capacity' => $incomingItem->jumlah_barang
+                    ]);
+                } else {
+                    // Update existing location capacity
+                    $location->current_capacity += $incomingItem->jumlah_barang;
+                    $location->save();
+                    \Log::info('VerificationItemController: Updated warehouse location capacity', [
+                        'location' => $incomingItem->lokasi_rak_barang,
+                        'added' => $incomingItem->jumlah_barang,
+                        'new_capacity' => $location->current_capacity
+                    ]);
+                }
+            }
 
             // Update verification item status
             $verificationItem->update([

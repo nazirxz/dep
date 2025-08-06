@@ -13,6 +13,7 @@ use App\Models\VerificationItem;
 use App\Models\ReturnedItem;
 use App\Models\Producer;
 use App\Models\Category;
+use App\Models\WarehouseLocation;
 use Carbon\Carbon;
 use League\Csv\Reader;
 
@@ -115,6 +116,41 @@ class ItemManagementController extends Controller
                 'message' => 'Validasi gagal.',
                 'errors' => $validator->errors()
             ], 422);
+        }
+
+        // Capacity validation for warehouse location
+        if ($request->lokasi_rak_barang) {
+            $location = WarehouseLocation::where('location_name', $request->lokasi_rak_barang)->first();
+            if (!$location) {
+                // Create new location with default capacity
+                $location = WarehouseLocation::create([
+                    'location_name' => $request->lokasi_rak_barang,
+                    'max_capacity' => 300,
+                    'current_capacity' => 0
+                ]);
+            }
+
+            // Check if adding this quantity would exceed capacity
+            if (!$location->canAccommodate($request->jumlah_barang)) {
+                \Log::warning('storeIncomingItem: Capacity exceeded', [
+                    'location' => $request->lokasi_rak_barang,
+                    'current_capacity' => $location->current_capacity,
+                    'max_capacity' => $location->max_capacity,
+                    'requested_quantity' => $request->jumlah_barang,
+                    'available_capacity' => $location->getAvailableCapacity()
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "Kapasitas rak tidak mencukupi. Lokasi {$request->lokasi_rak_barang} memiliki kapasitas maksimal {$location->max_capacity} unit. Saat ini terisi {$location->current_capacity} unit. Tersisa {$location->getAvailableCapacity()} unit, tetapi Anda mencoba menambah {$request->jumlah_barang} unit.",
+                    'capacity_info' => [
+                        'max_capacity' => $location->max_capacity,
+                        'current_capacity' => $location->current_capacity,
+                        'available_capacity' => $location->getAvailableCapacity(),
+                        'requested_quantity' => $request->jumlah_barang
+                    ]
+                ], 422);
+            }
         }
 
         try {
@@ -788,16 +824,149 @@ class ItemManagementController extends Controller
         });
         \Log::info('showWarehouseMonitor: Aggregated items by location', ['aggregated_count' => $aggregatedItems->count()]);
 
+        // Sync warehouse locations and get capacity information
+        $this->syncWarehouseLocations();
+        $warehouseLocations = WarehouseLocation::all()->keyBy('location_name');
+
+        // Add capacity information to aggregated items
+        $aggregatedItemsWithCapacity = $aggregatedItems->map(function ($item, $locationName) use ($warehouseLocations) {
+            $location = $warehouseLocations->get($locationName);
+            if ($location) {
+                $item['max_capacity'] = $location->max_capacity;
+                $item['current_capacity'] = $location->current_capacity;
+                $item['available_capacity'] = $location->getAvailableCapacity();
+                $item['capacity_percentage'] = $location->getCapacityPercentage();
+            } else {
+                // Default values if location not found in warehouse_locations table
+                $item['max_capacity'] = 300;
+                $item['current_capacity'] = $item['jumlah_barang'];
+                $item['available_capacity'] = 300 - $item['jumlah_barang'];
+                $item['capacity_percentage'] = round(($item['jumlah_barang'] / 300) * 100, 2);
+            }
+            return $item;
+        });
 
         // Mendapatkan jumlah total rak yang terisi untuk statistik
         $occupiedRacksCount = $incomingItems->unique('lokasi_rak_barang')->count();
         \Log::info('showWarehouseMonitor: Occupied racks count', ['count' => $occupiedRacksCount]);
 
-
         return view('staff_admin.warehouse_monitor', [
-            'aggregatedItems' => $aggregatedItems, // Meneruskan data teragregasi
+            'aggregatedItems' => $aggregatedItemsWithCapacity, // Meneruskan data teragregasi dengan info kapasitas
             'occupiedRacksCount' => $occupiedRacksCount, // Meneruskan jumlah untuk statistik
+            'maxCapacityPerLocation' => 300, // Maximum capacity per location
         ]);
+    }
+
+    /**
+     * Sync warehouse locations with current data from incoming items
+     */
+    private function syncWarehouseLocations()
+    {
+        $locations = IncomingItem::whereNotNull('lokasi_rak_barang')
+            ->where('lokasi_rak_barang', '!=', '')
+            ->distinct()
+            ->pluck('lokasi_rak_barang');
+
+        foreach ($locations as $locationName) {
+            $currentCapacity = IncomingItem::where('lokasi_rak_barang', $locationName)
+                ->where('jumlah_barang', '>', 0)
+                ->sum('jumlah_barang');
+
+            WarehouseLocation::updateOrCreate(
+                ['location_name' => $locationName],
+                [
+                    'max_capacity' => 300,
+                    'current_capacity' => $currentCapacity
+                ]
+            );
+        }
+    }
+
+    /**
+     * Check warehouse capacity for a specific location
+     */
+    public function checkWarehouseCapacity(Request $request)
+    {
+        \Log::info('checkWarehouseCapacity: Request received', ['request_data' => $request->all()]);
+
+        $validator = Validator::make($request->all(), [
+            'location_name' => 'required|string',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak valid.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $locationName = $request->location_name;
+            $requestedQuantity = $request->quantity;
+
+            // Get or create location
+            $location = WarehouseLocation::where('location_name', $locationName)->first();
+            if (!$location) {
+                // Calculate current capacity for new location
+                $currentCapacity = IncomingItem::where('lokasi_rak_barang', $locationName)
+                    ->where('jumlah_barang', '>', 0)
+                    ->sum('jumlah_barang');
+
+                $location = WarehouseLocation::create([
+                    'location_name' => $locationName,
+                    'max_capacity' => 300,
+                    'current_capacity' => $currentCapacity
+                ]);
+            } else {
+                // Update current capacity from actual data
+                $location->updateCurrentCapacity();
+            }
+
+            // Check if can accommodate the requested quantity
+            $canAccommodate = $location->canAccommodate($requestedQuantity);
+            
+            // Calculate what the capacity would be AFTER adding this quantity
+            $projectedCapacity = $location->current_capacity + $requestedQuantity;
+            $projectedPercentage = ($projectedCapacity / $location->max_capacity) * 100;
+            
+            \Log::info('checkWarehouseCapacity: Capacity calculation', [
+                'location' => $locationName,
+                'current_capacity' => $location->current_capacity,
+                'max_capacity' => $location->max_capacity,
+                'requested_quantity' => $requestedQuantity,
+                'projected_capacity' => $projectedCapacity,
+                'projected_percentage' => $projectedPercentage,
+                'can_accommodate' => $canAccommodate
+            ]);
+
+            return response()->json([
+                'success' => $canAccommodate,
+                'message' => $canAccommodate 
+                    ? 'Kapasitas mencukupi' 
+                    : "Kapasitas tidak mencukupi. Tersisa {$location->getAvailableCapacity()} unit dari maksimal {$location->max_capacity} unit.",
+                'capacity_info' => [
+                    'location_name' => $location->location_name,
+                    'max_capacity' => $location->max_capacity,
+                    'current_capacity' => $location->current_capacity,
+                    'available_capacity' => $location->getAvailableCapacity(),
+                    'requested_quantity' => $requestedQuantity,
+                    'can_accommodate' => $canAccommodate,
+                    'capacity_percentage' => $location->getCapacityPercentage(),
+                    'projected_capacity' => $projectedCapacity,
+                    'projected_percentage' => round($projectedPercentage, 1),
+                    'will_exceed' => $projectedCapacity > $location->max_capacity
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in checkWarehouseCapacity: ' . $e->getMessage(), ['exception' => $e]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memeriksa kapasitas: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
 
