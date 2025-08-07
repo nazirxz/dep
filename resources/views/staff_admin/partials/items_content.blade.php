@@ -961,6 +961,10 @@
 // Functions that will be called from HTML (onclick) must be in the global scope
 // or accessed via window.functionName. For simplicity, we will make them global.
 
+// Define asset storage URL to avoid blade syntax in JavaScript
+const STORAGE_URL = '{{ asset("storage") }}';
+const APP_URL = '{{ url("/") }}';
+
 /**
  * Initializes page functionality after the DOM is loaded.
  */
@@ -1154,17 +1158,17 @@ window.viewItemDetails = async function(itemId, itemType = 'incoming') {
         let htmlContent = '';
 
         const fotoBarangHtml = item.foto_barang
-            ? `<img src="{{ asset('storage') }}/${item.foto_barang}" alt="Foto Barang" class="img-fluid rounded mb-3" style="max-width: 200px; height: auto;">`
+            ? `<img src="${STORAGE_URL}/${item.foto_barang}" alt="Foto Barang" class="img-fluid rounded mb-3" style="max-width: 200px; height: auto;">`
             : `<img src="https://placehold.co/200x200/e0e0e0/ffffff?text=No+Image" alt="No Image" class="img-fluid rounded mb-3">`;
 
         const pembayaranTransaksiHtml = item.pembayaran_transaksi
-            ? `<a href="{{ asset('storage') }}/${item.pembayaran_transaksi}" target="_blank" class="btn btn-sm btn-outline-primary mt-2" title="Lihat Bukti Pembayaran">` +
+            ? `<a href="${STORAGE_URL}/${item.pembayaran_transaksi}" target="_blank" class="btn btn-sm btn-outline-primary mt-2" title="Lihat Bukti Pembayaran">` +
               (window.isPdf(item.pembayaran_transaksi) ? `<i class="fas fa-file-pdf"></i> PDF` : `<i class="fas fa-image"></i> Gambar`) +
               `</a>`
             : `-`;
 
         const notaTransaksiHtml = item.nota_transaksi
-            ? `<a href="{{ asset('storage') }}/${item.nota_transaksi}" target="_blank" class="btn btn-sm btn-outline-secondary mt-2" title="Lihat Nota Transaksi">` +
+            ? `<a href="${STORAGE_URL}/${item.nota_transaksi}" target="_blank" class="btn btn-sm btn-outline-secondary mt-2" title="Lihat Nota Transaksi">` +
               (window.isPdf(item.nota_transaksi) ? `<i class="fas fa-file-pdf"></i> PDF` : `<i class="fas fa-image"></i> Gambar`) +
               `</a>`
             : `-`;
@@ -1416,12 +1420,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                 </div>
                 <div class="mb-3">
                     <label for="crud_lokasi_rak" class="form-label">Lokasi Rak</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="crud_lokasi_rak" name="lokasi_rak_barang" placeholder="Format: R1-1-1" pattern="R[1-8]-[1-4]-[1-6]">
-                        <button type="button" class="btn btn-outline-secondary" onclick="window.showRackSelector('crud_lokasi_rak')">
-                            <i class="fas fa-map"></i> Pilih
-                        </button>
-                    </div>
+                    <input type="text" class="form-control" id="crud_lokasi_rak" name="lokasi_rak_barang" placeholder="Format: R1-1-1">
                     <small class="text-muted">Format: R[1-8]-[1-4]-[1-6], contoh: R1-1-1</small>
                 </div>
                 <div class="mb-3">
@@ -1569,7 +1568,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <input type="file" class="form-control" id="crud_pembayaran_transaksi_outgoing" name="pembayaran_transaksi" accept="image/*,application/pdf">
                     <small class="form-text text-muted">Unggah gambar atau PDF bukti pembayaran (opsional).</small>
                     <div id="current_pembayaran_transaksi_outgoing" class="mt-2">
-                        ${defaultPembayaran ? (window.isPdf(defaultPembayaran) ? `<a href="{{ asset('storage') }}/${defaultPembayaran}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="{{ asset('storage') }}/${defaultPembayaran}" alt="Current Payment" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
+                        ${defaultPembayaran ? (window.isPdf(defaultPembayaran) ? `<a href="${STORAGE_URL}/${defaultPembayaran}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="${STORAGE_URL}/${defaultPembayaran}" alt="Current Payment" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
                     </div>
                 </div>
                 <div class="mb-3">
@@ -1577,7 +1576,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <input type="file" class="form-control" id="crud_nota_transaksi_outgoing" name="nota_transaksi" accept="image/*,application/pdf">
                     <small class="form-text text-muted">Unggah gambar atau PDF nota transaksi (opsional).</small>
                     <div id="current_nota_transaksi_outgoing" class="mt-2">
-                        ${defaultNota ? (window.isPdf(defaultNota) ? `<a href="{{ asset('storage') }}/${defaultNota}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="{{ asset('storage') }}/${defaultNota}" alt="Current Nota" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
+                        ${defaultNota ? (window.isPdf(defaultNota) ? `<a href="${STORAGE_URL}/${defaultNota}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="${STORAGE_URL}/${defaultNota}" alt="Current Nota" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
                     </div>
                 </div>
                 <div class="mb-3">
@@ -1585,7 +1584,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <input type="file" class="form-control" id="crud_foto_barang_outgoing" name="foto_barang" accept="image/*">
                     <small class="form-text text-muted">Unggah gambar barang (opsional).</small>
                     <div id="current_foto_barang_outgoing" class="mt-2">
-                        ${defaultFoto ? `<img src="{{ asset('storage') }}/${defaultFoto}" alt="Current Photo" style="width: 100px; height: auto; border-radius: 5px;">` : ''}
+                        ${defaultFoto ? `<img src="${STORAGE_URL}/${defaultFoto}" alt="Current Photo" style="width: 100px; height: auto; border-radius: 5px;">` : ''}
                     </div>
                 </div>
             `;
@@ -1659,7 +1658,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <input type="file" class="form-control" id="crud_pembayaran_transaksi" name="pembayaran_transaksi" accept="image/*,application/pdf">
                     <small class="form-text text-muted">Unggah gambar atau PDF bukti pembayaran (biarkan kosong untuk tidak mengubah).</small>
                     <div id="current_pembayaran_transaksi" class="mt-2">
-                        ${itemData.pembayaran_transaksi ? (window.isPdf(itemData.pembayaran_transaksi) ? `<a href="{{ asset('storage') }}/${itemData.pembayaran_transaksi}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="{{ asset('storage') }}/${itemData.pembayaran_transaksi}" alt="Current Payment" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
+                        ${itemData.pembayaran_transaksi ? (window.isPdf(itemData.pembayaran_transaksi) ? `<a href="${STORAGE_URL}/${itemData.pembayaran_transaksi}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="${STORAGE_URL}/${itemData.pembayaran_transaksi}" alt="Current Payment" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
                     </div>
                     <div class="form-check mt-1">
                         <input class="form-check-input" type="checkbox" id="remove_pembayaran_transaksi" name="pembayaran_transaksi_removed" value="true">
@@ -1671,7 +1670,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <input type="file" class="form-control" id="crud_nota_transaksi" name="nota_transaksi" accept="image/*,application/pdf">
                     <small class="form-text text-muted">Unggah gambar atau PDF nota transaksi (biarkan kosong untuk tidak mengubah).</small>
                     <div id="current_nota_transaksi" class="mt-2">
-                        ${itemData.nota_transaksi ? (window.isPdf(itemData.nota_transaksi) ? `<a href="{{ asset('storage') }}/${itemData.nota_transaksi}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="{{ asset('storage') }}/${itemData.nota_transaksi}" alt="Current Nota" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
+                        ${itemData.nota_transaksi ? (window.isPdf(itemData.nota_transaksi) ? `<a href="${STORAGE_URL}/${itemData.nota_transaksi}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="${STORAGE_URL}/${itemData.nota_transaksi}" alt="Current Nota" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
                     </div>
                     <div class="form-check mt-1">
                         <input class="form-check-input" type="checkbox" id="remove_nota_transaksi" name="nota_transaksi_removed" value="true">
@@ -1683,7 +1682,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <input type="file" class="form-control" id="crud_foto_barang" name="foto_barang" accept="image/*">
                     <small class="form-text text-muted">Unggah gambar barang (biarkan kosong untuk tidak mengubah).</small>
                     <div id="current_foto_barang" class="mt-2">
-                        ${itemData.foto_barang ? `<img src="{{ asset('storage') }}/${itemData.foto_barang}" alt="Current Photo" style="width: 100px; height: auto; border-radius: 5px;">` : ''}
+                        ${itemData.foto_barang ? `<img src="${STORAGE_URL}/${itemData.foto_barang}" alt="Current Photo" style="width: 100px; height: auto; border-radius: 5px;">` : ''}
                     </div>
                     <div class="form-check mt-1">
                         <input class="form-check-input" type="checkbox" id="remove_foto_barang" name="foto_barang_removed" value="true">
@@ -1742,7 +1741,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <input type="file" class="form-control" id="crud_pembayaran_transaksi_outgoing" name="pembayaran_transaksi" accept="image/*,application/pdf">
                     <small class="form-text text-muted">Unggah gambar atau PDF bukti pembayaran (biarkan kosong untuk tidak mengubah).</small>
                     <div id="current_pembayaran_transaksi_outgoing" class="mt-2">
-                        ${itemData.pembayaran_transaksi ? (window.isPdf(itemData.pembayaran_transaksi) ? `<a href="{{ asset('storage') }}/${itemData.pembayaran_transaksi}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="{{ asset('storage') }}/${itemData.pembayaran_transaksi}" alt="Current Payment" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
+                        ${itemData.pembayaran_transaksi ? (window.isPdf(itemData.pembayaran_transaksi) ? `<a href="${STORAGE_URL}/${itemData.pembayaran_transaksi}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="${STORAGE_URL}/${itemData.pembayaran_transaksi}" alt="Current Payment" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
                     </div>
                     <div class="form-check mt-1">
                         <input class="form-check-input" type="checkbox" id="remove_pembayaran_transaksi_outgoing" name="pembayaran_transaksi_removed" value="true">
@@ -1754,7 +1753,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <input type="file" class="form-control" id="crud_nota_transaksi_outgoing" name="nota_transaksi" accept="image/*,application/pdf">
                     <small class="form-text text-muted">Unggah gambar atau PDF nota transaksi (biarkan kosong untuk tidak mengubah).</small>
                     <div id="current_nota_transaksi_outgoing" class="mt-2">
-                        ${itemData.nota_transaksi ? (window.isPdf(itemData.nota_transaksi) ? `<a href="{{ asset('storage') }}/${itemData.nota_transaksi}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="{{ asset('storage') }}/${itemData.nota_transaksi}" alt="Current Nota" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
+                        ${itemData.nota_transaksi ? (window.isPdf(itemData.nota_transaksi) ? `<a href="${STORAGE_URL}/${itemData.nota_transaksi}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` : `<img src="${STORAGE_URL}/${itemData.nota_transaksi}" alt="Current Nota" style="width: 100px; height: auto; border-radius: 5px;">`) : ''}
                     </div>
                     <div class="form-check mt-1">
                         <input class="form-check-input" type="checkbox" id="remove_nota_transaksi_outgoing" name="nota_transaksi_removed" value="true">
@@ -1766,7 +1765,7 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                     <input type="file" class="form-control" id="crud_foto_barang_outgoing" name="foto_barang" accept="image/*">
                     <small class="form-text text-muted">Unggah gambar barang (biarkan kosong untuk tidak mengubah).</small>
                     <div id="current_foto_barang_outgoing" class="mt-2">
-                        ${itemData.foto_barang ? `<img src="{{ asset('storage') }}/${itemData.foto_barang}" alt="Current Photo" style="width: 100px; height: auto; border-radius: 5px;">` : ''}
+                        ${itemData.foto_barang ? `<img src="${STORAGE_URL}/${itemData.foto_barang}" alt="Current Photo" style="width: 100px; height: auto; border-radius: 5px;">` : ''}
                     </div>
                     <div class="form-check mt-1">
                         <input class="form-check-input" type="checkbox" id="remove_foto_barang_outgoing" name="foto_barang_removed" value="true">
@@ -2156,7 +2155,7 @@ window.updateOutgoingFormFields = function(selectElement) {
     const currentFotoDiv = document.getElementById('current_foto_barang_outgoing');
     if (currentFotoDiv) {
         if (foto) {
-            currentFotoDiv.innerHTML = `<img src="{{ asset('storage') }}/${foto}" alt="Current Photo" style="width: 100px; height: auto; border-radius: 5px;">`;
+            currentFotoDiv.innerHTML = `<img src="${STORAGE_URL}/${foto}" alt="Current Photo" style="width: 100px; height: auto; border-radius: 5px;">`;
         } else {
             currentFotoDiv.innerHTML = '';
         }
@@ -2167,8 +2166,8 @@ window.updateOutgoingFormFields = function(selectElement) {
     if (currentPembayaranDiv) {
         if (pembayaran) {
             currentPembayaranDiv.innerHTML = window.isPdf(pembayaran) 
-                ? `<a href="{{ asset('storage') }}/${pembayaran}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` 
-                : `<img src="{{ asset('storage') }}/${pembayaran}" alt="Current Payment" style="width: 100px; height: auto; border-radius: 5px;">`;
+                ? `<a href="${STORAGE_URL}/${pembayaran}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` 
+                : `<img src="${STORAGE_URL}/${pembayaran}" alt="Current Payment" style="width: 100px; height: auto; border-radius: 5px;">`;
         } else {
             currentPembayaranDiv.innerHTML = '';
         }
@@ -2179,8 +2178,8 @@ window.updateOutgoingFormFields = function(selectElement) {
     if (currentNotaDiv) {
         if (nota) {
             currentNotaDiv.innerHTML = window.isPdf(nota) 
-                ? `<a href="{{ asset('storage') }}/${nota}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` 
-                : `<img src="{{ asset('storage') }}/${nota}" alt="Current Nota" style="width: 100px; height: auto; border-radius: 5px;">`;
+                ? `<a href="${STORAGE_URL}/${nota}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-file-pdf"></i> Lihat PDF</a>` 
+                : `<img src="${STORAGE_URL}/${nota}" alt="Current Nota" style="width: 100px; height: auto; border-radius: 5px;">`;
         } else {
             currentNotaDiv.innerHTML = '';
         }
@@ -3639,21 +3638,9 @@ window.checkWarehouseCapacity = async function(locationName, quantity, forceRefr
             quantity: parseInt(quantity)
         })
     })
-    .then(response => {
-        if (!response.ok) {
-            console.error('API Response not OK:', response.status, response.statusText);
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(result => {
         console.log('API Response:', result); // Debug log
-        console.log('Database connection status:', result.success ? 'SUCCESS' : 'FAILED');
-        
-        if (!result.success) {
-            console.error('Database query failed:', result.message);
-            throw new Error(result.message || 'Database query failed');
-        }
         
         // Cache the result (unless in debug mode)
         if (!window.capacityDebugMode) {
@@ -3721,10 +3708,7 @@ window.updateCapacityDisplay = async function(locationInput, quantityInput) {
         loadingDiv.remove();
         
         if (capacityResult && capacityResult.capacity_info) {
-            console.log('✅ Database connection successful!'); 
-            console.log('📊 Capacity Result:', capacityResult);
-            console.log('🏢 Location queried:', locationName);
-            console.log('📦 Quantity requested:', quantity);
+            console.log('Capacity Result:', capacityResult); // Debug log
             
             const { 
                 max_capacity, 
@@ -3832,36 +3816,16 @@ window.updateCapacityDisplay = async function(locationInput, quantityInput) {
                     submitBtn.removeAttribute('data-capacity-exceeded');
                 }
             }
-        } else {
-            console.error('❌ Database connection failed or no capacity_info returned');
-            console.error('Response received:', capacityResult);
-            
-            // Show more specific error message
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'capacity-info mt-2 p-2 rounded border border-danger bg-danger bg-opacity-10';
-            errorDiv.innerHTML = '<small class="text-danger"><i class="fas fa-database"></i> Tidak dapat mengakses data kapasitas gudang. Periksa koneksi database.</small>';
-            locationInput.parentElement.appendChild(errorDiv);
         }
     } catch (error) {
         // Remove loading indicator on error
         loadingDiv.remove();
-        console.error('💥 Network/Database Error:', error);
-        console.error('Error details:', {
-            message: error.message,
-            stack: error.stack,
-            name: error.name
-        });
+        console.error('Error checking capacity:', error);
         
-        // Show detailed error message
+        // Show error message without alert
         const errorDiv = document.createElement('div');
-        errorDiv.className = 'capacity-info mt-2 p-2 rounded border border-danger bg-danger bg-opacity-10';
-        errorDiv.innerHTML = `
-            <small class="text-danger">
-                <i class="fas fa-exclamation-triangle"></i> 
-                <strong>Error:</strong> ${error.message}<br>
-                <em>Periksa koneksi database dan pastikan endpoint '/staff/warehouse-capacity-check' tersedia</em>
-            </small>
-        `;
+        errorDiv.className = 'capacity-info mt-2';
+        errorDiv.innerHTML = '<small class="text-muted"><i class="fas fa-exclamation-circle"></i> Tidak dapat memeriksa kapasitas</small>';
         locationInput.parentElement.appendChild(errorDiv);
     }
 }
