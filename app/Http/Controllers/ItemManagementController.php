@@ -2047,22 +2047,27 @@ class ItemManagementController extends Controller
             // Import Order model if not already imported
             $order = \App\Models\Order::findOrFail($orderId);
 
-            // Validate current order status - allow from confirmed and processing status
-            if (!in_array($order->order_status, ['confirmed', 'processing'])) {
+            // Validate current order status - allow from pending, confirmed, and processing status
+            if (!in_array($order->order_status, ['pending', 'confirmed', 'processing'])) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Order harus dalam status confirmed atau processing untuk bisa ditandai selesai dikemas. Status saat ini: ' . $order->order_status
+                    'message' => 'Order tidak dapat ditandai selesai dikemas. Status saat ini: ' . $order->order_status . '. Hanya order dengan status pending, confirmed, atau processing yang dapat diproses.'
                 ], 422);
             }
 
-            // Update order status to processing (barang sudah selesai dikemas)
-            // Only change status if currently confirmed, keep processing if already processing
-            if ($order->order_status === 'confirmed') {
+            // Update order status based on current status
+            $previousStatus = $order->order_status;
+            if ($order->order_status === 'pending') {
+                // From pending: confirm first then set to processing
                 $order->order_status = 'processing';
-                $statusAction = 'diubah ke processing';
+                $statusAction = 'dari pending langsung ke processing (dikonfirmasi dan selesai dikemas)';
+            } elseif ($order->order_status === 'confirmed') {
+                // From confirmed: set to processing
+                $order->order_status = 'processing';
+                $statusAction = 'dari confirmed ke processing (selesai dikemas)';
             } else {
                 // Status already processing, just add note
-                $statusAction = 'tetap processing (sudah selesai dikemas)';
+                $statusAction = 'tetap processing (konfirmasi selesai dikemas)';
             }
             
             // Add notes about packing completion
@@ -2077,7 +2082,7 @@ class ItemManagementController extends Controller
                 'data' => [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
-                    'previous_status' => $request->input('previous_status', 'N/A'),
+                    'previous_status' => $previousStatus,
                     'current_status' => $order->order_status,
                     'status_action' => $statusAction,
                     'updated_at' => $order->updated_at,
