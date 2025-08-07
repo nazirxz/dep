@@ -143,26 +143,50 @@
             {{-- Konten Dashboard Utama --}}
             <div class="row">
                 <div class="col-12">
-                    <h2 class="mb-4">Selamat Datang di Dashboard Manajer!</h2>
-                    <p class="lead">Gunakan navigasi di samping untuk mengakses fitur-fitur manajemen.</p>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h2 class="mb-2">Dashboard Manager Statistik</h2>
+                            <p class="lead mb-0">Monitor data transaksi dan pergerakan barang berdasarkan tanggal</p>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center">
+                                <label for="managerDatePicker" class="form-label me-2 mb-0">
+                                    <i class="fas fa-calendar-alt"></i> Pilih Tanggal:
+                                </label>
+                                <input type="date" id="managerDatePicker" class="form-control" 
+                                       value="{{ date('Y-m-d') }}" style="min-width: 150px;">
+                            </div>
+                            <button type="button" id="refreshManagerDashboard" class="btn btn-primary btn-sm">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div class="alert alert-info" role="alert">
                         <i class="fas fa-info-circle"></i>
-                        <div>Untuk melihat laporan stok dan tren barang, silakan klik "Laporan Stok Barang" di sidebar. Untuk pemesanan barang, klik "Pemesanan Barang". Untuk mengelola akun pegawai, klik "Akun Pegawai".</div>
+                        <div>
+                            Data statistik menampilkan informasi untuk tanggal: 
+                            <strong id="managerSelectedDateDisplay">{{ date('d M Y') }}</strong>
+                            <span class="badge bg-primary ms-2" id="managerLoadingIndicator" style="display: none;">
+                                <i class="fas fa-spinner fa-spin"></i> Memuat...
+                            </span>
+                        </div>
                     </div>
                 </div>
 
                 {{-- Bagian Ringkasan Statistik (Summary Cards) --}}
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card bg-white shadow h-100 py-2">
+                    <div class="card border-left-primary shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
-                                        Jumlah Barang Masuk Hari Ini</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $incomingToday }} Pcs</div>
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Barang Masuk</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="managerIncomingToday">{{ $incomingToday }}</div>
+                                    <div class="text-xs text-gray-300">Unit</div>
                                 </div>
                                 <div class="col-auto">
-                                    <i class="fas fa-box fa-2x" style="color: #adb5bd;"></i>
+                                    <i class="fas fa-arrow-down fa-2x text-gray-300"></i>
                                 </div>
                             </div>
                         </div>
@@ -170,16 +194,17 @@
                 </div>
 
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card bg-white shadow h-100 py-2">
+                    <div class="card border-left-success shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
-                                        Jumlah Barang Keluar Hari Ini</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $outgoingToday }} Pcs</div>
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Barang Keluar</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="managerOutgoingToday">{{ $outgoingToday }}</div>
+                                    <div class="text-xs text-gray-300">Unit</div>
                                 </div>
                                 <div class="col-auto">
-                                    <i class="fas fa-truck fa-2x" style="color: #adb5bd;"></i>
+                                    <i class="fas fa-arrow-up fa-2x text-gray-300"></i>
                                 </div>
                             </div>
                         </div>
@@ -187,16 +212,17 @@
                 </div>
 
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card bg-white shadow h-100 py-2">
+                    <div class="card border-left-info shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
-                                        Transaksi Penjualan Hari Ini</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $salesTransactionsToday }} Nota</div>
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        Transaksi Penjualan</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="managerSalesToday">{{ $salesTransactionsToday }}</div>
+                                    <div class="text-xs text-gray-300">Transaksi</div>
                                 </div>
                                 <div class="col-auto">
-                                    <i class="fas fa-money-bill-wave fa-2x" style="color: #adb5bd;"></i>
+                                    <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
                                 </div>
                             </div>
                         </div>
@@ -204,16 +230,17 @@
                 </div>
 
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card bg-white shadow h-100 py-2">
+                    <div class="card border-left-warning shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
-                                        Transaksi Pembelian Hari Ini</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $purchaseTransactionsToday }} Produk</div>
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        Transaksi Pembelian</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="managerPurchasesToday">{{ $purchaseTransactionsToday }}</div>
+                                    <div class="text-xs text-gray-300">Produk</div>
                                 </div>
                                 <div class="col-auto">
-                                    <i class="fas fa-shopping-cart fa-2x" style="color: #adb5bd;"></i>
+                                    <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
                                 </div>
                             </div>
                         </div>
@@ -453,6 +480,75 @@
         margin-bottom: 0.5rem;
         font-weight: 600;
     }
+
+    /* Styles for Summary Cards */
+    .card.border-left-primary {
+        border-left: .25rem solid #4e73df!important;
+    }
+    .card.border-left-success {
+        border-left: .25rem solid #1cc88a!important;
+    }
+    .card.border-left-info {
+        border-left: .25rem solid #36b9cc!important;
+    }
+    .card.border-left-warning {
+        border-left: .25rem solid #f6c23e!important;
+    }
+    .text-xs {
+        font-size: .7rem;
+    }
+    .font-weight-bold {
+        font-weight: 700!important;
+    }
+    .text-primary {
+        color: #4e73df!important;
+    }
+    .text-success {
+        color: #1cc88a!important;
+    }
+    .text-info {
+        color: #36b9cc!important;
+    }
+    .text-warning {
+        color: #f6c23e!important;
+    }
+    .text-gray-800 {
+        color: #5a5c69!important;
+    }
+    .text-gray-300 {
+        color: #dddfeb!important;
+    }
+    .fa-2x {
+        font-size: 2em;
+    }
+
+    /* Enhanced Card Styles */
+    .card {
+        transition: all 0.3s ease;
+        transform: scale(1);
+        border: 1px solid #e3e6f0;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Animation for cards */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .card {
+        animation: fadeInUp 0.6s ease-out;
+    }
 </style>
 
 @push('scripts')
@@ -479,6 +575,146 @@
                 alert.style.transform = 'translateY(0)';
             }, 100);
         });
+
+        // Manager Dashboard Date Picker and Real-time Updates
+        const managerDatePicker = document.getElementById('managerDatePicker');
+        const refreshManagerBtn = document.getElementById('refreshManagerDashboard');
+        const managerLoadingIndicator = document.getElementById('managerLoadingIndicator');
+        const managerSelectedDateDisplay = document.getElementById('managerSelectedDateDisplay');
+
+        // Update date display
+        function updateManagerDateDisplay(date) {
+            const options = { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric',
+                locale: 'id-ID'
+            };
+            managerSelectedDateDisplay.textContent = new Date(date).toLocaleDateString('id-ID', options);
+        }
+
+        // Show loading state
+        function showManagerLoading() {
+            managerLoadingIndicator.style.display = 'inline-block';
+            refreshManagerBtn.disabled = true;
+            refreshManagerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+        }
+
+        // Hide loading state
+        function hideManagerLoading() {
+            managerLoadingIndicator.style.display = 'none';
+            refreshManagerBtn.disabled = false;
+            refreshManagerBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+        }
+
+        // Fetch manager dashboard data for selected date
+        async function fetchManagerDashboardData(selectedDate) {
+            showManagerLoading();
+            
+            try {
+                const url = `/manager/dashboard/data?date=${encodeURIComponent(selectedDate)}`;
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateManagerDashboardCards(data.data);
+                    updateManagerDateDisplay(selectedDate);
+                    
+                    // Show success message
+                    showManagerAlert('success', `Data berhasil diperbarui untuk tanggal ${new Date(selectedDate).toLocaleDateString('id-ID')}`);
+                } else {
+                    throw new Error(data.message || 'Gagal mengambil data dashboard');
+                }
+            } catch (error) {
+                console.error('Error fetching manager dashboard data:', error);
+                showManagerAlert('error', 'Gagal mengambil data dashboard: ' + error.message);
+            } finally {
+                hideManagerLoading();
+            }
+        }
+
+        // Update manager dashboard cards with new data
+        function updateManagerDashboardCards(data) {
+            // Update card values with animation
+            updateManagerCardValue('managerIncomingToday', data.total_incoming_today || 0);
+            updateManagerCardValue('managerOutgoingToday', data.total_outgoing_today || 0);
+            updateManagerCardValue('managerSalesToday', data.sales_transactions_today || 0);
+            updateManagerCardValue('managerPurchasesToday', data.purchase_transactions_today || 0);
+        }
+
+        // Animate card value update
+        function updateManagerCardValue(elementId, newValue) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                // Add update animation
+                element.style.transform = 'scale(1.1)';
+                element.style.transition = 'transform 0.3s ease';
+                
+                setTimeout(() => {
+                    element.textContent = newValue;
+                    element.style.transform = 'scale(1)';
+                }, 150);
+            }
+        }
+
+        // Show alert message
+        function showManagerAlert(type, message) {
+            // Remove existing alerts
+            const existingAlerts = document.querySelectorAll('.manager-dashboard-alert');
+            existingAlerts.forEach(alert => alert.remove());
+
+            // Create new alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show manager-dashboard-alert`;
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.minWidth = '300px';
+            alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <div>${message}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Event listeners
+        if (managerDatePicker) {
+            managerDatePicker.addEventListener('change', function() {
+                const selectedDate = this.value;
+                if (selectedDate) {
+                    fetchManagerDashboardData(selectedDate);
+                }
+            });
+        }
+
+        if (refreshManagerBtn) {
+            refreshManagerBtn.addEventListener('click', function() {
+                const selectedDate = managerDatePicker.value || new Date().toISOString().split('T')[0];
+                fetchManagerDashboardData(selectedDate);
+            });
+        }
 
         // Data from Laravel Controller for Sales and Purchase Chart
         const salesPurchaseChartLabels = @json($chartLabels);

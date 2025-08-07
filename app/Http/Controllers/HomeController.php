@@ -294,6 +294,65 @@ class HomeController extends Controller
     }
 
     /**
+     * Mendapatkan data dashboard manager dengan filter tanggal.
+     */
+    public function getManagerDashboardData(Request $request)
+    {
+        \Log::info('getManagerDashboardData: Request received', ['date' => $request->get('date')]);
+        
+        try {
+            $selectedDate = $request->get('date', Carbon::today()->toDateString());
+            $date = Carbon::parse($selectedDate);
+            
+            // Statistik untuk tanggal yang dipilih
+            $stats = [
+                'total_incoming_today' => IncomingItem::whereDate('tanggal_masuk_barang', $date)->sum('jumlah_barang'),
+                'total_outgoing_today' => OutgoingItem::whereDate('tanggal_keluar_barang', $date)->count(),
+                'sales_transactions_today' => OutgoingItem::whereDate('tanggal_keluar_barang', $date)->count(),
+                'purchase_transactions_today' => IncomingItem::whereDate('tanggal_masuk_barang', $date)->count(),
+            ];
+
+            // Data untuk chart 7 hari terakhir
+            $chartData = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $currentDate = $date->copy()->subDays($i);
+                $chartData[] = [
+                    'date' => $currentDate->format('Y-m-d'),
+                    'incoming' => IncomingItem::whereDate('tanggal_masuk_barang', $currentDate)->sum('jumlah_barang'),
+                    'outgoing' => OutgoingItem::whereDate('tanggal_keluar_barang', $currentDate)->count(),
+                ];
+            }
+
+            // Recent items untuk tanggal yang dipilih
+            $recentIncoming = IncomingItem::with(['producer', 'category'])
+                ->whereDate('tanggal_masuk_barang', $date)
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get();
+
+            $recentOutgoing = OutgoingItem::with(['producer', 'category'])
+                ->whereDate('tanggal_keluar_barang', $date)
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get();
+
+            \Log::info('getManagerDashboardData: Stats calculated', ['stats' => $stats]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $stats
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error in getManagerDashboardData: ' . $e->getMessage(), ['exception' => $e]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengambil data dashboard: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Show the employee accounts management page.
      */
     public function showEmployeeAccounts()

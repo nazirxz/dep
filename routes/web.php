@@ -60,6 +60,9 @@ Route::middleware(['auth'])->group(function () {
         // Route untuk chart data AJAX
         Route::get('/chart/data', [HomeController::class, 'getChartData'])->name('chart.data');
         
+        // Route untuk manager dashboard dengan filter tanggal
+        Route::get('/manager/dashboard/data', [HomeController::class, 'getManagerDashboardData'])->name('manager.dashboard.data');
+        
         // Routes untuk Akun Pegawai (sekarang di EmployeeAccountController)
         Route::get('/employee/accounts', [EmployeeAccountController::class, 'showEmployeeAccounts'])->name('employee.accounts');
         Route::post('/employee/accounts', [EmployeeAccountController::class, 'storeEmployeeAccount'])->name('employee.accounts.store');
