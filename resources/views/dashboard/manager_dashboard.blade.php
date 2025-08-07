@@ -631,6 +631,7 @@
                 if (data.success) {
                     updateManagerDashboardCards(data.data);
                     updateManagerDateDisplay(selectedDate);
+                    updateManagerWeeklyChart(data.data);
                     
                     // Show success message
                     showManagerAlert('success', `Data berhasil diperbarui untuk tanggal ${new Date(selectedDate).toLocaleDateString('id-ID')}`);
@@ -699,6 +700,27 @@
             }, 5000);
         }
 
+        // Update manager weekly chart with new data
+        function updateManagerWeeklyChart(data) {
+            if (salesPurchaseChart && data.chart_labels && data.chart_incoming_data && data.chart_outgoing_data) {
+                // Update chart data
+                salesPurchaseChart.data.labels = data.chart_labels;
+                salesPurchaseChart.data.datasets[0].data = data.chart_incoming_data; // Pembelian/Barang Masuk
+                salesPurchaseChart.data.datasets[1].data = data.chart_outgoing_data; // Penjualan/Barang Keluar
+                
+                // Update chart
+                salesPurchaseChart.update();
+                
+                // Update period display
+                const periodElement = document.getElementById('currentWeekPeriodSales');
+                if (periodElement && data.chart_period) {
+                    periodElement.textContent = data.chart_period;
+                }
+                
+                console.log('Manager weekly chart updated with new data');
+            }
+        }
+
         // Event listeners
         if (managerDatePicker) {
             managerDatePicker.addEventListener('change', function() {
@@ -715,6 +737,10 @@
                 fetchManagerDashboardData(selectedDate);
             });
         }
+
+        // Auto load data saat halaman pertama kali dimuat dengan tanggal hari ini
+        const today = new Date().toISOString().split('T')[0];
+        fetchManagerDashboardData(today);
 
         // Data from Laravel Controller for Sales and Purchase Chart
         const salesPurchaseChartLabels = @json($chartLabels);
@@ -802,11 +828,14 @@
             '#e74c3c', '#e67e22', '#f1c40f', '#f39c12', '#3498db',
             '#9b59b6', '#1abc9c', '#2ecc71', '#34495e', '#795548'
         ];
+        
+        // Global variable for chart instances
+        let salesPurchaseChart;
 
         // Sales and Purchase Bar Chart
         const salesPurchaseCtx = document.getElementById('salesPurchaseBarChart');
         if (salesPurchaseCtx) {
-            new Chart(salesPurchaseCtx, {
+            salesPurchaseChart = new Chart(salesPurchaseCtx, {
                 type: 'bar',
                 data: {
                     labels: salesPurchaseChartLabels,

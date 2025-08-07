@@ -1120,6 +1120,27 @@ class ItemManagementController extends Controller
             $salesTransactions = OutgoingItem::whereBetween('tanggal_keluar_barang', [$startOfDay, $endOfDay])->count();
             $purchaseTransactions = IncomingItem::whereBetween('tanggal_masuk_barang', [$startOfDay, $endOfDay])->count();
             
+            // Data untuk grafik mingguan (7 hari dari tanggal yang dipilih)
+            $chartData = [];
+            $chartLabels = [];
+            $chartIncomingData = [];
+            $chartOutgoingData = [];
+            
+            for ($i = 6; $i >= 0; $i--) {
+                $chartDate = $date->copy()->subDays($i);
+                $dayStart = $chartDate->copy()->startOfDay();
+                $dayEnd = $chartDate->copy()->endOfDay();
+                
+                $chartLabels[] = $chartDate->isoFormat('dddd'); // Nama hari dalam bahasa Indonesia
+                $chartIncomingData[] = IncomingItem::whereBetween('tanggal_masuk_barang', [$dayStart, $dayEnd])->sum('jumlah_barang');
+                $chartOutgoingData[] = OutgoingItem::whereBetween('tanggal_keluar_barang', [$dayStart, $dayEnd])->sum('jumlah_barang');
+            }
+            
+            // Periode untuk display
+            $startWeek = $date->copy()->subDays(6);
+            $endWeek = $date->copy();
+            $chartPeriod = $startWeek->format('d M Y') . ' - ' . $endWeek->format('d M Y');
+            
             // Data untuk grafik (7 hari terakhir dari tanggal yang dipilih)
             $chartData = [];
             for ($i = 6; $i >= 0; $i--) {
@@ -1139,6 +1160,10 @@ class ItemManagementController extends Controller
                 'total_outgoing_today' => $totalOutgoing,
                 'sales_transactions_today' => $salesTransactions,
                 'purchase_transactions_today' => $purchaseTransactions,
+                'chart_labels' => $chartLabels,
+                'chart_incoming_data' => $chartIncomingData,
+                'chart_outgoing_data' => $chartOutgoingData,
+                'chart_period' => $chartPeriod,
             ];
 
             \Log::info('getAdminDashboardData: Stats calculated', ['stats' => $stats]);

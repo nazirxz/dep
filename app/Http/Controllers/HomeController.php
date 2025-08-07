@@ -312,6 +312,30 @@ class HomeController extends Controller
                 'purchase_transactions_today' => IncomingItem::whereDate('tanggal_masuk_barang', $date)->count(),
             ];
 
+            // Data untuk chart mingguan (7 hari dari tanggal yang dipilih)
+            $chartLabels = [];
+            $chartIncomingData = [];
+            $chartOutgoingData = [];
+            
+            for ($i = 6; $i >= 0; $i--) {
+                $chartDate = $date->copy()->subDays($i);
+                
+                $chartLabels[] = $chartDate->isoFormat('dddd'); // Nama hari dalam bahasa Indonesia
+                $chartIncomingData[] = IncomingItem::whereDate('tanggal_masuk_barang', $chartDate)->sum('jumlah_barang');
+                $chartOutgoingData[] = OutgoingItem::whereDate('tanggal_keluar_barang', $chartDate)->sum('jumlah_barang');
+            }
+            
+            // Periode untuk display
+            $startWeek = $date->copy()->subDays(6);
+            $endWeek = $date->copy();
+            $chartPeriod = $startWeek->format('d M Y') . ' - ' . $endWeek->format('d M Y');
+            
+            // Tambahkan data chart ke response
+            $stats['chart_labels'] = $chartLabels;
+            $stats['chart_incoming_data'] = $chartIncomingData;
+            $stats['chart_outgoing_data'] = $chartOutgoingData;
+            $stats['chart_period'] = $chartPeriod;
+
             // Data untuk chart 7 hari terakhir
             $chartData = [];
             for ($i = 6; $i >= 0; $i--) {

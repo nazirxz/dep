@@ -434,6 +434,7 @@
                     console.log('Admin Dashboard Data:', data.data); // Debug log
                     updateDashboardCards(data.data);
                     updateDateDisplay(selectedDate);
+                    updateWeeklyChart(data.data);
                     
                     // Show success message
                     showAlert('success', `Data berhasil diperbarui untuk tanggal ${new Date(selectedDate).toLocaleDateString('id-ID')}`);
@@ -509,6 +510,27 @@
             }, 5000);
         }
 
+        // Update weekly chart with new data
+        function updateWeeklyChart(data) {
+            if (weeklyChart && data.chart_labels && data.chart_incoming_data && data.chart_outgoing_data) {
+                // Update chart data
+                weeklyChart.data.labels = data.chart_labels;
+                weeklyChart.data.datasets[0].data = data.chart_incoming_data;
+                weeklyChart.data.datasets[1].data = data.chart_outgoing_data;
+                
+                // Update chart
+                weeklyChart.update();
+                
+                // Update period display
+                const periodElement = document.getElementById('currentWeekPeriod');
+                if (periodElement && data.chart_period) {
+                    periodElement.textContent = data.chart_period;
+                }
+                
+                console.log('Weekly chart updated with new data');
+            }
+        }
+
         // Event listeners
         datePicker.addEventListener('change', function() {
             const selectedDate = this.value;
@@ -522,6 +544,10 @@
             fetchDashboardData(selectedDate);
         });
 
+        // Auto load data saat halaman pertama kali dimuat dengan tanggal hari ini
+        const today = new Date().toISOString().split('T')[0];
+        fetchDashboardData(today);
+
         // Initialize with current date
         updateDateDisplay(datePicker.value);
 
@@ -529,10 +555,13 @@
         const chartLabels = @json($chartLabels);
         const purchaseData = @json($purchaseTrendData);
         const salesData = @json($salesTrendData);
+        
+        // Global variable for chart instance
+        let weeklyChart;
 
         const weeklyBarChartCtx = document.getElementById('weeklyBarChart');
         if (weeklyBarChartCtx) {
-            new Chart(weeklyBarChartCtx, {
+            weeklyChart = new Chart(weeklyBarChartCtx, {
                 type: 'bar',
                 data: {
                     labels: chartLabels,
