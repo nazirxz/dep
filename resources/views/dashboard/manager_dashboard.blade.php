@@ -702,6 +702,7 @@
 
         // Update manager weekly chart with new data
         function updateManagerWeeklyChart(data) {
+            // Update sales/purchase chart
             if (salesPurchaseChart && data.chart_labels && data.chart_incoming_data && data.chart_outgoing_data) {
                 // Update chart data
                 salesPurchaseChart.data.labels = data.chart_labels;
@@ -717,7 +718,19 @@
                     periodElement.textContent = data.chart_period;
                 }
                 
-                console.log('Manager weekly chart updated with new data');
+                console.log('Manager sales/purchase chart updated with new data');
+            }
+            
+            // Update stock chart
+            if (stockChart && data.stock_labels && data.stock_data) {
+                // Update stock chart data
+                stockChart.data.labels = data.stock_labels;
+                stockChart.data.datasets[0].data = data.stock_data;
+                
+                // Update chart
+                stockChart.update();
+                
+                console.log('Manager stock chart updated with new data');
             }
         }
 
@@ -740,6 +753,12 @@
 
         // Auto load data saat halaman pertama kali dimuat dengan tanggal hari ini
         const today = new Date().toISOString().split('T')[0];
+        
+        // Set datepicker ke tanggal hari ini
+        if (managerDatePicker) {
+            managerDatePicker.value = today;
+        }
+        
         fetchManagerDashboardData(today);
 
         // Data from Laravel Controller for Sales and Purchase Chart
@@ -831,6 +850,7 @@
         
         // Global variable for chart instances
         let salesPurchaseChart;
+        let stockChart;
 
         // Sales and Purchase Bar Chart
         const salesPurchaseCtx = document.getElementById('salesPurchaseBarChart');
@@ -872,7 +892,7 @@
                 '#e74c3c', '#e67e22', '#f1c40f', '#f39c12', '#3498db',
                 '#9b59b6', '#1abc9c', '#2ecc71', '#34495e', '#795548'
             ];
-            new Chart(stockHorizontalCtx, {
+            stockChart = new Chart(stockHorizontalCtx, {
                 type: 'bar',
                 data: {
                     labels: stockItemLabels,

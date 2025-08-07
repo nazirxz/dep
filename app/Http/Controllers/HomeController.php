@@ -335,30 +335,22 @@ class HomeController extends Controller
             $stats['chart_incoming_data'] = $chartIncomingData;
             $stats['chart_outgoing_data'] = $chartOutgoingData;
             $stats['chart_period'] = $chartPeriod;
-
-            // Data untuk chart 7 hari terakhir
-            $chartData = [];
-            for ($i = 6; $i >= 0; $i--) {
-                $currentDate = $date->copy()->subDays($i);
-                $chartData[] = [
-                    'date' => $currentDate->format('Y-m-d'),
-                    'incoming' => IncomingItem::whereDate('tanggal_masuk_barang', $currentDate)->sum('jumlah_barang'),
-                    'outgoing' => OutgoingItem::whereDate('tanggal_keluar_barang', $currentDate)->count(),
-                ];
+            
+            // Data untuk stock chart (top 10 barang stok terendah)
+            $stockItems = IncomingItem::where('jumlah_barang', '>', 0)
+                ->orderBy('jumlah_barang', 'asc')
+                ->take(10)
+                ->get();
+                
+            $stockLabels = [];
+            $stockData = [];
+            foreach ($stockItems as $item) {
+                $stockLabels[] = $item->nama_barang;
+                $stockData[] = $item->jumlah_barang;
             }
-
-            // Recent items untuk tanggal yang dipilih
-            $recentIncoming = IncomingItem::with(['producer', 'category'])
-                ->whereDate('tanggal_masuk_barang', $date)
-                ->orderBy('created_at', 'desc')
-                ->take(5)
-                ->get();
-
-            $recentOutgoing = OutgoingItem::with(['producer', 'category'])
-                ->whereDate('tanggal_keluar_barang', $date)
-                ->orderBy('created_at', 'desc')
-                ->take(5)
-                ->get();
+            
+            $stats['stock_labels'] = $stockLabels;
+            $stats['stock_data'] = $stockData;
 
             \Log::info('getManagerDashboardData: Stats calculated', ['stats' => $stats]);
 
