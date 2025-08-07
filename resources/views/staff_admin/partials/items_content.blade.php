@@ -813,6 +813,38 @@
     </div>
 </div>
 
+{{-- Rack Selector Modal --}}
+<div class="modal fade" id="rackSelectorModal" tabindex="-1" aria-labelledby="rackSelectorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rackSelectorModalLabel">
+                    <i class="fas fa-map"></i> Pilih Lokasi Rak
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Petunjuk:</strong> Klik pada kotak rak untuk memilih lokasi. 
+                        Format lokasi: R[1-8]-[1-4]-[1-6] (Rak-Tingkat-Posisi)
+                    </div>
+                </div>
+                <div id="warehouseGrid" class="warehouse-selector-grid">
+                    <!-- Grid akan diisi oleh JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" id="confirmRackBtn" class="btn btn-primary" onclick="window.confirmRackSelection()" disabled>
+                    <i class="fas fa-check"></i> Pilih Lokasi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <style>
 /* Additional CSS for enhanced functionality */
@@ -1420,7 +1452,12 @@ window.renderItemCrudForm = function(itemType, mode, itemData = null) {
                 </div>
                 <div class="mb-3">
                     <label for="crud_lokasi_rak" class="form-label">Lokasi Rak</label>
-                    <input type="text" class="form-control" id="crud_lokasi_rak" name="lokasi_rak_barang" placeholder="Format: R1-1-1">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="crud_lokasi_rak" name="lokasi_rak_barang" placeholder="Format: R1-1-1">
+                        <button type="button" class="btn btn-outline-secondary" onclick="window.showRackSelector('crud_lokasi_rak')">
+                            <i class="fas fa-map"></i> Pilih
+                        </button>
+                    </div>
                     <small class="text-muted">Format: R[1-8]-[1-4]-[1-6], contoh: R1-1-1</small>
                 </div>
                 <div class="mb-3">
@@ -2214,8 +2251,11 @@ window.showRackSelector = function(targetInputId, itemId = null) {
  * Generates the warehouse grid in the rack selection modal.
  */
 window.generateWarehouseSelector = async function() {
-    const warehouseSelector = document.getElementById('warehouseSelector');
-    if (!warehouseSelector) return;
+    const warehouseSelector = document.getElementById('warehouseGrid');
+    if (!warehouseSelector) {
+        console.error('warehouseGrid element not found');
+        return;
+    }
     
     window.showAlert('info', 'Memuat data lokasi gudang...');
 
@@ -2223,24 +2263,11 @@ window.generateWarehouseSelector = async function() {
         const response = await fetch('{{ route("staff.locations.available") }}', {
             headers: { 'Accept': 'application/json' }
         });
-        // Enhanced error handling for fetch responses
+        
         if (!response.ok) {
-            let errorText = `HTTP error! status: ${response.status}`;
-            try {
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    const errorData = await response.json();
-                    errorText = errorData.message || JSON.stringify(errorData);
-                } else {
-                    errorText = await response.text();
-                }
-            }
-            catch (parseError) {
-                console.error('Error parsing response for non-OK status:', parseError);
-                errorText += ` (Failed to parse response: ${parseError.message})`;
-            }
-            console.error('Server response for generateWarehouseSelector was not OK:', errorText);
-            window.showAlert('error', `Gagal memuat data lokasi gudang. Status: ${response.status}. Detail di konsol.`);
+            // Fallback to manual grid if API fails
+            console.warn('API not available, generating manual grid');
+            window.generateManualWarehouseGrid();
             return;
         }
 
@@ -2261,19 +2288,19 @@ window.generateWarehouseSelector = async function() {
                     for (let col = 1; col <= 6; col++) {
                         const position = `R${rak}-${row}-${col}`;
                         const locationData = allLocations.find(loc => loc.location === position);
-                        const isOccupied = locationData ? !locationData.available : true; // If not found, assume occupied or invalid
+                        const isOccupied = locationData ? !locationData.available : true;
                         const currentItemLocation = document.getElementById(window.currentTargetInput)?.value;
                         const isCurrentItemLocation = currentItemLocation === position;
 
                         let cellClass = 'rack-selector-cell';
-                        let cellContent = position.split('-').slice(1).join('-'); // Default content
+                        let cellContent = position.split('-').slice(1).join('-');
 
                         if (isOccupied && !isCurrentItemLocation) {
                             cellClass += ' occupied';
-                            cellContent = '<i class="fas fa-times"></i>'; // Mark as occupied
+                            cellContent = '<i class="fas fa-times"></i>';
                         } else if (isCurrentItemLocation) {
-                            cellClass += ' selected'; // Highlight current item's location
-                            cellContent = '<i class="fas fa-check"></i>'; // Mark as current
+                            cellClass += ' selected';
+                            cellContent = '<i class="fas fa-check"></i>';
                         }
                         
                         html += `
@@ -2292,11 +2319,58 @@ window.generateWarehouseSelector = async function() {
             window.showAlert('success', 'Data lokasi gudang berhasil dimuat.');
         } else {
             window.showAlert('error', result.message || 'Gagal memuat data lokasi gudang.');
+            window.generateManualWarehouseGrid();
         }
     } catch (error) {
         console.error('Error fetching available locations:', error);
-        window.showAlert('error', 'Kesalahan jaringan saat memuat lokasi gudang.');
+        window.showAlert('warning', 'Menggunakan grid manual karena kesalahan jaringan.');
+        window.generateManualWarehouseGrid();
     }
+}
+
+/**
+ * Generate manual warehouse grid as fallback
+ */
+window.generateManualWarehouseGrid = function() {
+    const warehouseSelector = document.getElementById('warehouseGrid');
+    if (!warehouseSelector) return;
+    
+    let html = '';
+    for (let rak = 1; rak <= 8; rak++) {
+        html += `
+            <div class="warehouse-rack-selector">
+                <div class="rack-selector-header">Rak ${rak}</div>
+                <div class="rack-selector-grid">
+        `;
+        
+        for (let row = 1; row <= 4; row++) {
+            html += '<div class="rack-selector-row">';
+            for (let col = 1; col <= 6; col++) {
+                const position = `R${rak}-${row}-${col}`;
+                const currentItemLocation = document.getElementById(window.currentTargetInput)?.value;
+                const isCurrentItemLocation = currentItemLocation === position;
+
+                let cellClass = 'rack-selector-cell';
+                let cellContent = position.split('-').slice(1).join('-');
+
+                if (isCurrentItemLocation) {
+                    cellClass += ' selected';
+                    cellContent = '<i class="fas fa-check"></i>';
+                }
+                
+                html += `
+                    <div class="${cellClass}" data-position="${position}" 
+                         onclick="window.selectRackPosition('${position}', false)">
+                        ${cellContent}
+                    </div>
+                `;
+            }
+            html += '</div>';
+        }
+        
+        html += '</div></div>';
+    }
+    warehouseSelector.innerHTML = html;
 }
 
 /**
@@ -3926,6 +4000,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Initialize page when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    window.initializePage();
+});
 </script>
 @endpush
-3
