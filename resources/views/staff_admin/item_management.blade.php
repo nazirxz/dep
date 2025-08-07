@@ -201,10 +201,16 @@
                                                     <button class="btn btn-sm btn-primary me-1" onclick="showRackLocation('{{ $item->lokasi_rak_barang }}')">
                                                         <i class="fas fa-map-marker-alt"></i> Tampilkan Lokasi Rak Barang
                                                     </button>
-                                                    @if($item->order_id)
-                                                        <button class="btn btn-sm btn-success" onclick="markAsCompleted({{ $item->order_id }})">
-                                                            <i class="fas fa-check"></i> Barang Sudah Selesai dikemas
-                                                        </button>
+                                                    @if($item->order_id && $item->order)
+                                                        @if($item->order->order_status === 'pending')
+                                                            <button class="btn btn-sm btn-success" onclick="markAsCompleted({{ $item->order_id }})">
+                                                                <i class="fas fa-check"></i> Barang Sudah Selesai dikemas
+                                                            </button>
+                                                        @else
+                                                            <span class="badge bg-info">Status: {{ ucfirst($item->order->order_status) }}</span>
+                                                        @endif
+                                                    @elseif($item->order_id && !$item->order)
+                                                        <span class="badge bg-warning">Order Tidak Ditemukan</span>
                                                     @else
                                                         <span class="badge bg-secondary">Tidak Ada Order</span>
                                                     @endif

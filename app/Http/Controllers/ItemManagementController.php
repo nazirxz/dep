@@ -28,7 +28,7 @@ class ItemManagementController extends Controller
         $incomingItems = IncomingItem::with(['producer', 'category'])
             ->orderBy('tanggal_masuk_barang', 'desc')
             ->get();
-        $outgoingItems = OutgoingItem::with(['producer', 'category'])
+        $outgoingItems = OutgoingItem::with(['producer', 'category', 'order'])
             ->orderBy('tanggal_keluar_barang', 'desc')
             ->get();
         $producers = Producer::orderBy('nama_produsen_supplier')->get();
@@ -51,7 +51,7 @@ class ItemManagementController extends Controller
         $incomingItems = IncomingItem::with(['producer', 'category'])
             ->orderBy('tanggal_masuk_barang', 'desc')
             ->get();
-        $outgoingItems = OutgoingItem::with(['producer', 'category'])
+        $outgoingItems = OutgoingItem::with(['producer', 'category', 'order'])
             ->orderBy('tanggal_keluar_barang', 'desc')
             ->get();
         $producers = Producer::orderBy('nama_produsen_supplier')->get();
