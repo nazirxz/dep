@@ -722,19 +722,26 @@ class OrderController extends Controller
 
             $order = Order::findOrFail($id);
 
-            // Validate current order status - only allow from confirmed status
-            if ($order->order_status !== 'confirmed') {
+            // Validate current order status - allow from confirmed and processing status
+            if (!in_array($order->order_status, ['confirmed', 'processing'])) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Order harus dalam status confirmed untuk bisa ditandai selesai dikemas'
+                    'message' => 'Order harus dalam status confirmed atau processing untuk bisa ditandai selesai dikemas. Status saat ini: ' . $order->order_status
                 ], 422);
             }
 
             // Update order status to processing (barang sudah selesai dikemas)
-            $order->order_status = 'processing';
+            // Only change status if currently confirmed, keep processing if already processing
+            if ($order->order_status === 'confirmed') {
+                $order->order_status = 'processing';
+                $statusAction = 'diubah ke processing';
+            } else {
+                // Status already processing, just add note
+                $statusAction = 'tetap processing (sudah selesai dikemas)';
+            }
             
             // Add notes about packing completion
-            $packingNote = '[' . now()->format('Y-m-d H:i:s') . '] Barang sudah selesai dikemas oleh Admin';
+            $packingNote = '[' . now()->format('Y-m-d H:i:s') . '] Barang sudah selesai dikemas oleh Admin - Status ' . $statusAction;
             $order->notes = ($order->notes ? $order->notes . '\n' : '') . $packingNote;
 
             $order->save();
@@ -744,12 +751,12 @@ class OrderController extends Controller
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Order berhasil ditandai sebagai selesai dikemas',
+                'message' => 'Order berhasil ditandai sebagai selesai dikemas - Status ' . $statusAction,
                 'data' => [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
-                    'previous_status' => 'confirmed',
                     'current_status' => $order->order_status,
+                    'status_action' => $statusAction,
                     'updated_at' => $order->updated_at,
                     'notes' => $order->notes
                 ]
