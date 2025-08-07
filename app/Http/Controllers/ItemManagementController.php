@@ -1095,6 +1095,81 @@ class ItemManagementController extends Controller
     }
 
     /**
+     * Mendapatkan data dashboard admin dengan filter tanggal.
+     */
+    public function getAdminDashboardData(Request $request)
+    {
+        \Log::info('getAdminDashboardData: Request received', ['date' => $request->get('date')]);
+        
+        try {
+            $selectedDate = $request->get('date', now()->format('Y-m-d'));
+            
+            // Parse tanggal yang dipilih
+            $date = Carbon::parse($selectedDate);
+            $startOfDay = $date->startOfDay();
+            $endOfDay = $date->copy()->endOfDay();
+            
+            \Log::info('getAdminDashboardData: Date range', [
+                'start' => $startOfDay->format('Y-m-d H:i:s'),
+                'end' => $endOfDay->format('Y-m-d H:i:s')
+            ]);
+
+            // Hitung statistik berdasarkan tanggal yang dipilih
+            $totalIncoming = IncomingItem::whereBetween('tanggal_masuk_barang', [$startOfDay, $endOfDay])->count();
+            $totalOutgoing = OutgoingItem::whereBetween('tanggal_keluar_barang', [$startOfDay, $endOfDay])->count();
+            $totalStock = IncomingItem::sum('jumlah_barang'); // Total stok keseluruhan
+            $lowStockItems = IncomingItem::where('jumlah_barang', '>', 0)->where('jumlah_barang', '<', 10)->count();
+            
+            // Data untuk grafik (7 hari terakhir dari tanggal yang dipilih)
+            $chartData = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $chartDate = $date->copy()->subDays($i);
+                $dayStart = $chartDate->copy()->startOfDay();
+                $dayEnd = $chartDate->copy()->endOfDay();
+                
+                $chartData[] = [
+                    'date' => $chartDate->format('Y-m-d'),
+                    'incoming' => IncomingItem::whereBetween('tanggal_masuk_barang', [$dayStart, $dayEnd])->count(),
+                    'outgoing' => OutgoingItem::whereBetween('tanggal_keluar_barang', [$dayStart, $dayEnd])->count()
+                ];
+            }
+
+            $stats = [
+                'date' => $selectedDate,
+                'total_incoming_today' => $totalIncoming,
+                'total_outgoing_today' => $totalOutgoing,
+                'total_stock' => $totalStock,
+                'low_stock_items' => $lowStockItems,
+                'chart_data' => $chartData,
+                'recent_incoming' => IncomingItem::whereBetween('tanggal_masuk_barang', [$startOfDay, $endOfDay])
+                    ->with(['producer', 'category'])
+                    ->orderBy('tanggal_masuk_barang', 'desc')
+                    ->take(5)
+                    ->get(),
+                'recent_outgoing' => OutgoingItem::whereBetween('tanggal_keluar_barang', [$startOfDay, $endOfDay])
+                    ->with(['producer', 'category'])
+                    ->orderBy('tanggal_keluar_barang', 'desc')
+                    ->take(5)
+                    ->get()
+            ];
+
+            \Log::info('getAdminDashboardData: Stats calculated', ['stats' => $stats]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $stats
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error in getAdminDashboardData: ' . $e->getMessage(), ['exception' => $e]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengambil data dashboard: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Menetapkan lokasi secara otomatis untuk barang tanpa lokasi.
      */
     public function autoAssignLocations()

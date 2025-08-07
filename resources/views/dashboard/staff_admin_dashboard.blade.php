@@ -97,26 +97,50 @@
             {{-- Bagian Ringkasan (Summary Cards) --}}
             <div class="row mb-4">
                 <div class="col-12">
-                    <h2 class="mb-4">Selamat Datang di Dashboard Staff Admin!</h2>
-                    <p class="lead">Anda dapat mengelola operasi harian dan melihat laporan dasar.</p>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h2 class="mb-2">Dashboard Admin Statistik</h2>
+                            <p class="lead mb-0">Monitor data transaksi dan pergerakan barang berdasarkan tanggal</p>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center">
+                                <label for="dashboardDatePicker" class="form-label me-2 mb-0">
+                                    <i class="fas fa-calendar-alt"></i> Pilih Tanggal:
+                                </label>
+                                <input type="date" id="dashboardDatePicker" class="form-control" 
+                                       value="{{ date('Y-m-d') }}" style="min-width: 150px;">
+                            </div>
+                            <button type="button" id="refreshDashboard" class="btn btn-primary btn-sm">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div class="alert alert-info" role="alert">
                         <i class="fas fa-info-circle"></i>
-                        <div>Gunakan navigasi di samping untuk mengakses fitur-fitur yang tersedia.</div>
+                        <div>
+                            Data statistik menampilkan informasi untuk tanggal: 
+                            <strong id="selectedDateDisplay">{{ date('d M Y') }}</strong>
+                            <span class="badge bg-primary ms-2" id="loadingIndicator" style="display: none;">
+                                <i class="fas fa-spinner fa-spin"></i> Memuat...
+                            </span>
+                        </div>
                     </div>
                 </div>
 
                 {{-- Card: Jumlah Total Barang Masuk Hari Ini --}}
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card bg-white shadow h-100 py-2">
+                    <div class="card border-left-primary shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
-                                        Barang Masuk Hari Ini</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $incomingToday }} Pcs</div>
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Barang Masuk</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalIncomingToday">{{ $incomingToday }}</div>
+                                    <div class="text-xs text-gray-300">Unit</div>
                                 </div>
                                 <div class="col-auto">
-                                    <i class="fas fa-box fa-2x" style="color: #adb5bd;"></i>
+                                    <i class="fas fa-arrow-down fa-2x text-gray-300"></i>
                                 </div>
                             </div>
                         </div>
@@ -125,52 +149,55 @@
 
                 {{-- Card: Jumlah Total Barang Keluar Hari Ini --}}
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card bg-white shadow h-100 py-2">
+                    <div class="card border-left-success shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
-                                        Barang Keluar Hari Ini</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $outgoingToday }} Pcs</div>
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Barang Keluar</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalOutgoingToday">{{ $outgoingToday }}</div>
+                                    <div class="text-xs text-gray-300">Unit</div>
                                 </div>
                                 <div class="col-auto">
-                                    <i class="fas fa-truck-loading fa-2x" style="color: #adb5bd;"></i>
+                                    <i class="fas fa-arrow-up fa-2x text-gray-300"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- Card: Jumlah Transaksi Penjualan Hari Ini --}}
+                {{-- Card: Total Stok Keseluruhan --}}
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card bg-white shadow h-100 py-2">
+                    <div class="card border-left-info shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
-                                        Transaksi Penjualan Hari Ini</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $salesTransactionsToday }} Nota</div>
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        Total Stok</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalStock">{{ $totalStock }}</div>
+                                    <div class="text-xs text-gray-300">Unit</div>
                                 </div>
                                 <div class="col-auto">
-                                    <i class="fas fa-money-bill-wave fa-2x" style="color: #adb5bd;"></i>
+                                    <i class="fas fa-boxes fa-2x text-gray-300"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- Card: Jumlah Transaksi Pembelian Hari Ini --}}
+                {{-- Card: Barang Stok Rendah --}}
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card bg-white shadow h-100 py-2">
+                    <div class="card border-left-warning shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6c757d;">
-                                        Transaksi Pembelian Hari Ini</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $purchaseTransactionsToday }} Produk</div>
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        Stok Rendah</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="lowStockItems">{{ $lowStockItems }}</div>
+                                    <div class="text-xs text-gray-300">Barang</div>
                                 </div>
                                 <div class="col-auto">
-                                    <i class="fas fa-shopping-cart fa-2x" style="color: #adb5bd;"></i>
+                                    <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
                                 </div>
                             </div>
                         </div>
@@ -271,6 +298,50 @@
         height: 400px; /* Adjust this value as needed */
         min-height: 300px; /* Ensure a minimum height */
     }
+
+    /* Enhanced Card Styles - keeping original colors */
+    .card {
+        transition: all 0.3s ease;
+        transform: scale(1);
+        border: 1px solid #e3e6f0;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Animation for cards */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .card {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    /* Datepicker styling */
+    .date-picker-container {
+        animation: slideInDown 0.3s ease-out;
+    }
+
+    @keyframes slideInDown {
+        from {
+            transform: translateY(-10px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
 </style>
 
 @push('scripts')
@@ -297,6 +368,147 @@
                 alert.style.transform = 'translateY(0)';
             }, 100);
         });
+
+        // Dashboard Date Picker and Real-time Updates
+        const datePicker = document.getElementById('dashboardDatePicker');
+        const refreshBtn = document.getElementById('refreshDashboard');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const selectedDateDisplay = document.getElementById('selectedDateDisplay');
+
+        // Update date display
+        function updateDateDisplay(date) {
+            const options = { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric',
+                locale: 'id-ID'
+            };
+            selectedDateDisplay.textContent = new Date(date).toLocaleDateString('id-ID', options);
+        }
+
+        // Show loading state
+        function showLoading() {
+            loadingIndicator.style.display = 'inline-block';
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+        }
+
+        // Hide loading state
+        function hideLoading() {
+            loadingIndicator.style.display = 'none';
+            refreshBtn.disabled = false;
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+        }
+
+        // Fetch dashboard data for selected date
+        async function fetchDashboardData(selectedDate) {
+            showLoading();
+            
+            try {
+                const url = `/admin/dashboard/data?date=${encodeURIComponent(selectedDate)}`;
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateDashboardCards(data.data);
+                    updateDateDisplay(selectedDate);
+                    
+                    // Show success message
+                    showAlert('success', `Data berhasil diperbarui untuk tanggal ${new Date(selectedDate).toLocaleDateString('id-ID')}`);
+                } else {
+                    throw new Error(data.message || 'Gagal mengambil data dashboard');
+                }
+            } catch (error) {
+                console.error('Error fetching dashboard data:', error);
+                showAlert('error', 'Gagal mengambil data dashboard: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Update dashboard cards with new data
+        function updateDashboardCards(data) {
+            // Update card values with animation
+            updateCardValue('totalIncomingToday', data.total_incoming_today || 0);
+            updateCardValue('totalOutgoingToday', data.total_outgoing_today || 0);
+            updateCardValue('totalStock', data.total_stock || 0);
+            updateCardValue('lowStockItems', data.low_stock_items || 0);
+        }
+
+        // Animate card value update
+        function updateCardValue(elementId, newValue) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                // Add update animation
+                element.style.transform = 'scale(1.1)';
+                element.style.transition = 'transform 0.3s ease';
+                
+                setTimeout(() => {
+                    element.textContent = newValue;
+                    element.style.transform = 'scale(1)';
+                }, 150);
+            }
+        }
+
+        // Show alert message
+        function showAlert(type, message) {
+            // Remove existing alerts
+            const existingAlerts = document.querySelectorAll('.dashboard-alert');
+            existingAlerts.forEach(alert => alert.remove());
+
+            // Create new alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show dashboard-alert`;
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.minWidth = '300px';
+            
+            const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+            alertDiv.innerHTML = `
+                <i class="fas fa-${icon}"></i>
+                <span>${message}</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(alertDiv);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Event listeners
+        datePicker.addEventListener('change', function() {
+            const selectedDate = this.value;
+            if (selectedDate) {
+                fetchDashboardData(selectedDate);
+            }
+        });
+
+        refreshBtn.addEventListener('click', function() {
+            const selectedDate = datePicker.value || new Date().toISOString().split('T')[0];
+            fetchDashboardData(selectedDate);
+        });
+
+        // Initialize with current date
+        updateDateDisplay(datePicker.value);
 
         // Data from Laravel Controller
         const chartLabels = @json($chartLabels);

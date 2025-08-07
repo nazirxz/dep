@@ -105,6 +105,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/staff/items/search', [ItemManagementController::class, 'searchItems'])->name('staff.items.search');
         Route::get('/staff/items/category/{category}', [ItemManagementController::class, 'getItemsByCategory'])->name('staff.items.by_category');
         Route::get('/staff/dashboard/stats', [ItemManagementController::class, 'getDashboardStats'])->name('staff.dashboard.stats');
+        
+        // Route untuk admin dashboard dengan filter tanggal
+        Route::get('/admin/dashboard/data', [ItemManagementController::class, 'getAdminDashboardData'])->name('admin.dashboard.data');
         Route::post('/staff/items/auto-assign-locations', [ItemManagementController::class, 'autoAssignLocations'])->name('staff.items.auto_assign_locations');
         Route::post('/staff/items/import-csv', [ItemManagementController::class, 'importFromCSV'])->name('staff.items.import_csv');
         Route::get('/staff/items/export-csv', [ItemManagementController::class, 'exportToCSV'])->name('staff.items.export_csv');

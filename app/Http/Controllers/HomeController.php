@@ -119,11 +119,17 @@ class HomeController extends Controller
                 'outOfStockNotifications' => $outOfStockNotifications,
             ]);
         } elseif ($user->role === 'admin') {
+            // Hitung total stok dan barang stok rendah untuk admin dashboard
+            $totalStock = IncomingItem::sum('jumlah_barang') - OutgoingItem::sum('jumlah_barang');
+            $lowStockItems = IncomingItem::where('jumlah_barang', '>', 0)->where('jumlah_barang', '<', 10)->count();
+            
             return view('dashboard.staff_admin_dashboard', [
                 'incomingToday' => $incomingToday,
                 'outgoingToday' => $outgoingToday,
                 'salesTransactionsToday' => $salesTransactionsToday,
                 'purchaseTransactionsToday' => $purchaseTransactionsToday,
+                'totalStock' => $totalStock,
+                'lowStockItems' => $lowStockItems,
                 'chartLabels' => $daysOfWeek,
                 'purchaseTrendData' => $purchaseData,
                 'salesTrendData' => $salesData,
