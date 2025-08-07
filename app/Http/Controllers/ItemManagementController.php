@@ -2035,9 +2035,9 @@ class ItemManagementController extends Controller
     public function markOrderAsFinishedPacking(Request $request, $orderId)
     {
         try {
-            // Check if user is admin
+            // Check if user is admin or staff with item management access
             $user = Auth::user();
-            if ($user->role !== 'Admin') {
+            if (!in_array($user->role, ['admin', 'Admin'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized. Admin access required.'
