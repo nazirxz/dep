@@ -1115,10 +1115,10 @@ class ItemManagementController extends Controller
             ]);
 
             // Hitung statistik berdasarkan tanggal yang dipilih
-            $totalIncoming = IncomingItem::whereBetween('tanggal_masuk_barang', [$startOfDay, $endOfDay])->count();
-            $totalOutgoing = OutgoingItem::whereBetween('tanggal_keluar_barang', [$startOfDay, $endOfDay])->count();
-            $totalStock = IncomingItem::sum('jumlah_barang'); // Total stok keseluruhan
-            $lowStockItems = IncomingItem::where('jumlah_barang', '>', 0)->where('jumlah_barang', '<', 10)->count();
+            $totalIncoming = IncomingItem::whereBetween('tanggal_masuk_barang', [$startOfDay, $endOfDay])->sum('jumlah_barang');
+            $totalOutgoing = OutgoingItem::whereBetween('tanggal_keluar_barang', [$startOfDay, $endOfDay])->sum('jumlah_barang');
+            $salesTransactions = OutgoingItem::whereBetween('tanggal_keluar_barang', [$startOfDay, $endOfDay])->count();
+            $purchaseTransactions = IncomingItem::whereBetween('tanggal_masuk_barang', [$startOfDay, $endOfDay])->count();
             
             // Data untuk grafik (7 hari terakhir dari tanggal yang dipilih)
             $chartData = [];
@@ -1129,28 +1129,16 @@ class ItemManagementController extends Controller
                 
                 $chartData[] = [
                     'date' => $chartDate->format('Y-m-d'),
-                    'incoming' => IncomingItem::whereBetween('tanggal_masuk_barang', [$dayStart, $dayEnd])->count(),
-                    'outgoing' => OutgoingItem::whereBetween('tanggal_keluar_barang', [$dayStart, $dayEnd])->count()
+                    'incoming' => IncomingItem::whereBetween('tanggal_masuk_barang', [$dayStart, $dayEnd])->sum('jumlah_barang'),
+                    'outgoing' => OutgoingItem::whereBetween('tanggal_keluar_barang', [$dayStart, $dayEnd])->sum('jumlah_barang')
                 ];
             }
 
             $stats = [
-                'date' => $selectedDate,
                 'total_incoming_today' => $totalIncoming,
                 'total_outgoing_today' => $totalOutgoing,
-                'total_stock' => $totalStock,
-                'low_stock_items' => $lowStockItems,
-                'chart_data' => $chartData,
-                'recent_incoming' => IncomingItem::whereBetween('tanggal_masuk_barang', [$startOfDay, $endOfDay])
-                    ->with(['producer', 'category'])
-                    ->orderBy('tanggal_masuk_barang', 'desc')
-                    ->take(5)
-                    ->get(),
-                'recent_outgoing' => OutgoingItem::whereBetween('tanggal_keluar_barang', [$startOfDay, $endOfDay])
-                    ->with(['producer', 'category'])
-                    ->orderBy('tanggal_keluar_barang', 'desc')
-                    ->take(5)
-                    ->get()
+                'sales_transactions_today' => $salesTransactions,
+                'purchase_transactions_today' => $purchaseTransactions,
             ];
 
             \Log::info('getAdminDashboardData: Stats calculated', ['stats' => $stats]);

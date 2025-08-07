@@ -7,7 +7,15 @@
         <div class="col-md-2 d-none d-md-block sidebar">
             <div class="position-sticky">
                 <div class="d-flex align-items-center mb-4 mt-3">
-                    <img src="{{ asset('images/logo.png') }}" alt="Logo KS" class="img-fluid rounded-circle me-2" style="width: 40px; height: 40px;">
+                    <img src="{{ asset('images/logo.png') }}" alt="Logo KS" class="img-fluid rounded-circle me-2" style="width: 40px; he        // Update dashboard cards with new data
+        function updateDashboardCards(data) {
+            console.log('updateDashboardCards received data:', data);
+            // Update card values with animation
+            updateCardValue('totalIncomingToday', data.total_incoming_today || 0);
+            updateCardValue('totalOutgoingToday', data.total_outgoing_today || 0);
+            updateCardValue('salesTransactionsToday', data.sales_transactions_today || 0);
+            updateCardValue('purchaseTransactionsToday', data.purchase_transactions_today || 0);
+        }x;">
                     <h5 class="mb-0 text-white">UD KELUARGA SEHATI</h5>
                 </div>
                 <ul class="nav flex-column">
@@ -166,38 +174,38 @@
                     </div>
                 </div>
 
-                {{-- Card: Total Stok Keseluruhan --}}
+                {{-- Card: Transaksi Penjualan Hari Ini --}}
                 <div class="col-xl-3 col-md-6 mb-4">
                     <div class="card border-left-info shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
                                     <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                        Total Stok</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalStock">{{ $totalStock }}</div>
-                                    <div class="text-xs text-gray-300">Unit</div>
+                                        Transaksi Penjualan</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="salesTransactionsToday">{{ $salesTransactionsToday }}</div>
+                                    <div class="text-xs text-gray-300">Transaksi</div>
                                 </div>
                                 <div class="col-auto">
-                                    <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                                    <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- Card: Barang Stok Rendah --}}
+                {{-- Card: Transaksi Pembelian Hari Ini --}}
                 <div class="col-xl-3 col-md-6 mb-4">
                     <div class="card border-left-warning shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
                                     <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                        Stok Rendah</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="lowStockItems">{{ $lowStockItems }}</div>
-                                    <div class="text-xs text-gray-300">Barang</div>
+                                        Transaksi Pembelian</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="purchaseTransactionsToday">{{ $purchaseTransactionsToday }}</div>
+                                    <div class="text-xs text-gray-300">Transaksi</div>
                                 </div>
                                 <div class="col-auto">
-                                    <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                                    <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
                                 </div>
                             </div>
                         </div>
@@ -420,8 +428,10 @@
                 }
 
                 const data = await response.json();
+                console.log('Admin Dashboard Response:', data); // Debug log
                 
                 if (data.success) {
+                    console.log('Admin Dashboard Data:', data.data); // Debug log
                     updateDashboardCards(data.data);
                     updateDateDisplay(selectedDate);
                     
@@ -440,6 +450,7 @@
 
         // Update dashboard cards with new data
         function updateDashboardCards(data) {
+            console.log('Updating admin cards with data:', data); // Debug log
             // Update card values with animation
             updateCardValue('totalIncomingToday', data.total_incoming_today || 0);
             updateCardValue('totalOutgoingToday', data.total_outgoing_today || 0);
@@ -449,8 +460,10 @@
 
         // Animate card value update
         function updateCardValue(elementId, newValue) {
+            console.log(`Updating element ${elementId} with value ${newValue}`); // Debug log
             const element = document.getElementById(elementId);
             if (element) {
+                console.log(`Element ${elementId} found, updating...`); // Debug log
                 // Add update animation
                 element.style.transform = 'scale(1.1)';
                 element.style.transition = 'transform 0.3s ease';
@@ -459,6 +472,8 @@
                     element.textContent = newValue;
                     element.style.transform = 'scale(1)';
                 }, 150);
+            } else {
+                console.error(`Element with ID ${elementId} not found!`); // Debug log
             }
         }
 
